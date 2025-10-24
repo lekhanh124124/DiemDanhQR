@@ -24,4 +24,24 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? Khoa { get; set; }
         public string? Nganh { get; set; }
     }
+
+    public class GetStudentsRequest
+    {
+        // Paging (mặc định: trang 1, 20 bản ghi)
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+
+        // Tìm kiếm mờ theo MãSV / Họ tên / Email / SĐT
+        public string? Keyword { get; set; }
+
+        // Bộ lọc
+        public string? Khoa { get; set; }
+        public string? Nganh { get; set; }
+        public int? NamNhapHoc { get; set; }
+        public bool? TrangThaiUser { get; set; } // filter theo NguoiDung.TrangThai
+
+        // Sắp xếp: "MaSinhVien" | "HoTen" | "NamNhapHoc" (mặc định HoTen asc)
+        public string? SortBy { get; set; }
+        public bool Desc { get; set; } = false;
+    }
 }

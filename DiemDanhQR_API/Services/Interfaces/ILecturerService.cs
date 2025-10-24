@@ -7,5 +7,6 @@ namespace DiemDanhQR_API.Services.Interfaces
     public interface ILecturerService
     {
         Task<CreateLecturerResponse> CreateAsync(CreateLecturerRequest request);
+        Task<PagedResult<LecturerListItemResponse>> GetListAsync(GetLecturersRequest request);
     }
 }

@@ -103,5 +103,41 @@ namespace DiemDanhQR_API.Services.Implementations
 
             return resp;
         }
+        public async Task<PagedResult<LecturerListItemResponse>> GetListAsync(GetLecturersRequest request)
+        {
+            var page = request.Page <= 0 ? 1 : request.Page;
+            var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize, 200);
+
+            var (items, total) = await _repo.SearchLecturersAsync(
+                keyword: request.Keyword,
+                khoa: request.Khoa,
+                hocHam: request.HocHam,
+                hocVi: request.HocVi,
+                ngayTuyenDungFrom: request.NgayTuyenDungFrom,
+                ngayTuyenDungTo: request.NgayTuyenDungTo,
+                trangThaiUser: request.TrangThaiUser,
+                sortBy: request.SortBy,
+                desc: request.Desc,
+                page: page,
+                pageSize: pageSize
+            );
+
+            var list = items.Select(t => new LecturerListItemResponse(
+                maGiangVien: t.Gv.MaGiangVien!,
+                hoTen: t.Nd.HoTen,
+                khoa: t.Gv.Khoa,
+                hocHam: t.Gv.HocHam,
+                hocVi: t.Gv.HocVi,
+                ngayTuyenDung: t.Gv.NgayTuyenDung
+            )).ToList();
+
+            return new PagedResult<LecturerListItemResponse>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalRecords = total,
+                Items = list
+            };
+        }
     }
 }

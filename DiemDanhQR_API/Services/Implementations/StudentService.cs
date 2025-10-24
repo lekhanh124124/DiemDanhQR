@@ -102,5 +102,39 @@ namespace DiemDanhQR_API.Services.Implementations
 
             return resp;
         }
+        public async Task<PagedResult<StudentListItemResponse>> GetListAsync(GetStudentsRequest request)
+        {
+            var page = request.Page <= 0 ? 1 : request.Page;
+            var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize, 200);
+
+            var (items, total) = await _repo.SearchStudentsAsync(
+                keyword: request.Keyword,
+                khoa: request.Khoa,
+                nganh: request.Nganh,
+                namNhapHoc: request.NamNhapHoc,
+                trangThaiUser: request.TrangThaiUser,
+                sortBy: request.SortBy,
+                desc: request.Desc,
+                page: page,
+                pageSize: pageSize
+            );
+
+            var list = items.Select(t => new StudentListItemResponse(
+                maSinhVien: t.Sv.MaSinhVien!,
+                hoTen: t.Nd.HoTen,
+                lopHanhChinh: t.Sv.LopHanhChinh,
+                namNhapHoc: t.Sv.NamNhapHoc,
+                khoa: t.Sv.Khoa,
+                nganh: t.Sv.Nganh
+            )).ToList();
+
+            return new PagedResult<StudentListItemResponse>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalRecords = total,
+                Items = list
+            };
+        }
     }
 }

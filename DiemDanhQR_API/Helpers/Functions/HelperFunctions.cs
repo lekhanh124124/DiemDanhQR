@@ -28,11 +28,7 @@ namespace DiemDanhQR_API.Helpers
                 .TrimEnd('=');
             return b64;
         }
-
-        //Chuẩn hoá username: trim, bỏ khoảng giữa (không đổi hoa/thường)
-        public static string NormalizeUsername(string? input)
-            => NormalizeCode(input);
-
+        
         //Lấy MaNguoiDung từ Claims nếu có. Ưu tiên: NameIdentifier -> Name -> Identity.Name
         public static string? GetUserIdFromClaims(ClaimsPrincipal? user)
             => user?.FindFirstValue(ClaimTypes.NameIdentifier);

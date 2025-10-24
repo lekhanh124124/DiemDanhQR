@@ -98,4 +98,29 @@ namespace DiemDanhQR_API.DTOs.Responses
             NgayTuyenDung = ngayTuyenDung;
         }
     }
+    public class LecturerListItemResponse
+    {
+        public string MaGiangVien { get; }
+        public string? HoTen { get; }
+        public string? Khoa { get; }
+        public string? HocHam { get; }
+        public string? HocVi { get; }
+        public DateTime? NgayTuyenDung { get; }
+
+        public LecturerListItemResponse(
+            string maGiangVien,
+            string? hoTen,
+            string? khoa,
+            string? hocHam,
+            string? hocVi,
+            DateTime? ngayTuyenDung)
+        {
+            MaGiangVien = maGiangVien;
+            HoTen = hoTen;
+            Khoa = khoa;
+            HocHam = hocHam;
+            HocVi = hocVi;
+            NgayTuyenDung = ngayTuyenDung;
+        }
+    }
 }

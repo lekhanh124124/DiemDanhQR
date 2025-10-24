@@ -99,4 +99,29 @@ namespace DiemDanhQR_API.DTOs.Responses
             Nganh = nganh;
         }
     }
+    public class StudentListItemResponse
+    {
+        public string MaSinhVien { get; }
+        public string? HoTen { get; }
+        public string? LopHanhChinh { get; }
+        public int? NamNhapHoc { get; }
+        public string? Khoa { get; }
+        public string? Nganh { get; }
+
+        public StudentListItemResponse(
+            string maSinhVien,
+            string? hoTen,
+            string? lopHanhChinh,
+            int? namNhapHoc,
+            string? khoa,
+            string? nganh)
+        {
+            MaSinhVien = maSinhVien;
+            HoTen = hoTen;
+            LopHanhChinh = lopHanhChinh;
+            NamNhapHoc = namNhapHoc;
+            Khoa = khoa;
+            Nganh = nganh;
+        }
+    }
 }

@@ -18,5 +18,18 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task<PhanQuyen?> GetRoleAsync(int maQuyen);
 
         Task SaveChangesAsync();
+        Task<(List<(GiangVien Gv, NguoiDung Nd)> Items, int Total)> SearchLecturersAsync(
+            string? keyword,
+            string? khoa,
+            string? hocHam,
+            string? hocVi,
+            DateTime? ngayTuyenDungFrom,
+            DateTime? ngayTuyenDungTo,
+            bool? trangThaiUser,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize
+        );
     }
 }

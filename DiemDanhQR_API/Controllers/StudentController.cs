@@ -26,5 +26,20 @@ namespace DiemDanhQR_API.Controllers
                 Data = result
             });
         }
+
+        [HttpGet("List")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<PagedResult<StudentListItemResponse>>>> List([FromQuery] GetStudentsRequest req)
+        {
+            var result = await _svc.GetListAsync(req);
+            return Ok(new ApiResponse<PagedResult<StudentListItemResponse>>
+            {
+                Status = 200,
+                Message = "Lấy danh sách sinh viên thành công.",
+                Data = result
+            });
+        }
     }
+
+
 }
