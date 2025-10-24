@@ -1,5 +1,4 @@
 // File: Services/Implementations/StudentService.cs
-using BCrypt.Net;
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
 using DiemDanhQR_API.Models;
@@ -18,7 +17,7 @@ namespace DiemDanhQR_API.Services.Implementations
             _repo = repo;
         }
 
-        public async Task<ApiResponse<CreateStudentResponse>> CreateAsync(CreateStudentRequest request)
+        public async Task<CreateStudentResponse> CreateAsync(CreateStudentRequest request)
         {
             var maSV = HelperFunctions.NormalizeCode(request.MaSinhVien);
             if (string.IsNullOrWhiteSpace(maSV))
@@ -101,12 +100,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 sv.Nganh
             );
 
-            return new ApiResponse<CreateStudentResponse>
-            {
-                Status = 200,
-                Message = "Tạo sinh viên thành công.",
-                Data = resp
-            };
+            return resp;
         }
     }
 }

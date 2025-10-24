@@ -19,7 +19,12 @@ namespace DiemDanhQR_API.Controllers
         public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest req)
         {
             var result = await _authService.LoginAsync(req);
-            return Ok(result);
+            return Ok(new ApiResponse<LoginResponse>
+            {
+                Status = 200,
+                Message = "Đăng nhập thành công.",
+                Data = result,
+            });
         }
 
         [HttpPost("logout")]
@@ -31,7 +36,12 @@ namespace DiemDanhQR_API.Controllers
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng hiện tại.");
 
             var res = await _authService.LogoutAsync(userId!);
-            return Ok(res);
+            return Ok(new ApiResponse<LogoutResponse>
+            {
+                Status = 200,
+                Message = "Đăng xuất thành công.",
+                Data = res,             
+            });
         }
 
         [HttpPost("refreshtoken")]
@@ -39,7 +49,12 @@ namespace DiemDanhQR_API.Controllers
         public async Task<ActionResult<ApiResponse<RefreshAccessTokenResponse>>> Refresh([FromBody] RefreshTokenRequest req)
         {
             var res = await _authService.RefreshAccessTokenAsync(req);
-            return Ok(res);
+            return Ok(new ApiResponse<RefreshAccessTokenResponse>
+            {
+                Status = 200,
+                Message = "Làm mới token thành công.",
+                Data = res,
+            });
         }
 
         [HttpPost("changepassword")]
@@ -51,7 +66,12 @@ namespace DiemDanhQR_API.Controllers
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng hiện tại.");
 
             var res = await _authService.ChangePasswordAsync(userId!, req);
-            return Ok(res);
+            return Ok(new ApiResponse<ChangePasswordResponse>
+            {
+                Status = 200,
+                Message = "Đổi mật khẩu thành công.",
+                Data = res,
+            });
         }
 
         [HttpPost("refreshpassword")]
@@ -59,7 +79,12 @@ namespace DiemDanhQR_API.Controllers
         public async Task<ActionResult<ApiResponse<RefreshPasswordResponse>>> RefreshPassword([FromBody] RefreshPasswordRequest req)
         {
             var res = await _authService.RefreshPasswordToUserIdAsync(req);
-            return Ok(res);
+            return Ok(new ApiResponse<RefreshPasswordResponse>
+            {
+                Status = 200,
+                Message = "Làm mới mật khẩu thành công.",
+                Data = res,
+            });
         }
     }
 }

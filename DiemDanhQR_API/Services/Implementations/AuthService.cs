@@ -22,7 +22,7 @@ namespace DiemDanhQR_API.Services.Implementations
             _cfg = cfg;
         }
 
-        public async Task<ApiResponse<LoginResponse>> LoginAsync(LoginRequest request)
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             var username = HelperFunctions.NormalizeCode(request.TenDangNhap);
             if (string.IsNullOrWhiteSpace(username))
@@ -112,15 +112,10 @@ namespace DiemDanhQR_API.Services.Implementations
                 roleCode
             );
 
-            return new ApiResponse<LoginResponse>
-            {
-                Status = 200,
-                Message = "Đăng nhập thành công.",
-                Data = data
-            };
+            return data;
         }
 
-        public async Task<ApiResponse<LogoutResponse>> LogoutAsync(string maNguoiDung)
+        public async Task<LogoutResponse> LogoutAsync(string maNguoiDung)
         {
             var userId = HelperFunctions.NormalizeCode(maNguoiDung);
             if (string.IsNullOrWhiteSpace(userId))
@@ -137,14 +132,10 @@ namespace DiemDanhQR_API.Services.Implementations
             await _repo.SaveChangesAsync();
 
             var data = new LogoutResponse(userId, revokedAt);
-            return new ApiResponse<LogoutResponse>
-            {
-                Status = 200,
-                Message = "Đăng xuất thành công.",
-                Data = data
-            };
+            return data;
         }
-        public async Task<ApiResponse<RefreshAccessTokenResponse>> RefreshAccessTokenAsync(RefreshTokenRequest request)
+
+        public async Task<RefreshAccessTokenResponse> RefreshAccessTokenAsync(RefreshTokenRequest request)
         {
             // 1) Validate input
             var username = HelperFunctions.NormalizeCode(request?.TenDangNhap);
@@ -227,15 +218,10 @@ namespace DiemDanhQR_API.Services.Implementations
                 roleCode
             );
 
-            return new ApiResponse<RefreshAccessTokenResponse>
-            {
-                Status = 200,
-                Message = "Làm mới access token thành công.",
-                Data = data
-            };
+            return data;
         }
 
-        public async Task<ApiResponse<ChangePasswordResponse>> ChangePasswordAsync(string maNguoiDungFromClaims, ChangePasswordRequest request)
+        public async Task<ChangePasswordResponse> ChangePasswordAsync(string maNguoiDungFromClaims, ChangePasswordRequest request)
         {
             // Validate input
             var userKey = HelperFunctions.NormalizeCode(maNguoiDungFromClaims);
@@ -274,14 +260,10 @@ namespace DiemDanhQR_API.Services.Implementations
             await _repo.SaveChangesAsync();
 
             var data = new ChangePasswordResponse(user.MaNguoiDung ?? userKey, revokedAtVn);
-            return new ApiResponse<ChangePasswordResponse>
-            {
-                Status = 200,
-                Message = "Đổi mật khẩu thành công.",
-                Data = data
-            };
+            return data;
         }
-        public async Task<ApiResponse<RefreshPasswordResponse>> RefreshPasswordToUserIdAsync(RefreshPasswordRequest request)
+
+        public async Task<RefreshPasswordResponse> RefreshPasswordToUserIdAsync(RefreshPasswordRequest request)
         {
             var username = HelperFunctions.NormalizeCode(request?.TenDangNhap);
             if (string.IsNullOrWhiteSpace(username))
@@ -315,12 +297,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 changedAtVn
             );
 
-            return new ApiResponse<RefreshPasswordResponse>
-            {
-                Status = 200,
-                Message = "Đã làm mới mật khẩu về MaNguoiDung.",
-                Data = data
-            };
+            return data;
         }
     }
 }

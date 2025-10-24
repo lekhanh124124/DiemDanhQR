@@ -18,7 +18,7 @@ namespace DiemDanhQR_API.Services.Implementations
             _repo = repo;
         }
 
-        public async Task<ApiResponse<CreateLecturerResponse>> CreateAsync(CreateLecturerRequest request)
+        public async Task<CreateLecturerResponse> CreateAsync(CreateLecturerRequest request)
         {
             var maGV = HelperFunctions.NormalizeCode(request.MaGiangVien);
             if (string.IsNullOrWhiteSpace(maGV))
@@ -101,12 +101,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 user.TrangThai ?? true
             );
 
-            return new ApiResponse<CreateLecturerResponse>
-            {
-                Status = 200,
-                Message = "Tạo giảng viên thành công.",
-                Data = resp
-            };
+            return resp;
         }
     }
 }

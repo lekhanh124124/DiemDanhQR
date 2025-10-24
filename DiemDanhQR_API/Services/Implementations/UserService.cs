@@ -6,7 +6,6 @@ using DiemDanhQR_API.Repositories.Interfaces;
 using DiemDanhQR_API.Services.Interfaces;
 using DiemDanhQR_API.Helpers;
 
-
 namespace DiemDanhQR_API.Services.Implementations
 {
     public class UserService : IUserService
@@ -18,7 +17,7 @@ namespace DiemDanhQR_API.Services.Implementations
             _repo = repo;
         }
 
-        public async Task<ApiResponse<CreateUsertResponse>> CreateAsync(CreateUserRequest request)
+        public async Task<CreateUsertResponse> CreateAsync(CreateUserRequest request)
         {
             var maND = HelperFunctions.NormalizeCode(request.MaNguoiDung);
             if (string.IsNullOrWhiteSpace(maND))
@@ -65,29 +64,20 @@ namespace DiemDanhQR_API.Services.Implementations
                 TrangThai = entity.TrangThai ?? true
             };
 
-            return new ApiResponse<CreateUsertResponse>
-            {
-                Status = 200,
-                Message = "Tạo người dùng thành công.",
-                Data = data
-            };
+            return data;
         }
-        public async Task<ApiResponse<object>> GetInfoAsync(GetUserInfoRequest request)
+
+        public async Task<object> GetInfoAsync(string maNguoiDung)
         {
-            var maND = HelperFunctions.NormalizeCode(request.MaNguoiDung);
-            var tenDN = HelperFunctions.NormalizeUsername(request.TenDangNhap);
+            var maND = HelperFunctions.NormalizeCode(maNguoiDung);
+            if (string.IsNullOrWhiteSpace(maND))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng không hợp lệ.");
 
-            if (string.IsNullOrWhiteSpace(maND) && string.IsNullOrWhiteSpace(tenDN))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Cần cung cấp MaNguoiDung hoặc TenDangNhap.");
-
-            var user = !string.IsNullOrWhiteSpace(maND)
-                ? await _repo.GetByMaNguoiDungAsync(maND)
-                : await _repo.GetByTenDangNhapAsync(tenDN!);
-
+            var user = await _repo.GetByMaNguoiDungAsync(maND);
             if (user == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
 
-            // Ưu tiên giảng viên nếu tồn tại; nếu không thì sinh viên
+            // Ưu tiên giảng viên nếu có; nếu không thì sinh viên
             var gv = await _repo.GetLecturerByMaNguoiDungAsync(user!.MaNguoiDung!);
             if (gv != null)
             {
@@ -110,12 +100,7 @@ namespace DiemDanhQR_API.Services.Implementations
                     gv.NgayTuyenDung
                 );
 
-                return new ApiResponse<object>
-                {
-                    Status = 200,
-                    Message = "Lấy thông tin giảng viên thành công.",
-                    Data = payload
-                };
+                return payload;
             }
 
             var sv = await _repo.GetStudentByMaNguoiDungAsync(user.MaNguoiDung!);
@@ -139,16 +124,12 @@ namespace DiemDanhQR_API.Services.Implementations
                     sv.Khoa,
                     sv.Nganh
                 );
-                return new ApiResponse<object>
-                {
-                    Status = 200,
-                    Message = "Lấy thông tin sinh viên thành công.",
-                    Data = payload
-                };
+
+                return payload;
             }
 
             ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Người dùng không có hồ sơ Sinh viên/Giảng viên.");
-            throw new InvalidOperationException(); // unreachable
+            throw new InvalidOperationException("Unreachable"); // for compiler satisfaction
         }
     }
 }

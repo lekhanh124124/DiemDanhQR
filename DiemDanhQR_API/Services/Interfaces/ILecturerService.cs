@@ -6,6 +6,6 @@ namespace DiemDanhQR_API.Services.Interfaces
 {
     public interface ILecturerService
     {
-        Task<ApiResponse<CreateLecturerResponse>> CreateAsync(CreateLecturerRequest request);
+        Task<CreateLecturerResponse> CreateAsync(CreateLecturerRequest request);
     }
 }

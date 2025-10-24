@@ -35,9 +35,7 @@ namespace DiemDanhQR_API.Helpers
 
         //Lấy MaNguoiDung từ Claims nếu có. Ưu tiên: NameIdentifier -> Name -> Identity.Name
         public static string? GetUserIdFromClaims(ClaimsPrincipal? user)
-            => user?.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? user?.FindFirstValue(ClaimTypes.Name)
-            ?? user?.Identity?.Name;
+            => user?.FindFirstValue(ClaimTypes.NameIdentifier);
 
         // Giờ Việt Nam (Unspecified) -> UTC (DateTime UTC). Dùng khi đọc từ DB (đã lưu theo giờ VN) rồi cần chuẩn hoá về UTC.
         public static DateTime VietnamToUtc(DateTime vietnamTime)
@@ -45,7 +43,7 @@ namespace DiemDanhQR_API.Helpers
             var tz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
             var offset = tz.GetUtcOffset(vietnamTime);
             var dto = new DateTimeOffset(vietnamTime, offset);
-            return dto.UtcDateTime; 
+            return dto.UtcDateTime;
         }
 
         // UTC -> giờ Việt Nam (DateTime). Trả về Kind=Unspecified để EF không tự đổi múi giờ khi lưu DB (datetime/datetime2).

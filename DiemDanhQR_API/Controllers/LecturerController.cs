@@ -19,7 +19,12 @@ namespace DiemDanhQR_API.Controllers
         public async Task<ActionResult<ApiResponse<CreateLecturerResponse>>> Create([FromBody] CreateLecturerRequest req)
         {
             var result = await _svc.CreateAsync(req);
-            return Ok(result);
+            return Ok(new ApiResponse<CreateLecturerResponse>
+            {
+                Status = 200,
+                Message = "Tạo giảng viên thành công.",
+                Data = result
+            });
         }
     }
 }
