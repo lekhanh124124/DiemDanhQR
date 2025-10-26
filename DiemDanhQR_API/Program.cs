@@ -36,11 +36,14 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ILecturerRepository, LecturerRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+
 // Đăng ký DI cho Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ILecturerService, LecturerService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
 
 // CORS: chấp nhận frontend
 builder.Services.AddCors(opt =>

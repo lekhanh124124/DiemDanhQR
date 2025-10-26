@@ -275,7 +275,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy tài khoản hoặc tài khoản bị khoá.");
 
             // Mật khẩu mới = MaNguoiDung (fallback TenDangNhap nếu MaNguoiDung null)
-            var newPlain = user.MaNguoiDung ?? user.TenDangNhap ?? username;
+            var newPlain = user!.MaNguoiDung ?? user.TenDangNhap ?? username;
             if (string.IsNullOrWhiteSpace(newPlain))
                 ApiExceptionHelper.Throw(ApiErrorCode.InternalError, "Không xác định được mật khẩu mặc định.");
 
