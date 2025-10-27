@@ -98,6 +98,15 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var items = list.Select(x => (x.l, x.u)).ToList();
             return (items, total);
         }
+        public Task UpdateAsync(NguoiDung entity)
+        {
+            _db.NguoiDung.Update(entity);
+            return Task.CompletedTask;
+        }
 
+        public async Task AddActivityAsync(LichSuHoatDong log)
+        {
+            await _db.LichSuHoatDong.AddAsync(log);
+        }
     }
 }

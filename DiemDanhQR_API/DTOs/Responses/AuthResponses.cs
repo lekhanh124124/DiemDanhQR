@@ -45,7 +45,6 @@ namespace DiemDanhQR_API.DTOs.Responses
         }
     }
 
-    /// <summary>Response khi cấp AccessToken mới.</summary>
     public class RefreshAccessTokenResponse
     {
         public string AccessToken { get; }
@@ -56,7 +55,6 @@ namespace DiemDanhQR_API.DTOs.Responses
         public int MaQuyen { get; }
         public string RoleCode { get; }
 
-        // Service truyền thẳng tham số
         public RefreshAccessTokenResponse(
             string accessToken,
             DateTime expiresAt,
@@ -79,7 +77,7 @@ namespace DiemDanhQR_API.DTOs.Responses
     public class ChangePasswordResponse
     {
         public string MaNguoiDung { get; }
-        public DateTime ChangedAt { get; } // giờ VN bạn đang dùng cho DB
+        public DateTime ChangedAt { get; } 
 
         public ChangePasswordResponse(string maNguoiDung, DateTime changedAt)
         {
@@ -91,8 +89,8 @@ namespace DiemDanhQR_API.DTOs.Responses
     {
         public string MaNguoiDung { get; }
         public string TenDangNhap { get; }
-        public string NewPassword { get; }     // plaintext để hiển thị cho user
-        public DateTime ChangedAt { get; }     // giờ VN (bạn đang dùng DateTime)
+        public string NewPassword { get; }     
+        public DateTime ChangedAt { get; }    
 
         public RefreshPasswordResponse(string maNguoiDung, string tenDangNhap, string newPassword, DateTime changedAt)
         {

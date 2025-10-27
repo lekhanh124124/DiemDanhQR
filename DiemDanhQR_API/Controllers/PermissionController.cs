@@ -1,4 +1,5 @@
 // File: Controllers/PermissionController.cs
+// Bảng PhanQuyen + ChucNang + NhomChucNang
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
 using DiemDanhQR_API.Services.Interfaces;

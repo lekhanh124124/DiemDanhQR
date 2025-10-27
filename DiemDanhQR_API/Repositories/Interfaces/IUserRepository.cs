@@ -16,6 +16,9 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task<SinhVien?> GetStudentByMaNguoiDungAsync(string maNguoiDung);
         Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung);
 
+        Task UpdateAsync(NguoiDung entity);
+        Task AddActivityAsync(LichSuHoatDong log);
+
         Task<(List<(LichSuHoatDong Log, NguoiDung User)> Items, int Total)> SearchActivitiesAsync(
             string? keyword,
             string? maNguoiDung,

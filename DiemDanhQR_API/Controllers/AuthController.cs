@@ -1,4 +1,5 @@
 // File: Controllers/AuthController.cs
+// Bảng NguoiDung 
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
 using DiemDanhQR_API.Helpers;

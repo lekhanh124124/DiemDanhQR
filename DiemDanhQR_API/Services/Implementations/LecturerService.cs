@@ -1,5 +1,4 @@
 // File: Services/Implementations/LecturerService.cs
-using BCrypt.Net;
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
 using DiemDanhQR_API.Models;
@@ -12,10 +11,12 @@ namespace DiemDanhQR_API.Services.Implementations
     public class LecturerService : ILecturerService
     {
         private readonly ILecturerRepository _repo;
+        private readonly IWebHostEnvironment _env;
 
-        public LecturerService(ILecturerRepository repo)
+        public LecturerService(ILecturerRepository repo, IWebHostEnvironment env)
         {
             _repo = repo;
+            _env = env;
         }
 
         public async Task<CreateLecturerResponse> CreateAsync(CreateLecturerRequest request)
@@ -30,11 +31,11 @@ namespace DiemDanhQR_API.Services.Implementations
             if (string.IsNullOrWhiteSpace(maND))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng không hợp lệ.");
 
-            if (request.MaQuyen <= 0)
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã quyền không hợp lệ.");
+            if (!request.MaQuyen.HasValue)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã quyền không được để trống.");
 
             // Quyền phải tồn tại
-            var role = await _repo.GetRoleAsync(request.MaQuyen);
+            var role = await _repo.GetRoleAsync((int)request.MaQuyen!);
             if (role == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy quyền.");
 
@@ -42,9 +43,14 @@ namespace DiemDanhQR_API.Services.Implementations
             if (await _repo.ExistsLecturerAsync(maGV))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã giảng viên đã tồn tại.");
 
-            // Kiểm tra/tạo user
+            string? avatarUrl = null;
+            if (request.AnhDaiDien != null)
+            {
+                avatarUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath, maND);
+            }
+
             var user = await _repo.GetUserByMaAsync(maND)
-                       ?? await _repo.GetUserByUsernameAsync(maND); // TenDangNhap = MaND theo quy ước
+                       ?? await _repo.GetUserByUsernameAsync(maND);
 
             if (user == null)
             {
@@ -62,19 +68,20 @@ namespace DiemDanhQR_API.Services.Implementations
                     SoDienThoai = request.SoDienThoai,
                     NgaySinh = request.NgaySinh,
                     GioiTinh = request.GioiTinh,
-                    DiaChi = request.DiaChi
-                };
+                    DiaChi = request.DiaChi,
 
+                    AnhDaiDien = avatarUrl
+                };
                 await _repo.AddUserAsync(user);
             }
             else
             {
-                // Nếu user đã tồn tại, có thể cập nhật nhẹ hồ sơ/nhóm quyền nếu cần
                 user.HoTen ??= request.HoTen ?? maND;
                 user.MaQuyen ??= request.MaQuyen;
+                if (!string.IsNullOrWhiteSpace(avatarUrl))
+                    user.AnhDaiDien = avatarUrl;
             }
 
-            // Tạo giảng viên
             var gv = new GiangVien
             {
                 MaGiangVien = maGV,
@@ -88,25 +95,24 @@ namespace DiemDanhQR_API.Services.Implementations
             await _repo.AddLecturerAsync(gv);
             await _repo.SaveChangesAsync();
 
-            var resp = new CreateLecturerResponse(
-                maGV,
-                maND,
-                user.TenDangNhap ?? maND,
-                user.HoTen ?? maND,
-                user.MaQuyen ?? request.MaQuyen,
-                gv.Khoa,
-                gv.HocHam,
-                gv.HocVi,
-                gv.NgayTuyenDung,
-                user.TrangThai ?? true
-            );
-
-            return resp;
+            return new CreateLecturerResponse
+            {
+                MaGiangVien = gv.MaGiangVien,
+                MaNguoiDung = user.MaNguoiDung,
+                TenDangNhap = user.TenDangNhap,
+                HoTen = user.HoTen,
+                MaQuyen = user.MaQuyen,
+                Khoa = gv.Khoa,
+                HocHam = gv.HocHam,
+                HocVi = gv.HocVi,
+                NgayTuyenDung = gv.NgayTuyenDung,
+                TrangThaiUser = user.TrangThai ?? true
+            };
         }
         public async Task<PagedResult<LecturerListItemResponse>> GetListAsync(GetLecturersRequest request)
         {
             var page = request.Page <= 0 ? 1 : request.Page;
-            var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize, 200);
+            var pageSize = request.PageSize <= 0 ? 20 : Math.Min((int)request.PageSize!, 200);
 
             var sortBy = request.SortBy ?? "HoTen";
             var sortDir = (request.SortDir ?? "ASC").Trim().ToUpperInvariant();
@@ -122,27 +128,133 @@ namespace DiemDanhQR_API.Services.Implementations
                 trangThaiUser: request.TrangThaiUser,
                 sortBy: sortBy,
                 desc: desc,
-                page: page,
+                page: (int)page!,
                 pageSize: pageSize
             );
 
-            var list = items.Select(t => new LecturerListItemResponse(
-                maGiangVien: t.Gv.MaGiangVien!,
-                hoTen: t.Nd.HoTen,
-                khoa: t.Gv.Khoa,
-                hocHam: t.Gv.HocHam,
-                hocVi: t.Gv.HocVi,
-                ngayTuyenDung: t.Gv.NgayTuyenDung
-            )).ToList();
+            var list = items.Select(t => new LecturerListItemResponse
+            {
+                MaGiangVien = t.Gv.MaGiangVien!,
+                HoTen = t.Nd.HoTen,
+                Khoa = t.Gv.Khoa,
+                HocHam = t.Gv.HocHam,
+                HocVi = t.Gv.HocVi,
+                NgayTuyenDung = t.Gv.NgayTuyenDung
+            }).ToList();
 
             return new PagedResult<LecturerListItemResponse>
             {
-                Page = page,
+                Page = (int)page!,
                 PageSize = pageSize,
                 TotalRecords = total,
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize),
                 Items = list
             };
         }
+
+        public async Task<UpdateLecturerResponse> UpdateAsync(UpdateLecturerRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.MaNguoiDung))
+            {
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng không được để trống.");
+            }
+            var maND = HelperFunctions.NormalizeCode(request.MaNguoiDung);
+            if (string.IsNullOrWhiteSpace(maND))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng không hợp lệ.");
+
+            // Lấy user & lecturer
+            var user = await _repo.GetUserByMaAsync(maND);
+            if (user == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
+
+            var gv = await _repo.GetLecturerByMaNguoiDungAsync(maND);
+            if (gv == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy hồ sơ giảng viên.");
+
+            // Đổi tên đăng nhập (phải duy nhất)
+            if (!string.IsNullOrWhiteSpace(request.TenDangNhap))
+            {
+                var newUserName = HelperFunctions.NormalizeCode(request.TenDangNhap);
+                if (!string.Equals(newUserName, user!.TenDangNhap, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (await _repo.ExistsUsernameForAnotherAsync(newUserName))
+                        ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Tên đăng nhập đã tồn tại.");
+                    user.TenDangNhap = newUserName;
+                }
+            }
+
+            // Đổi mã quyền (nếu có) -> phải tồn tại
+            if (request.MaQuyen.HasValue)
+            {
+                if (request.MaQuyen.Value <= 0)
+                    ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã quyền không hợp lệ.");
+                var role = await _repo.GetRoleAsync(request.MaQuyen.Value);
+                if (role == null)
+                    ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy quyền.");
+                user!.MaQuyen = request.MaQuyen.Value;
+            }
+
+            if (request.TrangThai.HasValue) user!.TrangThai = request.TrangThai.Value;
+            if (!string.IsNullOrWhiteSpace(request.TenGiangVien)) user!.HoTen = request.TenGiangVien.Trim();
+
+            if (request.GioiTinh.HasValue) user!.GioiTinh = request.GioiTinh;
+            if (!string.IsNullOrWhiteSpace(request.Email)) user!.Email = request.Email.Trim();
+            if (!string.IsNullOrWhiteSpace(request.SoDienThoai)) user!.SoDienThoai = request.SoDienThoai.Trim();
+            if (request.NgaySinh.HasValue) user!.NgaySinh = request.NgaySinh.Value;
+            if (!string.IsNullOrWhiteSpace(request.DanToc)) user!.DanToc = request.DanToc.Trim();
+            if (!string.IsNullOrWhiteSpace(request.TonGiao)) user!.TonGiao = request.TonGiao.Trim();
+            if (!string.IsNullOrWhiteSpace(request.DiaChi)) user!.DiaChi = request.DiaChi.Trim();
+
+            // Ảnh đại diện mới (nếu có file)
+            if (request.AnhDaiDien != null)
+            {
+                var avatarUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath, user!.MaNguoiDung!);
+                if (!string.IsNullOrWhiteSpace(avatarUrl))
+                    user.AnhDaiDien = avatarUrl;
+            }
+
+            await _repo.UpdateUserAsync(user!);
+
+            // Thông tin giảng viên
+            if (!string.IsNullOrWhiteSpace(request.Khoa)) gv!.Khoa = request.Khoa.Trim();
+            if (!string.IsNullOrWhiteSpace(request.HocHam)) gv!.HocHam = request.HocHam.Trim();
+            if (!string.IsNullOrWhiteSpace(request.HocVi)) gv!.HocVi = request.HocVi.Trim();
+            if (request.NgayTuyenDung.HasValue) gv!.NgayTuyenDung = request.NgayTuyenDung.Value;
+
+            await _repo.UpdateLecturerAsync(gv!);
+
+            await _repo.AddActivityAsync(new LichSuHoatDong
+            {
+                MaNguoiDung = user!.MaNguoiDung,
+                HanhDong = $"Cập nhật thông tin giảng viên [{gv!.MaGiangVien}] (ND: {user.MaNguoiDung})",
+                ThoiGian = HelperFunctions.UtcToVietnam(DateTime.UtcNow)
+            });
+            await _repo.SaveChangesAsync();
+
+            return new UpdateLecturerResponse
+            {
+                MaNguoiDung = user.MaNguoiDung,
+                MaGiangVien = gv.MaGiangVien,
+                TenDangNhap = user.TenDangNhap,
+                HoTen = user.HoTen,
+                TrangThai = user.TrangThai ?? true,
+                MaQuyen = user.MaQuyen,
+
+                Khoa = gv.Khoa,
+                HocHam = gv.HocHam,
+                HocVi = gv.HocVi,
+                NgayTuyenDung = gv.NgayTuyenDung?.ToString("yyyy-MM-dd"),
+
+                GioiTinh = user.GioiTinh,
+                AnhDaiDien = user.AnhDaiDien,
+                Email = user.Email,
+                SoDienThoai = user.SoDienThoai,
+                NgaySinh = user.NgaySinh?.ToString("dd-MM-yyyy"),
+                DanToc = user.DanToc,
+                TonGiao = user.TonGiao,
+                DiaChi = user.DiaChi
+            };
+        }
+
     }
 }

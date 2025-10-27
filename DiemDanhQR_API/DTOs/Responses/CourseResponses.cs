@@ -36,8 +36,8 @@ namespace DiemDanhQR_API.DTOs.Responses
             byte? hocKy,
             string maGiangVien,
             string tenGiangVien,
-            DateTime? ngayThamGia = null,     // NEW (optional)
-            bool? trangThaiThamGia = null     // NEW (optional)
+            DateTime? ngayThamGia = null,     
+            bool? trangThaiThamGia = null     
         )
         {
             MaLopHocPhan = maLopHocPhan;

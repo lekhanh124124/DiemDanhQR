@@ -17,7 +17,7 @@ namespace DiemDanhQR_API.Services.Implementations
             _repo = repo;
         }
 
-        public async Task<CreateUsertResponse> CreateAsync(CreateUserRequest request)
+        public async Task<CreateUserResponse> CreateAsync(CreateUserRequest request)
         {
             var maND = HelperFunctions.NormalizeCode(request.MaNguoiDung);
             if (string.IsNullOrWhiteSpace(maND))
@@ -55,7 +55,7 @@ namespace DiemDanhQR_API.Services.Implementations
             await _repo.AddAsync(entity);
             await _repo.SaveChangesAsync();
 
-            var data = new CreateUsertResponse
+            var data = new CreateUserResponse
             {
                 MaNguoiDung = entity.MaNguoiDung!,
                 TenDangNhap = entity.TenDangNhap!,
@@ -81,24 +81,27 @@ namespace DiemDanhQR_API.Services.Implementations
             var gv = await _repo.GetLecturerByMaNguoiDungAsync(user!.MaNguoiDung!);
             if (gv != null)
             {
-                var payload = new LecturerInfoResponse(
-                    user.MaNguoiDung ?? string.Empty,
-                    user.HoTen,
-                    user.GioiTinh,
-                    user.AnhDaiDien,
-                    user.Email,
-                    user.SoDienThoai,
-                    user.NgaySinh,
-                    user.DanToc,
-                    user.TonGiao,
-                    user.DiaChi,
-                    user.TrangThai ?? true,
-                    gv.MaGiangVien ?? string.Empty,
-                    gv.Khoa,
-                    gv.HocHam,
-                    gv.HocVi,
-                    gv.NgayTuyenDung
-                );
+                var payload = new LecturerInfoResponse
+                {
+                    MaNguoiDung = user.MaNguoiDung,
+                    HoTen = user.HoTen,
+                    GioiTinh = user.GioiTinh,
+                    AnhDaiDien = user.AnhDaiDien,
+                    Email = user.Email,
+                    SoDienThoai = user.SoDienThoai,
+                    NgaySinh    = user.NgaySinh.HasValue 
+                                    ? user.NgaySinh.Value.ToString("dd-MM-yyyy")
+                                    : null,
+                    DanToc = user.DanToc,
+                    TonGiao = user.TonGiao,
+                    DiaChi = user.DiaChi,
+                    TrangThai = user.TrangThai ?? true,
+                    MaGiangVien = gv.MaGiangVien,
+                    Khoa = gv.Khoa,
+                    HocHam = gv.HocHam,
+                    HocVi = gv.HocVi,
+                    NgayTuyenDung = gv.NgayTuyenDung
+                };
 
                 return payload;
             }
@@ -106,24 +109,27 @@ namespace DiemDanhQR_API.Services.Implementations
             var sv = await _repo.GetStudentByMaNguoiDungAsync(user.MaNguoiDung!);
             if (sv != null)
             {
-                var payload = new StudentInfoResponse(
-                    user.MaNguoiDung ?? string.Empty,
-                    user.HoTen,
-                    user.GioiTinh,
-                    user.AnhDaiDien,
-                    user.Email,
-                    user.SoDienThoai,
-                    user.NgaySinh,
-                    user.DanToc,
-                    user.TonGiao,
-                    user.DiaChi,
-                    user.TrangThai ?? true,
-                    sv.MaSinhVien ?? string.Empty,
-                    sv.LopHanhChinh,
-                    sv.NamNhapHoc,
-                    sv.Khoa,
-                    sv.Nganh
-                );
+                var payload = new StudentInfoResponse
+                {
+                    MaNguoiDung = user.MaNguoiDung,
+                    HoTen = user.HoTen,
+                    GioiTinh = user.GioiTinh,
+                    AnhDaiDien = user.AnhDaiDien,
+                    Email = user.Email,
+                    SoDienThoai = user.SoDienThoai,
+                    NgaySinh    = user.NgaySinh.HasValue 
+                                    ? user.NgaySinh.Value.ToString("dd-MM-yyyy")
+                                    : null,
+                    DanToc = user.DanToc,
+                    TonGiao = user.TonGiao,
+                    DiaChi = user.DiaChi,
+                    TrangThai = user.TrangThai ?? true,
+                    MaSinhVien = sv.MaSinhVien,
+                    LopHanhChinh = sv.LopHanhChinh,
+                    NamNhapHoc = sv.NamNhapHoc,
+                    Khoa = sv.Khoa,
+                    Nganh = sv.Nganh
+                };
 
                 return payload;
             }
@@ -152,13 +158,17 @@ namespace DiemDanhQR_API.Services.Implementations
             );
 
             var items = rows.Select(x =>
-                new UserActivityItem(
-                    (int)x.Log.MaLichSu!,
-                    (DateTime)x.Log.ThoiGian!,
-                    x.Log.HanhDong ?? string.Empty,
-                    x.User.MaNguoiDung ?? string.Empty,
-                    x.User.TenDangNhap ?? string.Empty
-                )
+                new UserActivityItem
+                {
+                    MaLichSu = x.Log.MaLichSu,
+                    ThoiGian = x.Log.ThoiGian.HasValue
+                                ? HelperFunctions.UtcToVietnam(x.Log.ThoiGian.Value)
+                                    .ToString("dd-MM-yyyy HH:mm:ss")
+                                : null,
+                    HanhDong = x.Log.HanhDong,
+                    MaNguoiDung = x.User.MaNguoiDung,
+                    TenDangNhap = x.User.TenDangNhap
+                }
             ).ToList();
 
             return new PagedResult<UserActivityItem>
@@ -170,6 +180,69 @@ namespace DiemDanhQR_API.Services.Implementations
                 Items = items
             };
         }
+        public async Task<UpdateUserProfileResponse> UpdateProfileAsync(
+                    string maNguoiDungFromToken, UpdateUserProfileRequest req)
+        {
+            var maND = HelperFunctions.NormalizeCode(maNguoiDungFromToken);
+            if (string.IsNullOrWhiteSpace(maND))
+                ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
 
+            var user = await _repo.GetByMaNguoiDungAsync(maND);
+            if (user == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
+
+            // --- Validate cơ bản ---
+            if (!string.IsNullOrWhiteSpace(req.Email) && req.Email.Length > 100)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Email quá dài (<=100).");
+            if (!string.IsNullOrWhiteSpace(req.SoDienThoai) && req.SoDienThoai.Length > 15)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Số điện thoại quá dài (<=15).");
+            if (!string.IsNullOrWhiteSpace(req.AnhDaiDien) && req.AnhDaiDien.Length > 255)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Ảnh đại diện quá dài (<=255).");
+            if (!string.IsNullOrWhiteSpace(req.DanToc) && req.DanToc.Length > 20)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Dân tộc quá dài (<=20).");
+            if (!string.IsNullOrWhiteSpace(req.TonGiao) && req.TonGiao.Length > 20)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Tôn giáo quá dài (<=20).");
+            if (!string.IsNullOrWhiteSpace(req.DiaChi) && req.DiaChi.Length > 255)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Địa chỉ quá dài (<=255).");
+
+            // --- Cập nhật các trường được phép ---
+            user!.GioiTinh = req.GioiTinh;
+            user.AnhDaiDien = req.AnhDaiDien?.Trim();
+            user.Email = req.Email?.Trim();
+            user.SoDienThoai = req.SoDienThoai?.Trim();
+            user.NgaySinh = req.NgaySinh; // model là DATE (:contentReference[oaicite:6]{index=6})
+            user.DanToc = req.DanToc?.Trim();
+            user.TonGiao = req.TonGiao?.Trim();
+            user.DiaChi = req.DiaChi?.Trim();
+
+            await _repo.UpdateAsync(user);
+
+            // --- Ghi lịch sử hoạt động ---
+            var log = new LichSuHoatDong
+            {
+                MaNguoiDung = user.MaNguoiDung,
+                HanhDong = "Cập nhật thông tin cá nhân",
+                ThoiGian = HelperFunctions.UtcToVietnam(DateTime.UtcNow)
+            };
+            await _repo.AddActivityAsync(log);
+
+            await _repo.SaveChangesAsync();
+
+            return new UpdateUserProfileResponse
+            {
+                MaNguoiDung = user.MaNguoiDung!,
+                HoTen = user.HoTen,
+                GioiTinh = user.GioiTinh,
+                AnhDaiDien = user.AnhDaiDien,
+                Email = user.Email,
+                SoDienThoai = user.SoDienThoai,
+                NgaySinh = user.NgaySinh.HasValue
+                                ? user.NgaySinh.Value.ToString("dd-MM-yyyy")
+                                : null,
+                DanToc = user.DanToc,
+                TonGiao = user.TonGiao,
+                DiaChi = user.DiaChi
+            };
+        }
     }
 }

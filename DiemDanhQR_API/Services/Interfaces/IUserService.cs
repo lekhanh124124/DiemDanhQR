@@ -6,8 +6,10 @@ namespace DiemDanhQR_API.Services.Interfaces
 {
     public interface IUserService
     {
-        Task<CreateUsertResponse> CreateAsync(CreateUserRequest request);
+        Task<CreateUserResponse> CreateAsync(CreateUserRequest request);
         Task<object> GetInfoAsync(string maNguoiDung);
         Task<PagedResult<UserActivityItem>> GetActivityAsync(UserActivityListRequest req);
+        Task<UpdateUserProfileResponse> UpdateProfileAsync(string maNguoiDungFromToken, UpdateUserProfileRequest req);
+
     }
 }

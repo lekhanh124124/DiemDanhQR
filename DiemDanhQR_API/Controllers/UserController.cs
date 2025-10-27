@@ -1,4 +1,5 @@
 // File: Controllers/UsersController.cs
+// Bảng: NguoiDung + LichSuHoatDong
 using System.Security.Claims;
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
@@ -49,10 +50,10 @@ namespace DiemDanhQR_API.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<ActionResult<ApiResponse<CreateUsertResponse>>> Create([FromBody] CreateUserRequest req)
+        public async Task<ActionResult<ApiResponse<CreateUserResponse>>> Create([FromBody] CreateUserRequest req)
         {
             var result = await _svc.CreateAsync(req);
-            return Ok(new ApiResponse<CreateUsertResponse>
+            return Ok(new ApiResponse<CreateUserResponse>
             {
                 Status = 200,
                 Message = "Tạo người dùng thành công.",
@@ -94,6 +95,22 @@ namespace DiemDanhQR_API.Controllers
             });
         }
 
+        [Authorize]
+        [HttpPut("profile")]
+        public async Task<ActionResult<ApiResponse<UpdateUserProfileResponse>>> UpdateProfile(
+                    [FromBody] UpdateUserProfileRequest req)
+        {
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+            if (string.IsNullOrWhiteSpace(currentUserId))
+                ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
 
+            var data = await _svc.UpdateProfileAsync(currentUserId!, req);
+            return Ok(new ApiResponse<UpdateUserProfileResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật thông tin cá nhân thành công.",
+                Data = data
+            });
+        }
     }
 }

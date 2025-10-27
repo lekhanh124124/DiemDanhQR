@@ -36,12 +36,12 @@ namespace DiemDanhQR_API.DTOs.Requests
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
 
-        // Sorting: MaMonHoc (default), TenMonHoc, SoTinChi, SoTiet, HocKy, TrangThai
+        // Sorting
         public string? SortBy { get; set; } = "MaMonHoc";
-        public string? SortDir { get; set; } = "ASC"; // ASC | DESC
+        public string? SortDir { get; set; } = "ASC"; 
 
         // Filters
-        public string? Keyword { get; set; }      // OR theo nhiều trường
+        public string? Keyword { get; set; }      
         public string? MaMonHoc { get; set; }
         public string? TenMonHoc { get; set; }
         public byte? SoTinChi { get; set; }

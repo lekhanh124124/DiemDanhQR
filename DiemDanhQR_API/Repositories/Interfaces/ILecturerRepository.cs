@@ -31,5 +31,11 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             int page,
             int pageSize
         );
+
+        Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung);
+        Task UpdateLecturerAsync(GiangVien entity);
+        Task<bool> ExistsUsernameForAnotherAsync(string tenDangNhap);
+        Task UpdateUserAsync(NguoiDung user);
+        Task AddActivityAsync(LichSuHoatDong log);
     }
 }

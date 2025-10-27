@@ -102,5 +102,28 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var items = list.Select(x => (x.gv, x.nd)).ToList();
             return (items, total);
         }
+
+        public Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung)
+            => _db.GiangVien.FirstOrDefaultAsync(g => g.MaNguoiDung == maNguoiDung);
+
+        public Task UpdateLecturerAsync(GiangVien entity)
+        {
+            _db.GiangVien.Update(entity);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateUserAsync(NguoiDung user)
+        {
+            _db.NguoiDung.Update(user);
+            return Task.CompletedTask;
+        }
+
+        public async Task<bool> ExistsUsernameForAnotherAsync(string tenDangNhap)
+            => await _db.NguoiDung.AnyAsync(u => u.TenDangNhap == tenDangNhap);
+
+        public async Task AddActivityAsync(LichSuHoatDong log)
+        {
+            await _db.LichSuHoatDong.AddAsync(log);
+        }
     }
 }

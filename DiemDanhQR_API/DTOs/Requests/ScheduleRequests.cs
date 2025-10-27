@@ -16,12 +16,12 @@ namespace DiemDanhQR_API.DTOs.Requests
         public byte? SoTiet { get; set; }
         public string? GhiChu { get; set; }
 
-        public string? MaSinhVien { get; set; }    // để xem lịch học của SV
-        public string? MaGiangVien { get; set; }   // để xem lịch dạy của GV
+        public string? MaSinhVien { get; set; }   
+        public string? MaGiangVien { get; set; }   
 
         // Sắp xếp & phân trang
-        public string? SortBy { get; set; }     // MaBuoi (default) | MaPhong | TenPhong | MaLop | TenLop | TenMonHoc | NgayHoc | TietBatDau | SoTiet | GhiChu | SoTinChi | HocKy | TenGiangVien | TrangThai
-        public string? SortDir { get; set; }    // ASC | DESC (default: ASC)
+        public string? SortBy { get; set; }    
+        public string? SortDir { get; set; }    
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
     }
@@ -32,7 +32,7 @@ namespace DiemDanhQR_API.DTOs.Requests
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
 
-        // Sorting: MaPhong (default), TenPhong, ToaNha, Tang, SucChua, TrangThai
+        // Sorting
         public string? SortBy { get; set; } = "MaPhong";
         public string? SortDir { get; set; } = "ASC"; // ASC | DESC
 
@@ -41,8 +41,8 @@ namespace DiemDanhQR_API.DTOs.Requests
         public int? MaPhong { get; set; }
         public string? TenPhong { get; set; }
         public string? ToaNha { get; set; }
-        public byte? Tang { get; set; }        // ← đổi sang byte
-        public byte? SucChua { get; set; }     // ← đổi sang byte
+        public byte? Tang { get; set; }    
+        public byte? SucChua { get; set; }  
         public bool? TrangThai { get; set; }
     }
 

@@ -8,5 +8,7 @@ namespace DiemDanhQR_API.Services.Interfaces
     {
         Task<CreateLecturerResponse> CreateAsync(CreateLecturerRequest request);
         Task<PagedResult<LecturerListItemResponse>> GetListAsync(GetLecturersRequest request);
+        Task<UpdateLecturerResponse> UpdateAsync(UpdateLecturerRequest request);
+
     }
 }

@@ -47,8 +47,8 @@ namespace DiemDanhQR_API.DTOs.Responses
         public int MaPhong { get; }
         public string TenPhong { get; }
         public string ToaNha { get; }
-        public byte Tang { get; }        // ← đổi sang byte
-        public byte SucChua { get; }     // ← đổi sang byte
+        public byte Tang { get; }       
+        public byte SucChua { get; }  
         public bool TrangThai { get; }
 
         public RoomListItem(int maPhong, string tenPhong, string toaNha, byte tang, byte sucChua, bool trangThai)

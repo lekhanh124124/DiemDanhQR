@@ -28,14 +28,11 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? TenChucNang { get; set; }
         public string? MoTa { get; set; }
         public bool? TrangThai { get; set; }
-
-        // NEW: lọc theo phân quyền (role)
         public int? MaQuyen { get; set; }
 
         // Sắp xếp
-        // MaChucNang | CodeChucNang | TenChucNang | MoTa | TrangThai
         public string? SortBy { get; set; }
-        public string? SortDir { get; set; } // ASC | DESC
+        public string? SortDir { get; set; } 
 
         // Phân trang
         public int Page { get; set; } = 1;

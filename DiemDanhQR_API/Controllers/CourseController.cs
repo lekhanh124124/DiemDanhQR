@@ -1,5 +1,5 @@
 // File: Controllers/CourseController.cs
-// Bảng LopHocPhan + ThamGiaLop
+// Bảng LopHocPhan + ThamGiaLop + MonHoc
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
 using DiemDanhQR_API.Services.Interfaces;

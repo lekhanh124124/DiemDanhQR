@@ -3,16 +3,9 @@ namespace DiemDanhQR_API.DTOs.Requests
 {
     public class CreateLecturerRequest
     {
-        // Mã giảng viên (thường là PK hiển thị)
-        public string MaGiangVien { get; set; } = string.Empty;
-
-        // Nếu không truyền, sẽ mặc định = MaGiangVien
+        public string? MaGiangVien { get; set; }
         public string? MaNguoiDung { get; set; }
-
-        // Quyền áp cho user được tạo (bắt buộc)
-        public int MaQuyen { get; set; }
-
-        // Thông tin hồ sơ/nghiệp vụ
+        public int? MaQuyen { get; set; }
         public string? HoTen { get; set; }
         public string? Khoa { get; set; }
         public string? HocHam { get; set; }
@@ -20,18 +13,21 @@ namespace DiemDanhQR_API.DTOs.Requests
         public DateTime? NgayTuyenDung { get; set; }
 
         // Tuỳ chọn hồ sơ người dùng
+        public byte? GioiTinh { get; set; }
+        public IFormFile? AnhDaiDien { get; set; }
         public string? Email { get; set; }
         public string? SoDienThoai { get; set; }
         public DateTime? NgaySinh { get; set; }
-        public byte? GioiTinh { get; set; }
+        public string? DanToc { get; set; }
+        public string? TonGiao { get; set; }
         public string? DiaChi { get; set; }
     }
 
     public class GetLecturersRequest
     {
         // Paging
-        public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
+        public int? Page { get; set; } = 1;
+        public int? PageSize { get; set; } = 20;
 
         // Keyword
         public string? Keyword { get; set; }
@@ -45,8 +41,33 @@ namespace DiemDanhQR_API.DTOs.Requests
         public bool? TrangThaiUser { get; set; }
 
         // Sorting
-        // Allowed: MaGiangVien | HoTen | Khoa | HocHam | HocVi | NgayTuyenDung
         public string? SortBy { get; set; } = "HoTen";
         public string? SortDir { get; set; } = "ASC"; // ASC | DESC
+    }
+
+    public class UpdateLecturerRequest
+    {
+        // Bắt buộc: khóa để xác định người dùng + giảng viên
+        public string? MaNguoiDung { get; set; }
+
+        // Thông tin user/giảng viên có thể cập nhật
+        public string? TenGiangVien { get; set; }       
+        public string? TenDangNhap { get; set; }       
+        public bool? TrangThai { get; set; }            
+        public int? MaQuyen { get; set; }               
+
+        public string? Khoa { get; set; }            
+        public string? HocHam { get; set; }           
+        public string? HocVi { get; set; }             
+        public DateTime? NgayTuyenDung { get; set; }   
+
+        public byte? GioiTinh { get; set; }         
+        public IFormFile? AnhDaiDien { get; set; }      
+        public string? Email { get; set; }           
+        public string? SoDienThoai { get; set; }        
+        public DateTime? NgaySinh { get; set; }         
+        public string? DanToc { get; set; }          
+        public string? TonGiao { get; set; }            
+        public string? DiaChi { get; set; }       
     }
 }
