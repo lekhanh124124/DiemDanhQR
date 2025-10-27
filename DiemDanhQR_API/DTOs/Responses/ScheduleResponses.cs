@@ -41,4 +41,25 @@ namespace DiemDanhQR_API.DTOs.Responses
             GhiChu = ghiChu;
         }
     }
+
+    public class RoomListItem
+    {
+        public int MaPhong { get; }
+        public string TenPhong { get; }
+        public string ToaNha { get; }
+        public byte Tang { get; }        // ← đổi sang byte
+        public byte SucChua { get; }     // ← đổi sang byte
+        public bool TrangThai { get; }
+
+        public RoomListItem(int maPhong, string tenPhong, string toaNha, byte tang, byte sucChua, bool trangThai)
+        {
+            MaPhong = maPhong;
+            TenPhong = tenPhong;
+            ToaNha = toaNha;
+            Tang = tang;
+            SucChua = sucChua;
+            TrangThai = trangThai;
+        }
+    }
+
 }

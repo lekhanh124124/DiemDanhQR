@@ -66,5 +66,48 @@ namespace DiemDanhQR_API.Services.Implementations
                 Items = items
             };
         }
+
+        public async Task<PagedResult<RoomListItem>> GetRoomsAsync(RoomListRequest req)
+        {
+            var page = req.Page <= 0 ? 1 : req.Page;
+            var pageSize = req.PageSize <= 0 ? 20 : Math.Min(req.PageSize, 200);
+            var sortBy = req.SortBy ?? "MaPhong";
+            var sortDir = (req.SortDir ?? "ASC").Trim().ToUpperInvariant();
+            var desc = sortDir == "DESC";
+
+            var (rows, total) = await _repo.SearchRoomsAsync(
+                keyword: req.Keyword,
+                maPhong: req.MaPhong,
+                tenPhong: req.TenPhong,
+                toaNha: req.ToaNha,
+                tang: req.Tang,
+                sucChua: req.SucChua,
+                trangThai: req.TrangThai,
+                sortBy: sortBy,
+                desc: desc,
+                page: page,
+                pageSize: pageSize
+            );
+
+            var items = rows.Select(r => new RoomListItem(
+                maPhong: r.MaPhong ?? 0,
+                tenPhong: r.TenPhong ?? string.Empty,
+                toaNha: r.ToaNha ?? string.Empty,
+                tang: (byte)(r.Tang ?? 0),         // ← byte
+                sucChua: (byte)(r.SucChua ?? 0),   // ← byte
+                trangThai: r.TrangThai ?? true
+            )).ToList();
+
+
+            return new PagedResult<RoomListItem>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalRecords = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                Items = items
+            };
+        }
+
     }
 }

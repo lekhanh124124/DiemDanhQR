@@ -94,7 +94,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 var s = ghiChu.Trim().ToLower();
                 q = q.Where(x => (x.b.GhiChu ?? "").ToLower().Contains(s));
             }
-            
+
             // ===== NEW: lọc theo mã giảng viên (lịch dạy) =====
             if (!string.IsNullOrWhiteSpace(maGiangVien))
             {
@@ -115,20 +115,20 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var key = (sortBy ?? "MaBuoi").Trim().ToLowerInvariant();
             q = key switch
             {
-                "maphong"      => desc ? q.OrderByDescending(x => x.p.MaPhong)        : q.OrderBy(x => x.p.MaPhong),
-                "tenphong"     => desc ? q.OrderByDescending(x => x.p.TenPhong)       : q.OrderBy(x => x.p.TenPhong),
-                "malophocphan" => desc ? q.OrderByDescending(x => x.l.MaLopHocPhan)   : q.OrderBy(x => x.l.MaLopHocPhan),
-                "tenlop"       => desc ? q.OrderByDescending(x => x.l.TenLopHocPhan)  : q.OrderBy(x => x.l.TenLopHocPhan),
-                "tenmonhoc"    => desc ? q.OrderByDescending(x => x.m.TenMonHoc)      : q.OrderBy(x => x.m.TenMonHoc),
-                "ngayhoc"      => desc ? q.OrderByDescending(x => x.b.NgayHoc)        : q.OrderBy(x => x.b.NgayHoc),
-                "tietbatdau"   => desc ? q.OrderByDescending(x => x.b.TietBatDau)     : q.OrderBy(x => x.b.TietBatDau),
-                "sotiet"       => desc ? q.OrderByDescending(x => x.b.SoTiet)         : q.OrderBy(x => x.b.SoTiet),
-                "ghichu"       => desc ? q.OrderByDescending(x => x.b.GhiChu)         : q.OrderBy(x => x.b.GhiChu),
-                "trangthai"    => desc ? q.OrderByDescending(x => x.l.TrangThai)      : q.OrderBy(x => x.l.TrangThai),
-                "sotinchi"     => desc ? q.OrderByDescending(x => x.m.SoTinChi)       : q.OrderBy(x => x.m.SoTinChi),
-                "hocky"        => desc ? q.OrderByDescending(x => x.m.HocKy)          : q.OrderBy(x => x.m.HocKy),
-                "tengiangvien" => desc ? q.OrderByDescending(x => x.ndGv.HoTen)       : q.OrderBy(x => x.ndGv.HoTen),
-                "mabuoi" or _  => desc ? q.OrderByDescending(x => x.b.MaBuoi)         : q.OrderBy(x => x.b.MaBuoi),
+                "maphong" => desc ? q.OrderByDescending(x => x.p.MaPhong) : q.OrderBy(x => x.p.MaPhong),
+                "tenphong" => desc ? q.OrderByDescending(x => x.p.TenPhong) : q.OrderBy(x => x.p.TenPhong),
+                "malophocphan" => desc ? q.OrderByDescending(x => x.l.MaLopHocPhan) : q.OrderBy(x => x.l.MaLopHocPhan),
+                "tenlop" => desc ? q.OrderByDescending(x => x.l.TenLopHocPhan) : q.OrderBy(x => x.l.TenLopHocPhan),
+                "tenmonhoc" => desc ? q.OrderByDescending(x => x.m.TenMonHoc) : q.OrderBy(x => x.m.TenMonHoc),
+                "ngayhoc" => desc ? q.OrderByDescending(x => x.b.NgayHoc) : q.OrderBy(x => x.b.NgayHoc),
+                "tietbatdau" => desc ? q.OrderByDescending(x => x.b.TietBatDau) : q.OrderBy(x => x.b.TietBatDau),
+                "sotiet" => desc ? q.OrderByDescending(x => x.b.SoTiet) : q.OrderBy(x => x.b.SoTiet),
+                "ghichu" => desc ? q.OrderByDescending(x => x.b.GhiChu) : q.OrderBy(x => x.b.GhiChu),
+                "trangthai" => desc ? q.OrderByDescending(x => x.l.TrangThai) : q.OrderBy(x => x.l.TrangThai),
+                "sotinchi" => desc ? q.OrderByDescending(x => x.m.SoTinChi) : q.OrderBy(x => x.m.SoTinChi),
+                "hocky" => desc ? q.OrderByDescending(x => x.m.HocKy) : q.OrderBy(x => x.m.HocKy),
+                "tengiangvien" => desc ? q.OrderByDescending(x => x.ndGv.HoTen) : q.OrderBy(x => x.ndGv.HoTen),
+                "mabuoi" or _ => desc ? q.OrderByDescending(x => x.b.MaBuoi) : q.OrderBy(x => x.b.MaBuoi),
             };
 
             // ===== Paging =====
@@ -141,5 +141,63 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var items = list.Select(x => (x.b, x.p, x.l, x.m, x.gv, x.ndGv)).ToList();
             return (items, total);
         }
+
+        public async Task<(List<PhongHoc> Items, int Total)> SearchRoomsAsync(
+    string? keyword,
+    int? maPhong,
+    string? tenPhong,
+    string? toaNha,
+    byte? tang,         // ← byte
+    byte? sucChua,      // ← byte
+    bool? trangThai,
+    string? sortBy,
+    bool desc,
+    int page,
+    int pageSize)
+        {
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
+
+            var q = _db.PhongHoc.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                q = q.Where(p =>
+                    (p.MaPhong.HasValue ? p.MaPhong.Value.ToString() : "").Contains(kw) ||
+                    (p.TenPhong ?? "").ToLower().Contains(kw) ||
+                    (p.ToaNha ?? "").ToLower().Contains(kw) ||
+                    (p.Tang.HasValue ? p.Tang.Value.ToString() : "").Contains(kw) ||     // byte?
+                    (p.SucChua.HasValue ? p.SucChua.Value.ToString() : "").Contains(kw) // byte?
+                );
+            }
+
+            if (maPhong.HasValue) q = q.Where(p => p.MaPhong == maPhong.Value);
+            if (!string.IsNullOrWhiteSpace(tenPhong))
+                q = q.Where(p => (p.TenPhong ?? "").ToLower().Contains(tenPhong.Trim().ToLower()));
+            if (!string.IsNullOrWhiteSpace(toaNha))
+                q = q.Where(p => (p.ToaNha ?? "").ToLower().Contains(toaNha.Trim().ToLower()));
+
+            if (tang.HasValue) q = q.Where(p => (p.Tang ?? 0) == tang.Value);     // byte compare
+            if (sucChua.HasValue) q = q.Where(p => (p.SucChua ?? 0) == sucChua.Value);  // byte compare
+            if (trangThai.HasValue) q = q.Where(p => (p.TrangThai ?? true) == trangThai.Value);
+
+            var key = (sortBy ?? "MaPhong").Trim().ToLowerInvariant();
+            q = key switch
+            {
+                "tenphong" => desc ? q.OrderByDescending(p => p.TenPhong) : q.OrderBy(p => p.TenPhong),
+                "toanha" => desc ? q.OrderByDescending(p => p.ToaNha) : q.OrderBy(p => p.ToaNha),
+                "tang" => desc ? q.OrderByDescending(p => p.Tang) : q.OrderBy(p => p.Tang),
+                "succhua" => desc ? q.OrderByDescending(p => p.SucChua) : q.OrderBy(p => p.SucChua),
+                "trangthai" => desc ? q.OrderByDescending(p => p.TrangThai) : q.OrderBy(p => p.TrangThai),
+                "maphong" or _
+                            => desc ? q.OrderByDescending(p => p.MaPhong) : q.OrderBy(p => p.MaPhong),
+            };
+
+            var total = await q.CountAsync();
+            var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            return (items, total);
+        }
+
     }
 }

@@ -6,7 +6,7 @@ namespace DiemDanhQR_API.Services.Interfaces
 {
     public interface IScheduleService
     {
-        // Service trả dữ liệu thuần (không bọc ApiResponse)
         Task<PagedResult<ScheduleListItem>> GetListAsync(ScheduleListRequest req);
+        Task<PagedResult<RoomListItem>> GetRoomsAsync(RoomListRequest req);
     }
 }

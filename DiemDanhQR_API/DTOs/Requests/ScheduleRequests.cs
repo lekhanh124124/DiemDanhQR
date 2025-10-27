@@ -25,4 +25,25 @@ namespace DiemDanhQR_API.DTOs.Requests
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
     }
+
+    public class RoomListRequest
+    {
+        // Paging
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+
+        // Sorting: MaPhong (default), TenPhong, ToaNha, Tang, SucChua, TrangThai
+        public string? SortBy { get; set; } = "MaPhong";
+        public string? SortDir { get; set; } = "ASC"; // ASC | DESC
+
+        // Filters
+        public string? Keyword { get; set; }   // OR theo nhiều trường
+        public int? MaPhong { get; set; }
+        public string? TenPhong { get; set; }
+        public string? ToaNha { get; set; }
+        public byte? Tang { get; set; }        // ← đổi sang byte
+        public byte? SucChua { get; set; }     // ← đổi sang byte
+        public bool? TrangThai { get; set; }
+    }
+
 }

@@ -24,5 +24,19 @@ namespace DiemDanhQR_API.Repositories.Interfaces
                 bool desc,
                 int page,
                 int pageSize);
+
+        Task<(List<PhongHoc> Items, int Total)> SearchRoomsAsync(
+            string? keyword,
+            int? maPhong,
+            string? tenPhong,
+            string? toaNha,
+            byte? tang,        // ← byte
+            byte? sucChua,     // ← byte
+            bool? trangThai,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize);
+
     }
 }

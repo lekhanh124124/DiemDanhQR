@@ -233,7 +233,7 @@ namespace DiemDanhQR_API.Data
                 e.Property(x => x.MaPhong).ValueGeneratedOnAdd(); // IDENTITY
                 e.Property(x => x.TenPhong).HasMaxLength(100).IsRequired();
                 e.Property(x => x.ToaNha).HasMaxLength(100);
-                e.Property(x => x.Tang).HasMaxLength(20);
+                e.Property(x => x.Tang).HasColumnType("tinyint");
                 e.Property(x => x.SucChua).HasColumnType("tinyint").IsRequired();
                 e.Property(x => x.TrangThai).HasColumnType("bit").HasDefaultValue(true).IsRequired();
             });

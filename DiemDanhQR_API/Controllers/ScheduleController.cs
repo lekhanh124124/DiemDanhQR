@@ -29,5 +29,20 @@ namespace DiemDanhQR_API.Controllers
                 Data = data
             });
         }
+
+        // GET: /api/schedule/rooms
+        [HttpGet("rooms")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<RoomListItem>>>> GetRooms([FromQuery] RoomListRequest req)
+        {
+            var data = await _svc.GetRoomsAsync(req);
+            return Ok(new ApiResponse<PagedResult<RoomListItem>>
+            {
+                Status = 200,
+                Message = "Lấy danh sách phòng học thành công.",
+                Data = data
+            });
+        }
+
     }
 }
