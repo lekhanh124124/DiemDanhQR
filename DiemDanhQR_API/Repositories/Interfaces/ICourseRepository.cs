@@ -41,6 +41,19 @@ namespace DiemDanhQR_API.Repositories.Interfaces
                 bool desc,
                 int page,
                 int pageSize);
+
+        Task<(List<MonHoc> Items, int Total)> SearchSubjectsAsync(
+                    string? keyword,
+                    string? maMonHoc,
+                    string? tenMonHoc,
+                    byte? soTinChi,
+                    byte? soTiet,
+                    byte? hocKy,
+                    bool? trangThai,
+                    string? sortBy,
+                    bool desc,
+                    int page,
+                    int pageSize);
     }
 }
 

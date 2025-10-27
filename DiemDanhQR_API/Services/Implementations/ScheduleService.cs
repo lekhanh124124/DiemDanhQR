@@ -44,20 +44,18 @@ namespace DiemDanhQR_API.Services.Implementations
                 new ScheduleListItem(
                     x.b.MaBuoi ?? 0,
                     x.p.MaPhong ?? 0,
-                    x.p.TenPhong ?? string.Empty,
+                    tenPhong: x.p.TenPhong ?? string.Empty,
                     x.l.MaLopHocPhan ?? string.Empty,
                     x.l.TenLopHocPhan ?? string.Empty,
                     x.m.TenMonHoc ?? string.Empty,
                     x.b.NgayHoc ?? DateTime.MinValue,
                     (byte)(x.b.TietBatDau ?? 0),
                     (byte)(x.b.SoTiet ?? 0),
-                    x.b.GhiChu ?? string.Empty,
-                    x.l.TrangThai ?? true,
-                    (byte)(x.m.SoTinChi ?? 0),
-                    x.m.HocKy,
-                    x.ndGv.HoTen ?? string.Empty
+                    x.ndGv.HoTen ?? string.Empty,
+                    x.b.GhiChu ?? string.Empty
                 )
             ).ToList();
+
 
             return new PagedResult<ScheduleListItem>
             {

@@ -43,5 +43,20 @@ namespace DiemDanhQR_API.Controllers
                 Data = data
             });
         }
+
+        // GET: /api/course/subjects
+        [HttpGet("subjects")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<SubjectListItem>>>> GetSubjects([FromQuery] SubjectListRequest req)
+        {
+            var data = await _svc.GetSubjectsAsync(req);
+            return Ok(new ApiResponse<PagedResult<SubjectListItem>>
+            {
+                Status = 200,
+                Message = "Lấy danh sách môn học thành công.",
+                Data = data
+            });
+        }
+
     }
 }

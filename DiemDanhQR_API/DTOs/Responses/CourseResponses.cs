@@ -86,4 +86,32 @@ namespace DiemDanhQR_API.DTOs.Responses
             TenGiangVien = tenGiangVien;
         }
     }
+    public class SubjectListItem
+    {
+        public string MaMonHoc { get; }
+        public string TenMonHoc { get; }
+        public byte SoTinChi { get; }
+        public byte SoTiet { get; }
+        public byte? HocKy { get; }
+        public string MoTa { get; }
+        public bool TrangThai { get; }
+
+        public SubjectListItem(
+            string maMonHoc,
+            string tenMonHoc,
+            byte soTinChi,
+            byte soTiet,
+            byte? hocKy,
+            string moTa,
+            bool trangThai)
+        {
+            MaMonHoc = maMonHoc;
+            TenMonHoc = tenMonHoc;
+            SoTinChi = soTinChi;
+            SoTiet = soTiet;
+            HocKy = hocKy;
+            MoTa = moTa;
+            TrangThai = trangThai;
+        }
+    }
 }

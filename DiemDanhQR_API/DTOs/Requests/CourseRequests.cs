@@ -46,7 +46,7 @@ namespace DiemDanhQR_API.DTOs.Requests
 
         public string? MaMonHoc { get; set; }
         public string? TenMonHoc { get; set; }
-        public byte? HocKy { get; set; } 
+        public byte? HocKy { get; set; }
 
         public string? MaSinhVien { get; set; }
         public string? TenSinhVien { get; set; }
@@ -59,5 +59,25 @@ namespace DiemDanhQR_API.DTOs.Requests
 
         // Keyword tổng quát (OR nhiều trường)
         public string? Keyword { get; set; }
+    }
+
+    public class SubjectListRequest
+    {
+        // Paging
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+
+        // Sorting: MaMonHoc (default), TenMonHoc, SoTinChi, SoTiet, HocKy, TrangThai
+        public string? SortBy { get; set; } = "MaMonHoc";
+        public string? SortDir { get; set; } = "ASC"; // ASC | DESC
+
+        // Filters
+        public string? Keyword { get; set; }      // OR theo nhiều trường
+        public string? MaMonHoc { get; set; }
+        public string? TenMonHoc { get; set; }
+        public byte? SoTinChi { get; set; }
+        public byte? SoTiet { get; set; }
+        public byte? HocKy { get; set; }
+        public bool? TrangThai { get; set; }
     }
 }

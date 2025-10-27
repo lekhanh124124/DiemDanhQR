@@ -248,5 +248,69 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var items = list.Select(x => (x.t, x.l, x.m, x.sv, x.ndSv, x.gv, x.ndGv)).ToList();
             return (items, total);
         }
+        public async Task<(List<MonHoc> Items, int Total)> SearchSubjectsAsync(
+            string? keyword,
+            string? maMonHoc,
+            string? tenMonHoc,
+            byte? soTinChi,
+            byte? soTiet,
+            byte? hocKy,
+            bool? trangThai,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
+        {
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
+
+            var q = _db.MonHoc.AsNoTracking().AsQueryable();
+
+            // ===== Filters =====
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                q = q.Where(m =>
+                    (m.MaMonHoc ?? "").ToLower().Contains(kw) ||
+                    (m.TenMonHoc ?? "").ToLower().Contains(kw) ||
+                    (m.MoTa ?? "").ToLower().Contains(kw)
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(maMonHoc))
+            {
+                var code = maMonHoc.Trim().Replace(" ", "");
+                q = q.Where(m => ((m.MaMonHoc ?? "").Replace(" ", "")) == code);
+            }
+
+            if (!string.IsNullOrWhiteSpace(tenMonHoc))
+                q = q.Where(m => (m.TenMonHoc ?? "").ToLower().Contains(tenMonHoc.Trim().ToLower()));
+
+            if (soTinChi.HasValue) q = q.Where(m => (m.SoTinChi ?? 0) == soTinChi.Value);
+            if (soTiet.HasValue) q = q.Where(m => (m.SoTiet ?? 0) == soTiet.Value);
+            if (hocKy.HasValue) q = q.Where(m => m.HocKy == hocKy.Value);
+            if (trangThai.HasValue) q = q.Where(m => (m.TrangThai ?? true) == trangThai.Value);
+
+            // ===== Sorting =====
+            var key = (sortBy ?? "MaMonHoc").Trim().ToLowerInvariant();
+            q = key switch
+            {
+                "tenmonhoc" => desc ? q.OrderByDescending(m => m.TenMonHoc) : q.OrderBy(m => m.TenMonHoc),
+                "sotinchi" => desc ? q.OrderByDescending(m => m.SoTinChi) : q.OrderBy(m => m.SoTinChi),
+                "sotiet" => desc ? q.OrderByDescending(m => m.SoTiet) : q.OrderBy(m => m.SoTiet),
+                "hocky" => desc ? q.OrderByDescending(m => m.HocKy) : q.OrderBy(m => m.HocKy),
+                "trangthai" => desc ? q.OrderByDescending(m => m.TrangThai) : q.OrderBy(m => m.TrangThai),
+                "mamonhoc" or _
+                             => desc ? q.OrderByDescending(m => m.MaMonHoc) : q.OrderBy(m => m.MaMonHoc),
+            };
+
+            // ===== Paging =====
+            var total = await q.CountAsync();
+            var items = await q.Skip((page - 1) * pageSize)
+                               .Take(pageSize)
+                               .ToListAsync();
+
+            return (items, total);
+        }
     }
 }

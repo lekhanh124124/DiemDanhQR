@@ -78,7 +78,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 tenLopHocPhan: req.TenLopHocPhan,
                 maMonHoc: HelperFunctions.NormalizeCode(req.MaMonHoc),
                 tenMonHoc: req.TenMonHoc,
-                hocKy: req.HocKy,                                
+                hocKy: req.HocKy,
                 maSinhVien: HelperFunctions.NormalizeCode(req.MaSinhVien),
                 tenSinhVien: req.TenSinhVien,
                 ngayFrom: req.NgayThamGiaFrom,
@@ -98,7 +98,7 @@ namespace DiemDanhQR_API.Services.Implementations
                     x.Lhp.TenLopHocPhan ?? string.Empty,
                     x.Mh.MaMonHoc ?? string.Empty,
                     x.Mh.TenMonHoc ?? string.Empty,
-                    x.Mh.HocKy,                                  
+                    x.Mh.HocKy,
                     x.Sv.MaSinhVien ?? string.Empty,
                     x.NdSv.HoTen ?? string.Empty,
                     x.Tgl.NgayThamGia ?? DateTime.MinValue,
@@ -108,6 +108,47 @@ namespace DiemDanhQR_API.Services.Implementations
                 )).ToList();
 
             return new PagedResult<CourseParticipantItem>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalRecords = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                Items = items
+            };
+        }
+        public async Task<PagedResult<SubjectListItem>> GetSubjectsAsync(SubjectListRequest req)
+        {
+            var page = req.Page <= 0 ? 1 : req.Page;
+            var pageSize = req.PageSize <= 0 ? 20 : Math.Min(req.PageSize, 200);
+            var sortBy = req.SortBy ?? "MaMonHoc";
+            var sortDir = (req.SortDir ?? "ASC").Trim().ToUpperInvariant();
+            var desc = sortDir == "DESC";
+
+            var (rows, total) = await _repo.SearchSubjectsAsync(
+                keyword: req.Keyword,
+                maMonHoc: HelperFunctions.NormalizeCode(req.MaMonHoc),
+                tenMonHoc: req.TenMonHoc,
+                soTinChi: req.SoTinChi,
+                soTiet: req.SoTiet,
+                hocKy: req.HocKy,
+                trangThai: req.TrangThai,
+                sortBy: sortBy,
+                desc: desc,
+                page: page,
+                pageSize: pageSize
+            );
+
+            var items = rows.Select(m => new SubjectListItem(
+                maMonHoc: m.MaMonHoc ?? string.Empty,
+                tenMonHoc: m.TenMonHoc ?? string.Empty,
+                soTinChi: (byte)(m.SoTinChi ?? 0),
+                soTiet: (byte)(m.SoTiet ?? 0),
+                hocKy: m.HocKy,
+                moTa: m.MoTa ?? string.Empty,
+                trangThai: m.TrangThai ?? true
+            )).ToList();
+
+            return new PagedResult<SubjectListItem>
             {
                 Page = page,
                 PageSize = pageSize,
