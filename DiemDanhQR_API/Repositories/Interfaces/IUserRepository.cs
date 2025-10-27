@@ -15,5 +15,15 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task<NguoiDung?> GetByTenDangNhapAsync(string tenDangNhap);
         Task<SinhVien?> GetStudentByMaNguoiDungAsync(string maNguoiDung);
         Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung);
+
+        Task<(List<(LichSuHoatDong Log, NguoiDung User)> Items, int Total)> SearchActivitiesAsync(
+            string? keyword,
+            string? maNguoiDung,
+            DateTime? from,
+            DateTime? to,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize);
     }
 }

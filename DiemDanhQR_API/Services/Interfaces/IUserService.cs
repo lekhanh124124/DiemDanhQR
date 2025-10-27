@@ -8,5 +8,6 @@ namespace DiemDanhQR_API.Services.Interfaces
     {
         Task<CreateUsertResponse> CreateAsync(CreateUserRequest request);
         Task<object> GetInfoAsync(string maNguoiDung);
+        Task<PagedResult<UserActivityItem>> GetActivityAsync(UserActivityListRequest req);
     }
 }

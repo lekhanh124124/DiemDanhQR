@@ -131,5 +131,45 @@ namespace DiemDanhQR_API.Services.Implementations
             ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Người dùng không có hồ sơ Sinh viên/Giảng viên.");
             throw new InvalidOperationException("Unreachable"); // for compiler satisfaction
         }
+
+        public async Task<PagedResult<UserActivityItem>> GetActivityAsync(UserActivityListRequest req)
+        {
+            var page = req.Page <= 0 ? 1 : req.Page;
+            var pageSize = req.PageSize <= 0 ? 20 : Math.Min(req.PageSize, 200);
+            var sortBy = req.SortBy ?? "ThoiGian";
+            var sortDir = (req.SortDir ?? "DESC").Trim().ToUpperInvariant();
+            var desc = sortDir == "DESC";
+
+            var (rows, total) = await _repo.SearchActivitiesAsync(
+                keyword: req.Keyword,
+                maNguoiDung: HelperFunctions.NormalizeCode(req.MaNguoiDung),
+                from: req.DateFrom,
+                to: req.DateTo,
+                sortBy: sortBy,
+                desc: desc,
+                page: page,
+                pageSize: pageSize
+            );
+
+            var items = rows.Select(x =>
+                new UserActivityItem(
+                    (int)x.Log.MaLichSu!,
+                    (DateTime)x.Log.ThoiGian!,
+                    x.Log.HanhDong ?? string.Empty,
+                    x.User.MaNguoiDung ?? string.Empty,
+                    x.User.TenDangNhap ?? string.Empty
+                )
+            ).ToList();
+
+            return new PagedResult<UserActivityItem>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalRecords = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                Items = items
+            };
+        }
+
     }
 }

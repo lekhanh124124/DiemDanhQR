@@ -38,5 +38,66 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
         public Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung)
             => _db.GiangVien.FirstOrDefaultAsync(g => g.MaNguoiDung == maNguoiDung);
+
+        public async Task<(List<(LichSuHoatDong Log, NguoiDung User)> Items, int Total)> SearchActivitiesAsync(
+            string? keyword,
+            string? maNguoiDung,
+            DateTime? from,
+            DateTime? to,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
+        {
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
+
+            var q =
+                from l in _db.LichSuHoatDong.AsNoTracking()
+                join u in _db.NguoiDung.AsNoTracking() on l.MaNguoiDung equals u.MaNguoiDung
+                select new { l, u };
+
+            // Filters
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim().ToLower();
+                q = q.Where(x =>
+                    (x.l.HanhDong ?? "").ToLower().Contains(kw) ||
+                    (x.u.TenDangNhap ?? "").ToLower().Contains(kw) ||
+                    (x.u.MaNguoiDung ?? "").ToLower().Contains(kw));
+            }
+
+            if (!string.IsNullOrWhiteSpace(maNguoiDung))
+            {
+                var code = maNguoiDung.Trim().Replace(" ", "");
+                q = q.Where(x => ((x.u.MaNguoiDung ?? "").Replace(" ", "")) == code);
+            }
+
+            if (from.HasValue) q = q.Where(x => x.l.ThoiGian >= from.Value);
+            if (to.HasValue) q = q.Where(x => x.l.ThoiGian <= to.Value);
+
+            // Sorting
+            var key = (sortBy ?? "ThoiGian").Trim().ToLowerInvariant();
+            q = key switch
+            {
+                "malichsu" => desc ? q.OrderByDescending(x => x.l.MaLichSu) : q.OrderBy(x => x.l.MaLichSu),
+                "hanhdong" => desc ? q.OrderByDescending(x => x.l.HanhDong) : q.OrderBy(x => x.l.HanhDong),
+                "manguoidung" => desc ? q.OrderByDescending(x => x.u.MaNguoiDung) : q.OrderBy(x => x.u.MaNguoiDung),
+                "tendangnhap" => desc ? q.OrderByDescending(x => x.u.TenDangNhap) : q.OrderBy(x => x.u.TenDangNhap),
+                "thoigian" or _
+                              => desc ? q.OrderByDescending(x => x.l.ThoiGian) : q.OrderBy(x => x.l.ThoiGian),
+            };
+
+            // Paging
+            var total = await q.CountAsync();
+            var list = await q.Skip((page - 1) * pageSize)
+                              .Take(pageSize)
+                              .Select(x => new { x.l, x.u })
+                              .ToListAsync();
+
+            var items = list.Select(x => (x.l, x.u)).ToList();
+            return (items, total);
+        }
+
     }
 }

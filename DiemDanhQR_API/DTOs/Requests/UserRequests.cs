@@ -13,5 +13,22 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? MaNguoiDung { get; set; }
         public string? TenDangNhap { get; set; }
     }
-    
+    public class UserActivityListRequest
+    {
+        // Paging
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        
+        // Sorting
+        public string? SortBy { get; set; } = "ThoiGian";
+        public string? SortDir { get; set; } = "DESC";
+
+        // Filters
+        public string? Keyword { get; set; }     
+        public string? MaNguoiDung { get; set; }  
+        public DateTime? DateFrom { get; set; }
+        public DateTime? DateTo { get; set; }
+
+        public bool? AllUsers { get; set; } = false;
+    }
 }

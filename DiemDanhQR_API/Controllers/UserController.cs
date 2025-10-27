@@ -24,7 +24,7 @@ namespace DiemDanhQR_API.Controllers
         [HttpGet("info")]
         public async Task<ActionResult<ApiResponse<object>>> GetInfo([FromQuery] string? maNguoiDung)
         {
-            var currentUserId = HelperFunctions.GetUserIdFromClaims(User); 
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
             var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
 
@@ -59,5 +59,41 @@ namespace DiemDanhQR_API.Controllers
                 Data = result,
             });
         }
+
+        // File: Controllers/UserController.cs
+        [Authorize]
+        [HttpGet("activity")]
+        public async Task<ActionResult<ApiResponse<PagedResult<UserActivityItem>>>> GetActivity([FromQuery] UserActivityListRequest req)
+        {
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+            var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
+
+            var requestedMaND = HelperFunctions.NormalizeCode(req.MaNguoiDung);
+
+            if (!isAdmin)
+            {
+                // user thường: không được xem all, không được xem người khác
+                if (req.AllUsers == true || !string.IsNullOrWhiteSpace(requestedMaND))
+                    ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Bạn không có quyền xem lịch sử của người khác.");
+                req.MaNguoiDung = currentUserId; // ép về chính mình
+            }
+            else
+            {
+                // ADMIN: nếu AllUsers=true -> bỏ lọc MaNguoiDung để lấy tất cả
+                if (req.AllUsers == true) req.MaNguoiDung = null;
+                else req.MaNguoiDung = string.IsNullOrWhiteSpace(requestedMaND) ? currentUserId : requestedMaND;
+            }
+
+            var data = await _svc.GetActivityAsync(req);
+            return Ok(new ApiResponse<PagedResult<UserActivityItem>>
+            {
+                Status = 200,
+                Message = req.AllUsers == true ? "Lấy toàn bộ lịch sử hoạt động thành công." : "Lấy danh sách lịch sử hoạt động thành công.",
+                Data = data
+            });
+        }
+
+
     }
 }
