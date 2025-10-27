@@ -27,7 +27,7 @@ namespace DiemDanhQR_API.Helpers
                 .TrimEnd('=');
             return b64;
         }
-        
+
         //Lấy MaNguoiDung từ Claims nếu có. Ưu tiên: NameIdentifier -> Name -> Identity.Name
         public static string? GetUserIdFromClaims(ClaimsPrincipal? user)
             => user?.FindFirstValue(ClaimTypes.NameIdentifier);

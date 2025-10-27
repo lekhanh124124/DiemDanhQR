@@ -25,6 +25,7 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             string? nganh,
             int? namNhapHoc,
             bool? trangThaiUser,
+            string? maLopHocPhan,   // NEW
             string? sortBy,
             bool desc,
             int page,

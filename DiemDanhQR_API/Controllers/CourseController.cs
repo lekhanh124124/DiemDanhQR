@@ -30,20 +30,6 @@ namespace DiemDanhQR_API.Controllers
             });
         }
 
-        // GET: /api/course/participants
-        [HttpGet("participants")]
-        [Authorize]
-        public async Task<ActionResult<ApiResponse<PagedResult<CourseParticipantItem>>>> GetParticipants([FromQuery] CourseParticipantsRequest req)
-        {
-            var data = await _svc.GetParticipantsAsync(req);
-            return Ok(new ApiResponse<PagedResult<CourseParticipantItem>>
-            {
-                Status = 200,
-                Message = "Lấy danh sách tham gia lớp học phần thành công.",
-                Data = data
-            });
-        }
-
         // GET: /api/course/subjects
         [HttpGet("subjects")]
         [Authorize]

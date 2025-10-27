@@ -9,7 +9,6 @@ namespace DiemDanhQR_API.Services.Interfaces
     public interface ICourseService
     {
         Task<PagedResult<CourseListItem>> GetListAsync(CourseListRequest req);
-        Task<PagedResult<CourseParticipantItem>> GetParticipantsAsync(CourseParticipantsRequest req);
         Task<PagedResult<SubjectListItem>> GetSubjectsAsync(SubjectListRequest req);
     }
 }

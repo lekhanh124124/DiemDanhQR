@@ -107,7 +107,6 @@ namespace DiemDanhQR_API.Services.Implementations
             var page = request.Page <= 0 ? 1 : request.Page;
             var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize, 200);
 
-            // Chuyển SortDir -> desc (repository vẫn dùng bool desc)
             var sortBy = request.SortBy ?? "HoTen";
             var sortDir = (request.SortDir ?? "ASC").Trim().ToUpperInvariant();
             var desc = sortDir == "DESC";
@@ -118,6 +117,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 nganh: request.Nganh,
                 namNhapHoc: request.NamNhapHoc,
                 trangThaiUser: request.TrangThaiUser,
+                maLopHocPhan: request.MaLopHocPhan,   // NEW
                 sortBy: sortBy,
                 desc: desc,
                 page: page,
@@ -142,6 +142,5 @@ namespace DiemDanhQR_API.Services.Implementations
                 Items = list
             };
         }
-
     }
 }

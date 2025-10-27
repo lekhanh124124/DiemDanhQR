@@ -36,6 +36,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
             string? nganh,
             int? namNhapHoc,
             bool? trangThaiUser,
+            string? maLopHocPhan,          // NEW
             string? sortBy,
             bool desc,
             int page,
@@ -45,7 +46,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
-            // Join hoàn toàn bằng Models
             var q = from sv in _db.SinhVien.AsNoTracking()
                     join nd in _db.NguoiDung.AsNoTracking()
                         on sv.MaNguoiDung equals nd.MaNguoiDung
@@ -73,6 +73,15 @@ namespace DiemDanhQR_API.Repositories.Implementations
             if (trangThaiUser.HasValue)
                 q = q.Where(x => (x.nd.TrangThai ?? true) == trangThaiUser.Value);
 
+            // NEW: chỉ lấy SV thuộc lớp học phần chỉ định
+            if (!string.IsNullOrWhiteSpace(maLopHocPhan))
+            {
+                var lhp = maLopHocPhan.Trim();
+                q = q.Where(x => _db.ThamGiaLop
+                    .AsNoTracking()
+                    .Any(t => t.MaSinhVien == x.sv.MaSinhVien && t.MaLopHocPhan == lhp));
+            }
+
             var key = (sortBy ?? "HoTen").ToLowerInvariant();
             q = key switch
             {
@@ -84,7 +93,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 "hoten" or _ => (desc ? q.OrderByDescending(x => x.nd.HoTen) : q.OrderBy(x => x.nd.HoTen)),
             };
 
-
             var total = await q.CountAsync();
 
             var list = await q
@@ -93,9 +101,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 .Select(x => new { x.sv, x.nd })
                 .ToListAsync();
 
-            // Trả về tuple của Models
             var items = list.Select(x => (x.sv, x.nd)).ToList();
-
             return (items, total);
         }
     }

@@ -1,20 +1,29 @@
 // File: DTOs/Responses/CourseResponses.cs
+using System.Text.Json.Serialization;
+
 namespace DiemDanhQR_API.DTOs.Responses
 {
     public class CourseListItem
     {
-        public string MaLopHocPhan { get; }
-        public string TenLopHocPhan { get; }
-        public bool TrangThai { get; }
+        public string MaLopHocPhan { get; set; }
+        public string TenLopHocPhan { get; set; }
+        public bool TrangThai { get; set; }
 
-        public string MaMonHoc { get; }
-        public string TenMonHoc { get; }
-        public byte SoTinChi { get; }
-        public byte SoTiet { get; }
-        public byte? HocKy { get; }
+        public string MaMonHoc { get; set; }
+        public string TenMonHoc { get; set; }
+        public byte SoTinChi { get; set; }
+        public byte SoTiet { get; set; }
+        public byte? HocKy { get; set; }
 
-        public string MaGiangVien { get; }
-        public string TenGiangVien { get; }
+        public string MaGiangVien { get; set; }
+        public string TenGiangVien { get; set; }
+
+        // NEW: thông tin tham gia (ẩn nếu null)
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public DateTime? NgayThamGia { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? TrangThaiThamGia { get; set; }
 
         public CourseListItem(
             string maLopHocPhan,
@@ -26,7 +35,10 @@ namespace DiemDanhQR_API.DTOs.Responses
             byte soTiet,
             byte? hocKy,
             string maGiangVien,
-            string tenGiangVien)
+            string tenGiangVien,
+            DateTime? ngayThamGia = null,     // NEW (optional)
+            bool? trangThaiThamGia = null     // NEW (optional)
+        )
         {
             MaLopHocPhan = maLopHocPhan;
             TenLopHocPhan = tenLopHocPhan;
@@ -40,52 +52,12 @@ namespace DiemDanhQR_API.DTOs.Responses
 
             MaGiangVien = maGiangVien;
             TenGiangVien = tenGiangVien;
-        }
-    }
 
-    public class CourseParticipantItem
-    {
-        public string MaLopHocPhan { get; }
-        public string TenLopHocPhan { get; }
-
-        public string MaMonHoc { get; }
-        public string TenMonHoc { get; }
-        public byte? HocKy { get; }
-
-        public string MaSinhVien { get; }
-        public string TenSinhVien { get; }
-        public DateTime NgayThamGia { get; }
-        public bool TrangThaiThamGia { get; }
-
-        public string MaGiangVien { get; }
-        public string TenGiangVien { get; }
-
-        public CourseParticipantItem(
-            string maLopHocPhan,
-            string tenLopHocPhan,
-            string maMonHoc,
-            string tenMonHoc,
-            byte? hocKy,
-            string maSinhVien,
-            string tenSinhVien,
-            DateTime ngayThamGia,
-            bool trangThaiThamGia,
-            string maGiangVien,
-            string tenGiangVien)
-        {
-            MaLopHocPhan = maLopHocPhan;
-            TenLopHocPhan = tenLopHocPhan;
-            MaMonHoc = maMonHoc;
-            TenMonHoc = tenMonHoc;
-            HocKy = hocKy;
-            MaSinhVien = maSinhVien;
-            TenSinhVien = tenSinhVien;
             NgayThamGia = ngayThamGia;
             TrangThaiThamGia = trangThaiThamGia;
-            MaGiangVien = maGiangVien;
-            TenGiangVien = tenGiangVien;
         }
     }
+
     public class SubjectListItem
     {
         public string MaMonHoc { get; }
