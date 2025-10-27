@@ -15,7 +15,7 @@ namespace DiemDanhQR_API.Controllers
         public StudentController(IStudentService svc) => _svc = svc;
 
         [HttpPost("Create")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<CreateStudentResponse>>> Create([FromBody] CreateStudentRequest req)
         {
             var result = await _svc.CreateAsync(req);
@@ -28,7 +28,7 @@ namespace DiemDanhQR_API.Controllers
         }
 
         [HttpGet("List")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<PagedResult<StudentListItemResponse>>>> List([FromQuery] GetStudentsRequest req)
         {
             var result = await _svc.GetListAsync(req);

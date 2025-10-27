@@ -7,13 +7,13 @@ namespace DiemDanhQR_API.DTOs.Responses
         public string TenLopHocPhan { get; }
         public bool TrangThai { get; }
 
-        public string MaMonHoc { get; }      // NEW
+        public string MaMonHoc { get; }
         public string TenMonHoc { get; }
         public byte SoTinChi { get; }
         public byte SoTiet { get; }
         public byte? HocKy { get; }
 
-        public string MaGiangVien { get; }   // NEW
+        public string MaGiangVien { get; }
         public string TenGiangVien { get; }
 
         public CourseListItem(
@@ -43,21 +43,47 @@ namespace DiemDanhQR_API.DTOs.Responses
         }
     }
 
-    public class CourseListResponse
+    public class CourseParticipantItem
     {
-        public int Page { get; }
-        public int PageSize { get; }
-        public int TotalItems { get; }
-        public int TotalPages { get; }
-        public IEnumerable<CourseListItem> Items { get; }
+        public string MaLopHocPhan { get; }
+        public string TenLopHocPhan { get; }
 
-        public CourseListResponse(int page, int pageSize, int totalItems, int totalPages, IEnumerable<CourseListItem> items)
+        public string MaMonHoc { get; }
+        public string TenMonHoc { get; }
+        public byte? HocKy { get; }
+
+        public string MaSinhVien { get; }
+        public string TenSinhVien { get; }
+        public DateTime NgayThamGia { get; }
+        public bool TrangThaiThamGia { get; }
+
+        public string MaGiangVien { get; }
+        public string TenGiangVien { get; }
+
+        public CourseParticipantItem(
+            string maLopHocPhan,
+            string tenLopHocPhan,
+            string maMonHoc,
+            string tenMonHoc,
+            byte? hocKy,
+            string maSinhVien,
+            string tenSinhVien,
+            DateTime ngayThamGia,
+            bool trangThaiThamGia,
+            string maGiangVien,
+            string tenGiangVien)
         {
-            Page = page;
-            PageSize = pageSize;
-            TotalItems = totalItems;
-            TotalPages = totalPages;
-            Items = items;
+            MaLopHocPhan = maLopHocPhan;
+            TenLopHocPhan = tenLopHocPhan;
+            MaMonHoc = maMonHoc;
+            TenMonHoc = tenMonHoc;
+            HocKy = hocKy;
+            MaSinhVien = maSinhVien;
+            TenSinhVien = tenSinhVien;
+            NgayThamGia = ngayThamGia;
+            TrangThaiThamGia = trangThaiThamGia;
+            MaGiangVien = maGiangVien;
+            TenGiangVien = tenGiangVien;
         }
     }
 }

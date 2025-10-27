@@ -15,7 +15,7 @@ namespace DiemDanhQR_API.Controllers
         public LecturerController(ILecturerService svc) => _svc = svc;
 
         [HttpPost("Create")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<CreateLecturerResponse>>> Create([FromBody] CreateLecturerRequest req)
         {
             var result = await _svc.CreateAsync(req);
@@ -27,7 +27,7 @@ namespace DiemDanhQR_API.Controllers
             });
         }
         [HttpGet("List")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<PagedResult<LecturerListItemResponse>>>> List([FromQuery] GetLecturersRequest req)
         {
             var result = await _svc.GetListAsync(req);

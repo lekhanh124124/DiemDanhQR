@@ -251,12 +251,12 @@ namespace DiemDanhQR_API.Data
                 e.Property(x => x.SoTiet).HasColumnType("tinyint").IsRequired();
                 e.Property(x => x.GhiChu).HasMaxLength(200);
 
-                e.Property(x => x.MaLop).HasMaxLength(20).IsRequired();
+                e.Property(x => x.MaLopHocPhan).HasMaxLength(20).IsRequired();
                 e.Property(x => x.MaPhong).IsRequired();
 
                 e.HasOne<LopHocPhan>()
                  .WithMany()
-                 .HasForeignKey(x => x.MaLop)
+                 .HasForeignKey(x => x.MaLopHocPhan)
                  .HasPrincipalKey(l => l.MaLopHocPhan)
                  .OnDelete(DeleteBehavior.Restrict);
 

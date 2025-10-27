@@ -84,9 +84,13 @@ namespace DiemDanhQR_API.Repositories.Implementations
             q = key switch
             {
                 "magiangvien" => (desc ? q.OrderByDescending(x => x.gv.MaGiangVien) : q.OrderBy(x => x.gv.MaGiangVien)),
+                "khoa" => (desc ? q.OrderByDescending(x => x.gv.Khoa) : q.OrderBy(x => x.gv.Khoa)),
+                "hocham" => (desc ? q.OrderByDescending(x => x.gv.HocHam) : q.OrderBy(x => x.gv.HocHam)),
+                "hocvi" => (desc ? q.OrderByDescending(x => x.gv.HocVi) : q.OrderBy(x => x.gv.HocVi)),
                 "ngaytuyendung" => (desc ? q.OrderByDescending(x => x.gv.NgayTuyenDung) : q.OrderBy(x => x.gv.NgayTuyenDung)),
                 "hoten" or _ => (desc ? q.OrderByDescending(x => x.nd.HoTen) : q.OrderBy(x => x.nd.HoTen)),
             };
+
 
             var total = await q.CountAsync();
 

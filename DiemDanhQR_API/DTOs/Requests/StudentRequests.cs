@@ -40,8 +40,9 @@ namespace DiemDanhQR_API.DTOs.Requests
         public int? NamNhapHoc { get; set; }
         public bool? TrangThaiUser { get; set; } // filter theo NguoiDung.TrangThai
 
-        // Sắp xếp: "MaSinhVien" | "HoTen" | "NamNhapHoc" (mặc định HoTen asc)
-        public string? SortBy { get; set; }
-        public bool Desc { get; set; } = false;
+        // Sắp xếp:
+        // Allowed: MaSinhVien | HoTen | LopHanhChinh | NamNhapHoc | Khoa | Nganh
+        public string? SortBy { get; set; } = "HoTen";
+        public string? SortDir { get; set; } = "ASC"; // ASC | DESC
     }
 }

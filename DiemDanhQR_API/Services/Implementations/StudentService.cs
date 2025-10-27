@@ -107,14 +107,19 @@ namespace DiemDanhQR_API.Services.Implementations
             var page = request.Page <= 0 ? 1 : request.Page;
             var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize, 200);
 
+            // Chuyển SortDir -> desc (repository vẫn dùng bool desc)
+            var sortBy = request.SortBy ?? "HoTen";
+            var sortDir = (request.SortDir ?? "ASC").Trim().ToUpperInvariant();
+            var desc = sortDir == "DESC";
+
             var (items, total) = await _repo.SearchStudentsAsync(
                 keyword: request.Keyword,
                 khoa: request.Khoa,
                 nganh: request.Nganh,
                 namNhapHoc: request.NamNhapHoc,
                 trangThaiUser: request.TrangThaiUser,
-                sortBy: request.SortBy,
-                desc: request.Desc,
+                sortBy: sortBy,
+                desc: desc,
                 page: page,
                 pageSize: pageSize
             );
@@ -133,8 +138,10 @@ namespace DiemDanhQR_API.Services.Implementations
                 Page = page,
                 PageSize = pageSize,
                 TotalRecords = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
                 Items = list
             };
         }
+
     }
 }

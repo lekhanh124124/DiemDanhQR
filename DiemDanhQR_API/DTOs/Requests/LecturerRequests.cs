@@ -33,10 +33,10 @@ namespace DiemDanhQR_API.DTOs.Requests
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
 
-        // Tìm kiếm mờ theo MãGV / Họ tên / Email / SĐT
+        // Keyword
         public string? Keyword { get; set; }
 
-        // Bộ lọc
+        // Filters
         public string? Khoa { get; set; }
         public string? HocHam { get; set; }
         public string? HocVi { get; set; }
@@ -44,8 +44,9 @@ namespace DiemDanhQR_API.DTOs.Requests
         public DateTime? NgayTuyenDungTo { get; set; }
         public bool? TrangThaiUser { get; set; }
 
-        // Sắp xếp: "MaGiangVien" | "HoTen" | "NgayTuyenDung" (mặc định HoTen asc)
-        public string? SortBy { get; set; }
-        public bool Desc { get; set; } = false;
+        // Sorting
+        // Allowed: MaGiangVien | HoTen | Khoa | HocHam | HocVi | NgayTuyenDung
+        public string? SortBy { get; set; } = "HoTen";
+        public string? SortDir { get; set; } = "ASC"; // ASC | DESC
     }
 }

@@ -21,5 +21,26 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             bool desc,
             int page,
             int pageSize);
+
+        Task<(List<(ThamGiaLop Tgl, LopHocPhan Lhp, MonHoc Mh, SinhVien Sv, NguoiDung NdSv, GiangVien Gv, NguoiDung NdGv)> Items, int Total)>
+            SearchCourseParticipantsAsync(
+                string? keyword,
+                string? maLopHocPhan,
+                string? tenLopHocPhan,
+                string? maMonHoc,
+                string? tenMonHoc,
+                byte? hocKy,                 // NEW
+                string? maSinhVien,
+                string? tenSinhVien,
+                DateTime? ngayFrom,
+                DateTime? ngayTo,
+                bool? trangThaiThamGia,
+                string? maGiangVien,
+                string? tenGiangVien,
+                string? sortBy,
+                bool desc,
+                int page,
+                int pageSize);
     }
 }
+

@@ -18,17 +18,30 @@ namespace DiemDanhQR_API.Controllers
         // GET: /api/course/list
         [HttpGet("list")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<CourseListResponse>>> GetList([FromQuery] CourseListRequest req)
+        public async Task<ActionResult<ApiResponse<PagedResult<CourseListItem>>>> GetList([FromQuery] CourseListRequest req)
         {
             var data = await _svc.GetListAsync(req);
 
-            var res = new ApiResponse<CourseListResponse>
+            return Ok(new ApiResponse<PagedResult<CourseListItem>>
             {
                 Status = 200,
                 Message = "Lấy danh sách lớp học phần thành công.",
                 Data = data
-            };
-            return Ok(res);
+            });
+        }
+
+        // GET: /api/course/participants
+        [HttpGet("participants")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<CourseParticipantItem>>>> GetParticipants([FromQuery] CourseParticipantsRequest req)
+        {
+            var data = await _svc.GetParticipantsAsync(req);
+            return Ok(new ApiResponse<PagedResult<CourseParticipantItem>>
+            {
+                Status = 200,
+                Message = "Lấy danh sách tham gia lớp học phần thành công.",
+                Data = data
+            });
         }
     }
 }

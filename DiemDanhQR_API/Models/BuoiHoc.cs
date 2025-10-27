@@ -9,7 +9,7 @@ namespace DiemDanhQR_API.Models
         public byte? SoTiet { get; set; }
         public string? GhiChu { get; set; }
 
-        public string? MaLop { get; set; }
+        public string? MaLopHocPhan { get; set; }
         public int? MaPhong { get; set; }
     }
 }
