@@ -10,5 +10,10 @@ namespace DiemDanhQR_API.Services.Interfaces
     {
         Task<PagedResult<CourseListItem>> GetListAsync(CourseListRequest req);
         Task<PagedResult<SubjectListItem>> GetSubjectsAsync(SubjectListRequest req);
+        Task<CreateSubjectResponse> CreateSubjectAsync(CreateSubjectRequest req, string? currentUserId);
+        Task<CreateCourseResponse> CreateCourseAsync(CreateCourseRequest req, string? currentUserId);
+        Task<AddStudentToCourseResponse> AddStudentToCourseAsync(AddStudentToCourseRequest req, string? currentUserId);
+
+
     }
 }

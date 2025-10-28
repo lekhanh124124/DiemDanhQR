@@ -113,14 +113,14 @@ namespace DiemDanhQR_API.Repositories.Implementations
                     from x in baseQ
                     select new { l = x.l, m = x.m, gv = x.gv, nd = x.nd, Ngay = (DateTime?)null, TrangThai = (bool?)null }
                   );
-            
+
             var total = await qFinalQuery.CountAsync();
-            
+
             var list = await qFinalQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            
+
             var items = list
                 .Select(x => (x.l, x.m, x.gv, x.nd, x.Ngay, x.TrangThai)) // (Lhp, Mh, Gv, Nd, NgayThamGia?, TrangThaiThamGia?)
                 .ToList();
@@ -191,6 +191,67 @@ namespace DiemDanhQR_API.Repositories.Implementations
                                .ToListAsync();
 
             return (items, total);
+        }
+
+        public async Task<bool> SubjectExistsAsync(string maMonHoc)
+        {
+            if (string.IsNullOrWhiteSpace(maMonHoc)) return false;
+            var code = maMonHoc.Trim();
+            return await _db.MonHoc.AsNoTracking()
+                .AnyAsync(m => (m.MaMonHoc ?? "") == code);
+        }
+
+        public async Task AddSubjectAsync(MonHoc subject)
+        {
+            _db.MonHoc.Add(subject);
+            await _db.SaveChangesAsync();
+        }
+        public async Task<bool> CourseExistsAsync(string maLopHocPhan)
+        {
+            if (string.IsNullOrWhiteSpace(maLopHocPhan)) return false;
+            var code = maLopHocPhan.Trim();
+            return await _db.LopHocPhan.AsNoTracking()
+                .AnyAsync(l => (l.MaLopHocPhan ?? "") == code);
+        }
+
+        public async Task AddCourseAsync(LopHocPhan course)
+        {
+            _db.LopHocPhan.Add(course);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<bool> LecturerExistsByCodeAsync(string maGiangVien)
+        {
+            if (string.IsNullOrWhiteSpace(maGiangVien)) return false;
+            var code = maGiangVien.Trim();
+            return await _db.GiangVien.AsNoTracking()
+                .AnyAsync(g => (g.MaGiangVien ?? "") == code);
+        }
+        public async Task WriteActivityLogAsync(LichSuHoatDong log)
+        {
+            _db.LichSuHoatDong.Add(log);
+            await _db.SaveChangesAsync();
+        }
+        public async Task<bool> StudentExistsByCodeAsync(string maSinhVien)
+        {
+            if (string.IsNullOrWhiteSpace(maSinhVien)) return false;
+            var code = maSinhVien.Trim();
+            return await _db.SinhVien.AsNoTracking()
+                .AnyAsync(s => (s.MaSinhVien ?? "") == code);
+        }
+
+        public async Task<bool> ParticipationExistsAsync(string maLopHocPhan, string maSinhVien)
+        {
+            var lhp = maLopHocPhan?.Trim() ?? "";
+            var sv = maSinhVien?.Trim() ?? "";
+            return await _db.ThamGiaLop.AsNoTracking()
+                .AnyAsync(t => (t.MaLopHocPhan ?? "") == lhp && (t.MaSinhVien ?? "") == sv);
+        }
+
+        public async Task AddParticipationAsync(ThamGiaLop thamGia)
+        {
+            _db.ThamGiaLop.Add(thamGia);
+            await _db.SaveChangesAsync();
         }
     }
 }

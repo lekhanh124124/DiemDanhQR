@@ -37,6 +37,16 @@ namespace DiemDanhQR_API.Repositories.Interfaces
                     bool desc,
                     int page,
                     int pageSize);
+
+        Task<bool> SubjectExistsAsync(string maMonHoc);
+        Task AddSubjectAsync(MonHoc subject);
+        Task<bool> CourseExistsAsync(string maLopHocPhan);
+        Task AddCourseAsync(LopHocPhan course);
+        Task<bool> LecturerExistsByCodeAsync(string maGiangVien);
+        Task WriteActivityLogAsync(LichSuHoatDong log);
+        Task<bool> StudentExistsByCodeAsync(string maSinhVien);
+        Task<bool> ParticipationExistsAsync(string maLopHocPhan, string maSinhVien);
+        Task AddParticipationAsync(ThamGiaLop thamGia);
     }
 }
 
