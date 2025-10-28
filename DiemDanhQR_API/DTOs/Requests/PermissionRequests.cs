@@ -9,6 +9,7 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? CodeQuyen { get; set; }
         public string? TenQuyen { get; set; }
         public string? MoTa { get; set; }
+        public int? MaChucNang { get; set; }
 
         // Sắp xếp
         public string? SortBy { get; set; }   // MaQuyen | CodeQuyen | TenQuyen | MoTa

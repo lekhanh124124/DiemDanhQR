@@ -26,6 +26,8 @@ namespace DiemDanhQR_API.Services.Implementations
                 request.CodeQuyen,
                 request.TenQuyen,
                 request.MoTa,
+                // 🔹 truyền tham số lọc theo mã chức năng
+                request.MaChucNang,
                 sortBy,
                 desc,
                 page,

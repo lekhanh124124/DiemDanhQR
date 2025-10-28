@@ -11,6 +11,7 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             string? codeQuyen,
             string? tenQuyen,
             string? moTa,
+            int? maChucNang,
             string? sortBy,
             bool desc,
             int page,

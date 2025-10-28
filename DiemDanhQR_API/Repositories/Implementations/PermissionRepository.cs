@@ -12,15 +12,16 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public PermissionRepository(AppDbContext db) => _db = db;
 
         public async Task<(List<PhanQuyen> Items, int Total)> SearchAsync(
-            string? keyword,
-            int? maQuyen,
-            string? codeQuyen,
-            string? tenQuyen,
-            string? moTa,
-            string? sortBy,
-            bool desc,
-            int page,
-            int pageSize)
+    string? keyword,
+    int? maQuyen,
+    string? codeQuyen,
+    string? tenQuyen,
+    string? moTa,
+    int? maChucNang, // 🔹 thêm
+    string? sortBy,
+    bool desc,
+    int page,
+    int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
@@ -50,23 +51,31 @@ namespace DiemDanhQR_API.Repositories.Implementations
             if (!string.IsNullOrWhiteSpace(moTa))
                 q = q.Where(x => (x.MoTa ?? "").Contains(moTa));
 
+            // 🔹 Mới: chỉ lấy các quyền có gán MaChucNang trong NhomChucNang
+            if (maChucNang.HasValue)
+            {
+                var fnId = maChucNang.Value;
+                q = q.Where(role => _db.NhomChucNang.AsNoTracking()
+                            .Any(n => n.MaQuyen == role.MaQuyen && n.MaChucNang == fnId));
+            }
+
             var key = (sortBy ?? "MaQuyen").Trim().ToLowerInvariant();
             q = key switch
             {
                 "codequyen" => (desc ? q.OrderByDescending(x => x.CodeQuyen) : q.OrderBy(x => x.CodeQuyen)),
                 "tenquyen" => (desc ? q.OrderByDescending(x => x.TenQuyen) : q.OrderBy(x => x.TenQuyen)),
                 "mota" => (desc ? q.OrderByDescending(x => x.MoTa) : q.OrderBy(x => x.MoTa)),
-                "maquyen" or _ => (desc ? q.OrderByDescending(x => x.MaQuyen) : q.OrderBy(x => x.MaQuyen)),
+                _ => (desc ? q.OrderByDescending(x => x.MaQuyen) : q.OrderBy(x => x.MaQuyen)),
             };
 
             var total = await q.CountAsync();
-
             var items = await q.Skip((page - 1) * pageSize)
                                .Take(pageSize)
                                .ToListAsync();
 
             return (items, total);
         }
+
 
         public async Task<(List<ChucNang> Items, int Total)> SearchFunctionsAsync(
             string? keyword,
@@ -111,7 +120,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
             if (trangThai.HasValue)
                 q = q.Where(x => (x.TrangThai ?? true) == trangThai.Value);
-                
+
             if (maQuyen.HasValue)
             {
                 var roleId = maQuyen.Value;
