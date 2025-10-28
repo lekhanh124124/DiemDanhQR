@@ -18,6 +18,7 @@ namespace DiemDanhQR_API.Repositories.Interfaces
                 byte? tietBatDau,
                 byte? soTiet,
                 string? ghiChu,
+                bool? trangThai,
                 string? maSinhVien,   // NEW
                 string? maGiangVien,  // NEW
                 string? sortBy,
@@ -37,6 +38,13 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             bool desc,
             int page,
             int pageSize);
-
+        Task<bool> RoomNameExistsAsync(string tenPhong);
+        Task AddRoomAsync(PhongHoc room);
+        Task WriteActivityLogAsync(LichSuHoatDong log);
+        Task<bool> CourseExistsByCodeAsync(string maLopHocPhan);
+        Task<bool> RoomExistsByIdAsync(int maPhong);
+        Task<bool> ScheduleExistsAsync(string maLopHocPhan, DateTime ngayHoc, byte tietBatDau);
+        Task AddScheduleAsync(BuoiHoc buoi);
+        Task<PhongHoc?> GetRoomByIdAsync(int maPhong);
     }
 }

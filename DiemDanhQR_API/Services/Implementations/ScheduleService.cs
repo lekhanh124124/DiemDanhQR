@@ -2,6 +2,7 @@
 using DiemDanhQR_API.DTOs.Requests;
 using DiemDanhQR_API.DTOs.Responses;
 using DiemDanhQR_API.Helpers;
+using DiemDanhQR_API.Models;
 using DiemDanhQR_API.Repositories.Interfaces;
 using DiemDanhQR_API.Services.Interfaces;
 
@@ -32,6 +33,7 @@ namespace DiemDanhQR_API.Services.Implementations
                 req.TietBatDau,
                 req.SoTiet,
                 req.GhiChu,
+                req.TrangThai,
                 HelperFunctions.NormalizeCode(req.MaSinhVien),
                 HelperFunctions.NormalizeCode(req.MaGiangVien),
                 sortBy,
@@ -41,19 +43,21 @@ namespace DiemDanhQR_API.Services.Implementations
             );
 
             var items = rows.Select(x =>
-                new ScheduleListItem(
-                    x.b.MaBuoi ?? 0,
-                    x.p.MaPhong ?? 0,
-                    tenPhong: x.p.TenPhong ?? string.Empty,
-                    x.l.MaLopHocPhan ?? string.Empty,
-                    x.l.TenLopHocPhan ?? string.Empty,
-                    x.m.TenMonHoc ?? string.Empty,
-                    x.b.NgayHoc ?? DateTime.MinValue,
-                    (byte)(x.b.TietBatDau ?? 0),
-                    (byte)(x.b.SoTiet ?? 0),
-                    x.ndGv.HoTen ?? string.Empty,
-                    x.b.GhiChu ?? string.Empty
-                )
+                new ScheduleListItem
+                {
+                    MaBuoi = x.b.MaBuoi,
+                    MaPhong = x.b.MaPhong,
+                    TenPhong = x.p?.TenPhong,
+                    MaLopHocPhan = x.b.MaLopHocPhan,
+                    TenLopHocPhan = x.l?.TenLopHocPhan,
+                    TenMonHoc = x.m?.TenMonHoc,
+                    NgayHoc = x.b.NgayHoc?.ToString("dd-MM-yyyy"),
+                    TietBatDau = x.b.TietBatDau,
+                    SoTiet = x.b.SoTiet,
+                    TenGiangVien = x.ndGv?.HoTen,
+                    GhiChu = x.b.GhiChu,
+                    TrangThai = x.b.TrangThai
+                }
             ).ToList();
 
 
@@ -89,14 +93,14 @@ namespace DiemDanhQR_API.Services.Implementations
                 pageSize: pageSize
             );
 
-            var items = rows.Select(r => new RoomListItem(
-                maPhong: r.MaPhong ?? 0,
-                tenPhong: r.TenPhong ?? string.Empty,
-                toaNha: r.ToaNha ?? string.Empty,
-                tang: (byte)(r.Tang ?? 0),         // ← byte
-                sucChua: (byte)(r.SucChua ?? 0),   // ← byte
-                trangThai: r.TrangThai ?? true
-            )).ToList();
+            var items = rows.Select(r => new RoomListItem{
+                MaPhong = r.MaPhong,
+                TenPhong = r.TenPhong,
+                ToaNha = r.ToaNha,
+                Tang = r.Tang,
+                SucChua = r.SucChua,
+                TrangThai = r.TrangThai
+            }).ToList();
 
 
             return new PagedResult<RoomListItem>
@@ -108,6 +112,101 @@ namespace DiemDanhQR_API.Services.Implementations
                 Items = items
             };
         }
+        public async Task<CreateRoomResponse> CreateRoomAsync(CreateRoomRequest req, string? currentUserId)
+        {
+            // kiểm tra trùng tên phòng (không phân biệt hoa thường)
+            var tenPhong = (req.TenPhong ?? "").Trim();
+            if (await _repo.RoomNameExistsAsync(tenPhong))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Tên phòng đã tồn tại.");
 
+            var entity = new PhongHoc
+            {
+                TenPhong = tenPhong,
+                ToaNha = string.IsNullOrWhiteSpace(req.ToaNha) ? null : req.ToaNha!.Trim(),
+                Tang = req.Tang,
+                SucChua = req.SucChua,
+                TrangThai = req.TrangThai ?? true
+            };
+
+            await _repo.AddRoomAsync(entity);
+
+            // ghi log
+            var log = new LichSuHoatDong
+            {
+                MaNguoiDung = string.IsNullOrWhiteSpace(currentUserId) ? "system" : currentUserId,
+                HanhDong = $"Tạo phòng học: {entity.TenPhong}" +
+                           (string.IsNullOrWhiteSpace(entity.ToaNha) ? "" : $" - {entity.ToaNha}") +
+                           (entity.Tang.HasValue ? $" (Tầng {entity.Tang})" : "")
+            };
+            await _repo.WriteActivityLogAsync(log);
+
+            return new CreateRoomResponse
+            {
+                MaPhong = entity.MaPhong ?? 0,
+                TenPhong = entity.TenPhong ?? "",
+                ToaNha = entity.ToaNha,
+                Tang = entity.Tang,
+                SucChua = entity.SucChua,
+                TrangThai = entity.TrangThai
+            };
+        }
+
+        public async Task<CreateScheduleResponse> CreateScheduleAsync(CreateScheduleRequest req, string? currentUserId)
+        {
+            var maLhp = HelperFunctions.NormalizeCode(req.MaLopHocPhan);
+            var maPhong = req.MaPhong ?? 0;
+            var ngay = (req.NgayHoc ?? DateTime.Now).Date;
+            var tietBd = req.TietBatDau!.Value;
+            var soTiet = req.SoTiet!.Value;
+
+            // 1) Check tồn tại lớp học phần & phòng
+            if (!await _repo.CourseExistsByCodeAsync(maLhp))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Lớp học phần không tồn tại.");
+            if (!await _repo.RoomExistsByIdAsync(maPhong))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Phòng học không tồn tại.");
+
+            // 2) Chặn trùng cùng lớp + cùng ngày + cùng tiết bắt đầu
+            if (await _repo.ScheduleExistsAsync(maLhp, ngay, tietBd))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Buổi học đã tồn tại (trùng lớp, ngày, tiết bắt đầu).");
+
+            // (tuỳ chọn) có thể kiểm tra va chạm phòng theo khung tiết ở đây
+
+            // 3) Tạo entity
+            var entity = new BuoiHoc
+            {
+                MaLopHocPhan = maLhp,
+                MaPhong = maPhong,
+                NgayHoc = ngay,
+                TietBatDau = tietBd,
+                SoTiet = soTiet,
+                GhiChu = string.IsNullOrWhiteSpace(req.GhiChu) ? null : req.GhiChu!.Trim(),
+                TrangThai = req.TrangThai ?? true
+            };
+
+            await _repo.AddScheduleAsync(entity);
+
+            // 4) Log
+            await _repo.WriteActivityLogAsync(new LichSuHoatDong
+            {
+                MaNguoiDung = string.IsNullOrWhiteSpace(currentUserId) ? "system" : currentUserId,
+                HanhDong = $"Tạo buổi học: {entity.MaLopHocPhan} - {entity.NgayHoc:dd-MM-yyyy} (Tiết {entity.TietBatDau}, {entity.SoTiet} tiết) - Phòng {entity.MaPhong}"
+            });
+
+            // 5) Lấy tên phòng (nếu muốn trả về đẹp)
+            var phong = await _repo.GetRoomByIdAsync(entity.MaPhong ?? 0);
+
+            return new CreateScheduleResponse
+            {
+                MaBuoi = entity.MaBuoi ?? 0,
+                MaLopHocPhan = entity.MaLopHocPhan!,
+                MaPhong = entity.MaPhong ?? 0,
+                TenPhong = phong?.TenPhong ?? "",
+                NgayHoc = entity.NgayHoc?.ToString("dd-MM-yyyy") ?? "",
+                TietBatDau = (byte)(entity.TietBatDau ?? 0),
+                SoTiet = (byte)(entity.SoTiet ?? 0),
+                GhiChu = entity.GhiChu,
+                TrangThai = entity.TrangThai ?? true
+            };
+        }
     }
 }

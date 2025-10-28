@@ -11,5 +11,6 @@ namespace DiemDanhQR_API.Models
 
         public string? MaLopHocPhan { get; set; }
         public int? MaPhong { get; set; }
+        public bool? TrangThai { get; set; } 
     }
 }

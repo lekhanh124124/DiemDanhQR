@@ -253,6 +253,7 @@ namespace DiemDanhQR_API.Data
 
                 e.Property(x => x.MaLopHocPhan).HasMaxLength(20).IsRequired();
                 e.Property(x => x.MaPhong).IsRequired();
+                e.Property(x => x.TrangThai).HasColumnType("bit").HasDefaultValue(true).IsRequired();
 
                 e.HasOne<LopHocPhan>()
                  .WithMany()
@@ -272,16 +273,12 @@ namespace DiemDanhQR_API.Data
             modelBuilder.Entity<ThamGiaLop>(e =>
             {
                 e.ToTable("ThamGiaLop");
-                // e.HasKey(x => x.MaThamGia);
-                // e.Property(x => x.MaThamGia).ValueGeneratedOnAdd(); // IDENTITY
                 e.HasKey(x => new { x.MaSinhVien, x.MaLopHocPhan });
                 e.Property(x => x.NgayThamGia).HasColumnType("date").IsRequired();
                 e.Property(x => x.TrangThai).HasColumnType("bit").HasDefaultValue(true).IsRequired();
 
                 e.Property(x => x.MaSinhVien).HasMaxLength(20).IsRequired();
                 e.Property(x => x.MaLopHocPhan).HasMaxLength(20).IsRequired();
-
-                // e.HasIndex(x => new { x.MaSinhVien, x.MaLopHocPhan }).IsUnique(); // UQ_ThamGia
 
                 e.HasOne<SinhVien>()
                  .WithMany()

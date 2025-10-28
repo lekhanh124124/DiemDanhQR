@@ -8,5 +8,9 @@ namespace DiemDanhQR_API.Services.Interfaces
     {
         Task<PagedResult<ScheduleListItem>> GetListAsync(ScheduleListRequest req);
         Task<PagedResult<RoomListItem>> GetRoomsAsync(RoomListRequest req);
+        Task<CreateRoomResponse> CreateRoomAsync(CreateRoomRequest req, string? currentUserId);
+        Task<CreateScheduleResponse> CreateScheduleAsync(CreateScheduleRequest req, string? currentUserId);
+
+
     }
 }

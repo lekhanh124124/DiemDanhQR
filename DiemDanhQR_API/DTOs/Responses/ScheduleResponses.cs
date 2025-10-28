@@ -3,63 +3,48 @@ namespace DiemDanhQR_API.DTOs.Responses
 {
     public class ScheduleListItem
     {
-        public int MaBuoi { get; }
-        public int MaPhong { get; }
-        public string TenPhong { get; }
-        public string MaLopHocPhan { get; }           // MaLopHocPhan
-        public string TenLopHocPhan { get; }
-        public string TenMonHoc { get; }
-        public DateTime NgayHoc { get; }
-        public byte TietBatDau { get; }
-        public byte SoTiet { get; }
-        public string TenGiangVien { get; }    // << yêu cầu mới
-        public string GhiChu { get; }
-
-        public ScheduleListItem(
-            int maBuoi,
-            int maPhong,
-            string tenPhong,
-            string maLopHocPhan,
-            string tenLopHocPhan,
-            string tenMonHoc,
-            DateTime ngayHoc,
-            byte tietBatDau,
-            byte soTiet,
-            string tenGiangVien,
-            string ghiChu)
-        {
-            MaBuoi = maBuoi;
-            MaPhong = maPhong;
-            TenPhong = tenPhong;
-            MaLopHocPhan = maLopHocPhan;
-            TenLopHocPhan = tenLopHocPhan;
-            TenMonHoc = tenMonHoc;
-            NgayHoc = ngayHoc;
-            TietBatDau = tietBatDau;
-            SoTiet = soTiet;
-            TenGiangVien = tenGiangVien;
-            GhiChu = ghiChu;
-        }
+        public int? MaBuoi { get; set; }
+        public int? MaPhong { get; set; }
+        public string? TenPhong { get; set; }
+        public string? MaLopHocPhan { get; set; }
+        public string? TenLopHocPhan { get; set; }
+        public string? TenMonHoc { get; set; }
+        public string? NgayHoc { get; set; }
+        public byte? TietBatDau { get; set; }
+        public byte? SoTiet { get; set; }
+        public string? TenGiangVien { get; set; }
+        public string? GhiChu { get; set; }
+        public bool? TrangThai { get; set; }
     }
 
     public class RoomListItem
     {
-        public int MaPhong { get; }
-        public string TenPhong { get; }
-        public string ToaNha { get; }
-        public byte Tang { get; }       
-        public byte SucChua { get; }  
-        public bool TrangThai { get; }
-
-        public RoomListItem(int maPhong, string tenPhong, string toaNha, byte tang, byte sucChua, bool trangThai)
-        {
-            MaPhong = maPhong;
-            TenPhong = tenPhong;
-            ToaNha = toaNha;
-            Tang = tang;
-            SucChua = sucChua;
-            TrangThai = trangThai;
-        }
+        public int? MaPhong { get; set; }
+        public string? TenPhong { get; set; }
+        public string? ToaNha { get; set; }
+        public byte? Tang { get; set; }
+        public byte? SucChua { get; set; }
+        public bool? TrangThai { get; set; }
     }
-
+    public class CreateRoomResponse
+    {
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = default!;
+        public string? ToaNha { get; set; }
+        public byte? Tang { get; set; }
+        public byte? SucChua { get; set; }
+        public bool? TrangThai { get; set; }
+    }
+    public class CreateScheduleResponse
+    {
+        public int MaBuoi { get; set; }
+        public string MaLopHocPhan { get; set; } = default!;
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = "";
+        public string NgayHoc { get; set; } = "";   // dd-MM-yyyy
+        public byte TietBatDau { get; set; }
+        public byte SoTiet { get; set; }
+        public string? GhiChu { get; set; }
+        public bool? TrangThai { get; set; }
+    }
 }

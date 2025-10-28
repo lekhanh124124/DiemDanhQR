@@ -24,6 +24,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 byte? tietBatDau,
                 byte? soTiet,
                 string? ghiChu,
+                bool? trangThai,
                 string? maSinhVien,    // NEW
                 string? maGiangVien,   // NEW
                 string? sortBy,
@@ -54,7 +55,8 @@ namespace DiemDanhQR_API.Repositories.Implementations
                     (x.l.TenLopHocPhan ?? "").ToLower().Contains(kw) ||
                     (x.m.TenMonHoc ?? "").ToLower().Contains(kw) ||
                     (x.ndGv.HoTen ?? "").ToLower().Contains(kw) ||
-                    (x.b.GhiChu ?? "").ToLower().Contains(kw)
+                    (x.b.GhiChu ?? "").ToLower().Contains(kw) ||
+                    (x.b.TrangThai.HasValue ? (x.b.TrangThai.Value ? "true" : "false") : "").Contains(kw)
                 );
             }
 
@@ -124,10 +126,8 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 "tietbatdau" => desc ? q.OrderByDescending(x => x.b.TietBatDau) : q.OrderBy(x => x.b.TietBatDau),
                 "sotiet" => desc ? q.OrderByDescending(x => x.b.SoTiet) : q.OrderBy(x => x.b.SoTiet),
                 "ghichu" => desc ? q.OrderByDescending(x => x.b.GhiChu) : q.OrderBy(x => x.b.GhiChu),
-                "trangthai" => desc ? q.OrderByDescending(x => x.l.TrangThai) : q.OrderBy(x => x.l.TrangThai),
-                "sotinchi" => desc ? q.OrderByDescending(x => x.m.SoTinChi) : q.OrderBy(x => x.m.SoTinChi),
-                "hocky" => desc ? q.OrderByDescending(x => x.m.HocKy) : q.OrderBy(x => x.m.HocKy),
-                "tengiangvien" => desc ? q.OrderByDescending(x => x.ndGv.HoTen) : q.OrderBy(x => x.ndGv.HoTen),
+                "magiangvien" => desc ? q.OrderByDescending(x => x.gv.MaGiangVien) : q.OrderBy(x => x.gv.MaGiangVien),
+                "trangthai" => desc ? q.OrderByDescending(x => x.b.TrangThai) : q.OrderBy(x => x.b.TrangThai),
                 "mabuoi" or _ => desc ? q.OrderByDescending(x => x.b.MaBuoi) : q.OrderBy(x => x.b.MaBuoi),
             };
 
@@ -143,17 +143,17 @@ namespace DiemDanhQR_API.Repositories.Implementations
         }
 
         public async Task<(List<PhongHoc> Items, int Total)> SearchRoomsAsync(
-    string? keyword,
-    int? maPhong,
-    string? tenPhong,
-    string? toaNha,
-    byte? tang,         // ← byte
-    byte? sucChua,      // ← byte
-    bool? trangThai,
-    string? sortBy,
-    bool desc,
-    int page,
-    int pageSize)
+            string? keyword,
+            int? maPhong,
+            string? tenPhong,
+            string? toaNha,
+            byte? tang,         // ← byte
+            byte? sucChua,      // ← byte
+            bool? trangThai,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
@@ -198,6 +198,58 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
             return (items, total);
         }
+        public async Task<bool> RoomNameExistsAsync(string tenPhong)
+        {
+            var name = (tenPhong ?? "").Trim().ToLower();
+            return await _db.PhongHoc.AsNoTracking()
+                .AnyAsync(p => (p.TenPhong ?? "").ToLower() == name);
+        }
 
+        public async Task AddRoomAsync(PhongHoc room)
+        {
+            _db.PhongHoc.Add(room);
+            await _db.SaveChangesAsync(); // EF sẽ tự fill MaPhong (IDENTITY)
+        }
+
+        public async Task WriteActivityLogAsync(LichSuHoatDong log)
+        {
+            _db.LichSuHoatDong.Add(log);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<bool> CourseExistsByCodeAsync(string maLopHocPhan)
+        {
+            var code = (maLopHocPhan ?? "").Trim();
+            return await _db.LopHocPhan.AsNoTracking()
+                .AnyAsync(l => (l.MaLopHocPhan ?? "") == code);
+        }
+
+        public async Task<bool> RoomExistsByIdAsync(int maPhong)
+        {
+            return await _db.PhongHoc.AsNoTracking()
+                .AnyAsync(p => (p.MaPhong ?? 0) == maPhong);
+        }
+
+        public async Task<bool> ScheduleExistsAsync(string maLopHocPhan, DateTime ngayHoc, byte tietBatDau)
+        {
+            var code = (maLopHocPhan ?? "").Trim();
+            var d = ngayHoc.Date;
+            return await _db.BuoiHoc.AsNoTracking()
+                .AnyAsync(b => (b.MaLopHocPhan ?? "") == code
+                               && b.NgayHoc == d
+                               && (b.TietBatDau ?? 0) == tietBatDau);
+        }
+
+        public async Task AddScheduleAsync(BuoiHoc buoi)
+        {
+            _db.BuoiHoc.Add(buoi);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<PhongHoc?> GetRoomByIdAsync(int maPhong)
+        {
+            return await _db.PhongHoc.AsNoTracking()
+                .FirstOrDefaultAsync(p => (p.MaPhong ?? 0) == maPhong);
+        }
     }
 }
