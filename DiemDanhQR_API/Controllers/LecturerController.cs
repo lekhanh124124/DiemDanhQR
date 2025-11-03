@@ -21,9 +21,6 @@ namespace DiemDanhQR_API.Controllers
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ApiResponse<CreateLecturerResponse>>> Create([FromForm] CreateLecturerRequest req)
         {
-            // Mặc định MaNguoiDung = MaGiangVien nếu không truyền
-            req.MaNguoiDung ??= req.MaGiangVien;
-
             var result = await _svc.CreateAsync(req);
             return Ok(new ApiResponse<CreateLecturerResponse>
             {

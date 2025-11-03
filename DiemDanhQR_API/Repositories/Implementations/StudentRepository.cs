@@ -17,7 +17,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public async Task AddStudentAsync(SinhVien entity)
             => await _db.SinhVien.AddAsync(entity);
 
-        public Task<NguoiDung?> GetUserByMaAsync(string maNguoiDung)
+        public Task<NguoiDung?> GetUserByIdAsync(int maNguoiDung)
             => _db.NguoiDung.FirstOrDefaultAsync(u => u.MaNguoiDung == maNguoiDung);
 
         public Task<NguoiDung?> GetUserByUsernameAsync(string tenDangNhap)
@@ -26,17 +26,24 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public async Task AddUserAsync(NguoiDung user)
             => await _db.NguoiDung.AddAsync(user);
 
+        public Task UpdateUserAsync(NguoiDung user)
+        {
+            _db.NguoiDung.Update(user);
+            return Task.CompletedTask;
+        }
+
         public Task<PhanQuyen?> GetRoleAsync(int maQuyen)
             => _db.PhanQuyen.FirstOrDefaultAsync(r => r.MaQuyen == maQuyen);
 
         public Task SaveChangesAsync() => _db.SaveChangesAsync();
+
         public async Task<(List<(SinhVien Sv, NguoiDung Nd)> Items, int Total)> SearchStudentsAsync(
-            string? keyword,
+            // string? keyword, // removed
             string? khoa,
             string? nganh,
             int? namNhapHoc,
             bool? trangThaiUser,
-            string? maLopHocPhan,          // NEW
+            string? maLopHocPhan,
             string? sortBy,
             bool desc,
             int page,
@@ -51,16 +58,9 @@ namespace DiemDanhQR_API.Repositories.Implementations
                         on sv.MaNguoiDung equals nd.MaNguoiDung
                     select new { sv, nd };
 
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim();
-                q = q.Where(x =>
-                    (x.sv.MaSinhVien ?? "").Contains(kw) ||
-                    (x.nd.HoTen ?? "").Contains(kw) ||
-                    (x.nd.Email ?? "").Contains(kw) ||
-                    (x.nd.SoDienThoai ?? "").Contains(kw)
-                );
-            }
+            // removed keyword OR filter
+            // if (!string.IsNullOrWhiteSpace(keyword)) { ... }
+
             if (!string.IsNullOrWhiteSpace(khoa))
                 q = q.Where(x => x.sv.Khoa == khoa);
 
@@ -73,12 +73,10 @@ namespace DiemDanhQR_API.Repositories.Implementations
             if (trangThaiUser.HasValue)
                 q = q.Where(x => (x.nd.TrangThai ?? true) == trangThaiUser.Value);
 
-            // NEW: chỉ lấy SV thuộc lớp học phần chỉ định
             if (!string.IsNullOrWhiteSpace(maLopHocPhan))
             {
                 var lhp = maLopHocPhan.Trim();
-                q = q.Where(x => _db.ThamGiaLop
-                    .AsNoTracking()
+                q = q.Where(x => _db.ThamGiaLop.AsNoTracking()
                     .Any(t => t.MaSinhVien == x.sv.MaSinhVien && t.MaLopHocPhan == lhp));
             }
 
@@ -105,8 +103,11 @@ namespace DiemDanhQR_API.Repositories.Implementations
             return (items, total);
         }
 
-        public Task<SinhVien?> GetStudentByMaNguoiDungAsync(string maNguoiDung)
+        public Task<SinhVien?> GetStudentByMaNguoiDungAsync(int maNguoiDung)
             => _db.SinhVien.FirstOrDefaultAsync(s => s.MaNguoiDung == maNguoiDung);
+
+        public Task<SinhVien?> GetStudentByMaSinhVienAsync(string maSinhVien)
+            => _db.SinhVien.FirstOrDefaultAsync(s => s.MaSinhVien == maSinhVien);
 
         public Task UpdateStudentAsync(SinhVien entity)
         {
@@ -114,16 +115,41 @@ namespace DiemDanhQR_API.Repositories.Implementations
             return Task.CompletedTask;
         }
 
-        public Task UpdateUserAsync(NguoiDung user)
-        {
-            _db.NguoiDung.Update(user);
-            return Task.CompletedTask;
-        }
-
-        public Task<bool> ExistsUsernameForAnotherAsync(string tenDangNhap, string maNguoiDungExclude)
-            => _db.NguoiDung.AnyAsync(u => u.TenDangNhap == tenDangNhap && u.MaNguoiDung != maNguoiDungExclude);
-
         public async Task AddActivityAsync(LichSuHoatDong log)
             => await _db.LichSuHoatDong.AddAsync(log);
+
+        public async Task<bool> CourseExistsAsync(string maLopHocPhan)
+        {
+            if (string.IsNullOrWhiteSpace(maLopHocPhan)) return false;
+            var code = maLopHocPhan.Trim();
+            return await _db.LopHocPhan.AsNoTracking().AnyAsync(l => (l.MaLopHocPhan ?? "") == code);
+        }
+
+        public async Task<bool> ParticipationExistsAsync(string maLopHocPhan, string maSinhVien)
+        {
+            var lhp = maLopHocPhan?.Trim() ?? "";
+            var sv = maSinhVien?.Trim() ?? "";
+            return await _db.ThamGiaLop.AsNoTracking()
+                .AnyAsync(t => (t.MaLopHocPhan ?? "") == lhp && (t.MaSinhVien ?? "") == sv);
+        }
+
+        public async Task AddParticipationAsync(ThamGiaLop thamGia)
+        {
+            _db.ThamGiaLop.Add(thamGia);
+            await _db.SaveChangesAsync();
+        }
+
+        public Task<ThamGiaLop?> GetParticipationAsync(string maLopHocPhan, string maSinhVien)
+        {
+            var lhp = (maLopHocPhan ?? "").Trim();
+            var sv = (maSinhVien ?? "").Trim();
+            return _db.ThamGiaLop.FirstOrDefaultAsync(t => (t.MaLopHocPhan ?? "") == lhp && (t.MaSinhVien ?? "") == sv);
+        }
+
+        public async Task UpdateParticipationAsync(ThamGiaLop thamGia)
+        {
+            _db.ThamGiaLop.Update(thamGia);
+            await _db.SaveChangesAsync();
+        }
     }
 }

@@ -21,7 +21,6 @@ namespace DiemDanhQR_API.Services.Implementations
             var desc = sortDir == "DESC";
 
             var (items, total) = await _repo.SearchAsync(
-                request.Keyword,
                 request.MaQuyen,
                 request.CodeQuyen,
                 request.TenQuyen,
@@ -61,7 +60,6 @@ namespace DiemDanhQR_API.Services.Implementations
             var desc = sortDir == "DESC";
 
             var (items, total) = await _repo.SearchFunctionsAsync(
-                request.Keyword,
                 request.MaChucNang,
                 request.CodeChucNang,
                 request.TenChucNang,

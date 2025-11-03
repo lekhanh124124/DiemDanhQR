@@ -56,3 +56,6 @@ nunit-*.xml
 .vscode/
 .vs/
 .github/
+.fake
+wwwroot/
+*.csproj.user

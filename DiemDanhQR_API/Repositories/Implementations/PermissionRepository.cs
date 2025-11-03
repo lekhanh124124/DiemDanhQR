@@ -12,32 +12,21 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public PermissionRepository(AppDbContext db) => _db = db;
 
         public async Task<(List<PhanQuyen> Items, int Total)> SearchAsync(
-    string? keyword,
-    int? maQuyen,
-    string? codeQuyen,
-    string? tenQuyen,
-    string? moTa,
-    int? maChucNang, // 🔹 thêm
-    string? sortBy,
-    bool desc,
-    int page,
-    int pageSize)
+            // string? keyword, // removed
+            int? maQuyen,
+            string? codeQuyen,
+            string? tenQuyen,
+            string? moTa,
+            int? maChucNang,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
             var q = _db.PhanQuyen.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim();
-                q = q.Where(x =>
-                    (x.MaQuyen + "")!.Contains(kw) ||
-                    (x.CodeQuyen ?? "").Contains(kw) ||
-                    (x.TenQuyen ?? "").Contains(kw) ||
-                    (x.MoTa ?? "").Contains(kw)
-                );
-            }
 
             if (maQuyen.HasValue)
                 q = q.Where(x => x.MaQuyen == maQuyen.Value);
@@ -78,7 +67,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
 
         public async Task<(List<ChucNang> Items, int Total)> SearchFunctionsAsync(
-            string? keyword,
+            // string? keyword, // removed
             int? maChucNang,
             string? codeChucNang,
             string? tenChucNang,
@@ -94,17 +83,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
             var q = _db.ChucNang.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim();
-                q = q.Where(x =>
-                    (x.MaChucNang + "")!.Contains(kw) ||
-                    (x.CodeChucNang ?? "").Contains(kw) ||
-                    (x.TenChucNang ?? "").Contains(kw) ||
-                    (x.MoTa ?? "").Contains(kw)
-                );
-            }
 
             if (maChucNang.HasValue)
                 q = q.Where(x => x.MaChucNang == maChucNang.Value);

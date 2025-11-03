@@ -7,7 +7,6 @@ namespace DiemDanhQR_API.Repositories.Interfaces
     {
         Task<(List<(BuoiHoc b, PhongHoc p, LopHocPhan l, MonHoc m, GiangVien gv, NguoiDung ndGv)> Items, int Total)>
             SearchSchedulesAsync(
-                string? keyword,
                 int? maBuoi,
                 int? maPhong,
                 string? tenPhong,
@@ -19,20 +18,19 @@ namespace DiemDanhQR_API.Repositories.Interfaces
                 byte? soTiet,
                 string? ghiChu,
                 bool? trangThai,
-                string? maSinhVien,   // NEW
-                string? maGiangVien,  // NEW
+                string? maSinhVien,
+                string? maGiangVien,
                 string? sortBy,
                 bool desc,
                 int page,
                 int pageSize);
 
         Task<(List<PhongHoc> Items, int Total)> SearchRoomsAsync(
-            string? keyword,
             int? maPhong,
             string? tenPhong,
             string? toaNha,
-            byte? tang,        // ← byte
-            byte? sucChua,     // ← byte
+            byte? tang,
+            byte? sucChua,
             bool? trangThai,
             string? sortBy,
             bool desc,
@@ -40,7 +38,10 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             int pageSize);
         Task<bool> RoomNameExistsAsync(string tenPhong);
         Task AddRoomAsync(PhongHoc room);
-        Task WriteActivityLogAsync(LichSuHoatDong log);
+
+        // Ghi log theo TenDangNhap -> map sang MaNguoiDung
+        Task LogActivityAsync(string? tenDangNhap, string hanhDong);
+
         Task<bool> CourseExistsByCodeAsync(string maLopHocPhan);
         Task<bool> RoomExistsByIdAsync(int maPhong);
         Task<bool> ScheduleExistsAsync(string maLopHocPhan, DateTime ngayHoc, byte tietBatDau);

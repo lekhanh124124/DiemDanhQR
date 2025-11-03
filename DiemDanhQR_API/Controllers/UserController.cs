@@ -23,24 +23,34 @@ namespace DiemDanhQR_API.Controllers
 
         [Authorize]
         [HttpGet("info")]
-        public async Task<ActionResult<ApiResponse<object>>> GetInfo([FromQuery] string? maNguoiDung)
+        public async Task<ActionResult<ApiResponse<object>>> GetInfo([FromQuery] string? tenDangNhap)
         {
-            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
             var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
 
-            var requestedMaND = HelperFunctions.NormalizeCode(maNguoiDung);
+            object result;
 
-            if (!isAdmin && !string.IsNullOrWhiteSpace(requestedMaND))
+            if (string.IsNullOrWhiteSpace(tenDangNhap))
             {
-                ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Bạn không có quyền xem thông tin người dùng khác.");
+                // Không truyền: lấy thông tin bản thân theo tên đăng nhập trong token
+                var usernameFromToken =
+                        User.FindFirst("TenDangNhap")?.Value
+                        ?? User.FindFirst(ClaimTypes.Name)?.Value
+                        ?? User.Identity?.Name;
+
+                if (string.IsNullOrWhiteSpace(usernameFromToken))
+                    ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
+
+                result = await _svc.GetInfoAsync(usernameFromToken!);
+            }
+            else
+            {
+                // Có truyền: chỉ ADMIN được phép xem người khác theo tên đăng nhập
+                if (!isAdmin)
+                    ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Chỉ ADMIN mới được tra cứu theo tên đăng nhập.");
+                result = await _svc.GetInfoAsync(tenDangNhap!);
             }
 
-            var targetMaND = string.IsNullOrWhiteSpace(requestedMaND)
-                ? currentUserId
-                : requestedMaND;
-
-            var result = await _svc.GetInfoAsync(targetMaND!);
             return Ok(new ApiResponse<object>
             {
                 Status = 200,
@@ -66,31 +76,36 @@ namespace DiemDanhQR_API.Controllers
         [HttpGet("activity")]
         public async Task<ActionResult<ApiResponse<PagedResult<UserActivityItem>>>> GetActivity([FromQuery] UserActivityListRequest req)
         {
-            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
             var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
 
-            var requestedMaND = HelperFunctions.NormalizeCode(req.MaNguoiDung);
+            // Lấy username từ token để ràng buộc user thường
+            var usernameFromToken =
+                    User.FindFirst("TenDangNhap")?.Value
+                    ?? User.FindFirst(ClaimTypes.Name)?.Value
+                    ?? User.Identity?.Name;
+
+            if (string.IsNullOrWhiteSpace(usernameFromToken))
+                ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
 
             if (!isAdmin)
             {
-                // user thường: không được xem all, không được xem người khác
-                if (req.AllUsers == true || !string.IsNullOrWhiteSpace(requestedMaND))
-                    ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Bạn không có quyền xem lịch sử của người khác.");
-                req.MaNguoiDung = currentUserId; // ép về chính mình
+                // User thường: chỉ được xem lịch sử của chính mình
+                req.TenDangNhap = usernameFromToken;
             }
             else
             {
-                // ADMIN: nếu AllUsers=true -> bỏ lọc MaNguoiDung để lấy tất cả
-                if (req.AllUsers == true) req.MaNguoiDung = null;
-                else req.MaNguoiDung = string.IsNullOrWhiteSpace(requestedMaND) ? currentUserId : requestedMaND;
+                // ADMIN: có thể xem tất cả nếu không truyền; nếu truyền thì lọc theo TenDangNhap
+                req.TenDangNhap = string.IsNullOrWhiteSpace(req.TenDangNhap)
+                    ? null
+                    : HelperFunctions.NormalizeCode(req.TenDangNhap);
             }
 
             var data = await _svc.GetActivityAsync(req);
             return Ok(new ApiResponse<PagedResult<UserActivityItem>>
             {
                 Status = 200,
-                Message = req.AllUsers == true ? "Lấy toàn bộ lịch sử hoạt động thành công." : "Lấy danh sách lịch sử hoạt động thành công.",
+                Message = "Lấy danh sách lịch sử hoạt động thành công.",
                 Data = data
             });
         }

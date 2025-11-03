@@ -1,9 +1,10 @@
-// File: Models/GiangVien.cs
+using System;
+
 namespace DiemDanhQR_API.Models
 {
     public class GiangVien
     {
-        public string? MaNguoiDung { get; set; }
+        public int? MaNguoiDung { get; set; }
         public string? MaGiangVien { get; set; }
         public string? Khoa { get; set; }
         public string? HocHam { get; set; }

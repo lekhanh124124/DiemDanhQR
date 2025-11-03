@@ -1,4 +1,6 @@
 // File: Models/BuoiHoc.cs
+using System;
+
 namespace DiemDanhQR_API.Models
 {
     public class BuoiHoc
@@ -8,9 +10,8 @@ namespace DiemDanhQR_API.Models
         public byte? TietBatDau { get; set; }
         public byte? SoTiet { get; set; }
         public string? GhiChu { get; set; }
-
         public string? MaLopHocPhan { get; set; }
         public int? MaPhong { get; set; }
-        public bool? TrangThai { get; set; } 
+        public bool? TrangThai { get; set; }
     }
 }

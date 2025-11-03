@@ -7,6 +7,7 @@ namespace DiemDanhQR_API.Data
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
         public DbSet<PhanQuyen> PhanQuyen { get; set; }
         public DbSet<NguoiDung> NguoiDung { get; set; }
         public DbSet<SinhVien> SinhVien { get; set; }
@@ -21,6 +22,7 @@ namespace DiemDanhQR_API.Data
         public DbSet<PhongHoc> PhongHoc { get; set; }
         public DbSet<BuoiHoc> BuoiHoc { get; set; }
         public DbSet<DiemDanh> DiemDanh { get; set; }
+        public DbSet<HocKy> HocKy { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,8 +82,18 @@ namespace DiemDanhQR_API.Data
             {
                 e.ToTable("NguoiDung");
                 e.HasKey(x => x.MaNguoiDung);
-                // PK là NVARCHAR(50), KHÔNG identity:
-                e.Property(x => x.MaNguoiDung).HasMaxLength(50);
+                e.Property(x => x.MaNguoiDung).ValueGeneratedOnAdd(); // IDENTITY
+
+                // Hồ sơ
+                e.Property(x => x.HoTen).HasMaxLength(100).IsRequired();
+                e.Property(x => x.GioiTinh).HasColumnType("tinyint");
+                e.Property(x => x.AnhDaiDien).HasMaxLength(255);
+                e.Property(x => x.Email).HasMaxLength(100);
+                e.Property(x => x.SoDienThoai).HasMaxLength(15);
+                e.Property(x => x.NgaySinh).HasColumnType("date");
+                e.Property(x => x.DanToc).HasMaxLength(20);
+                e.Property(x => x.TonGiao).HasMaxLength(20);
+                e.Property(x => x.DiaChi).HasMaxLength(255);
 
                 // Tài khoản
                 e.Property(x => x.TenDangNhap).HasMaxLength(50).IsRequired();
@@ -95,17 +107,6 @@ namespace DiemDanhQR_API.Data
                 e.Property(x => x.RefreshTokenId).HasColumnType("uniqueidentifier");
                 e.Property(x => x.RefreshTokenRevokedAt).HasColumnType("datetime");
 
-                // Hồ sơ
-                e.Property(x => x.HoTen).HasMaxLength(100).IsRequired();
-                e.Property(x => x.GioiTinh).HasColumnType("tinyint");
-                e.Property(x => x.AnhDaiDien).HasMaxLength(255);
-                e.Property(x => x.Email).HasMaxLength(100);
-                e.Property(x => x.SoDienThoai).HasMaxLength(15);
-                e.Property(x => x.NgaySinh).HasColumnType("date");
-                e.Property(x => x.DanToc).HasMaxLength(20);
-                e.Property(x => x.TonGiao).HasMaxLength(20);
-                e.Property(x => x.DiaChi).HasMaxLength(255);
-
                 // FK -> PhanQuyen
                 e.Property(x => x.MaQuyen).IsRequired();
                 e.HasOne<PhanQuyen>()
@@ -115,16 +116,16 @@ namespace DiemDanhQR_API.Data
             });
 
             // =========================
-            // GIANGVIEN (PK = MaNguoiDung; MaGiangVien UNIQUE)
+            // GIANGVIEN (PK = MaNguoiDung; MaGiangVien UNIQUE) - CASCADE
             // =========================
             modelBuilder.Entity<GiangVien>(e =>
             {
-                e.ToTable("GiangVien");
-                e.HasKey(x => x.MaNguoiDung); // PK đúng theo SQL
-                e.Property(x => x.MaNguoiDung).HasMaxLength(50).IsRequired();
+                e.ToTable("GiangVien", tb => tb.HasTrigger("trg_GiangVien_Exclusive"));
+                e.HasKey(x => x.MaNguoiDung);
+                e.Property(x => x.MaNguoiDung).IsRequired();
 
                 e.Property(x => x.MaGiangVien).HasMaxLength(20).IsRequired();
-                e.HasIndex(x => x.MaGiangVien).IsUnique(); // UNIQUE
+                e.HasIndex(x => x.MaGiangVien).IsUnique();
 
                 e.Property(x => x.Khoa).HasMaxLength(100);
                 e.Property(x => x.HocHam).HasMaxLength(50);
@@ -134,20 +135,20 @@ namespace DiemDanhQR_API.Data
                 e.HasOne<NguoiDung>()
                  .WithMany()
                  .HasForeignKey(x => x.MaNguoiDung)
-                 .OnDelete(DeleteBehavior.Restrict);
+                 .OnDelete(DeleteBehavior.Cascade);
             });
 
             // =========================
-            // SINHVIEN (PK = MaNguoiDung; MaSinhVien UNIQUE)
+            // SINHVIEN (PK = MaNguoiDung; MaSinhVien UNIQUE) - CASCADE
             // =========================
             modelBuilder.Entity<SinhVien>(e =>
             {
-                e.ToTable("SinhVien");
-                e.HasKey(x => x.MaNguoiDung); // PK đúng theo SQL
-                e.Property(x => x.MaNguoiDung).HasMaxLength(50).IsRequired();
+                e.ToTable("SinhVien", tb => tb.HasTrigger("trg_SinhVien_Exclusive"));
+                e.HasKey(x => x.MaNguoiDung);
+                e.Property(x => x.MaNguoiDung).IsRequired();
 
                 e.Property(x => x.MaSinhVien).HasMaxLength(20).IsRequired();
-                e.HasIndex(x => x.MaSinhVien).IsUnique(); // UNIQUE
+                e.HasIndex(x => x.MaSinhVien).IsUnique();
 
                 e.Property(x => x.LopHanhChinh).HasMaxLength(50);
                 e.Property(x => x.NamNhapHoc).IsRequired();
@@ -157,7 +158,7 @@ namespace DiemDanhQR_API.Data
                 e.HasOne<NguoiDung>()
                     .WithMany()
                     .HasForeignKey(x => x.MaNguoiDung)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // =========================
@@ -173,11 +174,25 @@ namespace DiemDanhQR_API.Data
                                            .IsRequired();
                 e.Property(x => x.HanhDong).HasMaxLength(200).IsRequired();
 
-                e.Property(x => x.MaNguoiDung).HasMaxLength(50).IsRequired();
+                e.Property(x => x.MaNguoiDung).IsRequired();
                 e.HasOne<NguoiDung>()
                  .WithMany()
                  .HasForeignKey(x => x.MaNguoiDung)
                  .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // =========================
+            // HOCKY
+            // =========================
+            modelBuilder.Entity<HocKy>(e =>
+            {
+                e.ToTable("HocKy");
+                e.HasKey(x => x.MaHocKy);
+                e.Property(x => x.MaHocKy).ValueGeneratedOnAdd(); // IDENTITY
+                e.Property(x => x.NamHoc).HasColumnType("smallint").IsRequired();
+                e.Property(x => x.Ky).HasColumnType("tinyint").IsRequired();
+
+                e.HasIndex(x => new { x.NamHoc, x.Ky }).IsUnique();
             });
 
             // =========================
@@ -190,8 +205,7 @@ namespace DiemDanhQR_API.Data
                 e.Property(x => x.MaMonHoc).HasMaxLength(20).IsRequired();
                 e.Property(x => x.TenMonHoc).HasMaxLength(100).IsRequired();
                 e.Property(x => x.SoTinChi).HasColumnType("tinyint").IsRequired();
-                e.Property(x => x.SoTiet).HasColumnType("tinyint").IsRequired(); // NOT NULL
-                e.Property(x => x.HocKy).HasColumnType("tinyint");               // NULL
+                e.Property(x => x.SoTiet).HasColumnType("tinyint").IsRequired();
                 e.Property(x => x.MoTa).HasMaxLength(200);
                 e.Property(x => x.TrangThai).HasColumnType("bit").HasDefaultValue(true).IsRequired();
             });
@@ -209,6 +223,7 @@ namespace DiemDanhQR_API.Data
 
                 e.Property(x => x.MaMonHoc).HasMaxLength(20).IsRequired();
                 e.Property(x => x.MaGiangVien).HasMaxLength(20).IsRequired();
+                e.Property(x => x.MaHocKy).IsRequired();
 
                 e.HasOne<MonHoc>()
                  .WithMany()
@@ -220,6 +235,11 @@ namespace DiemDanhQR_API.Data
                  .WithMany()
                  .HasForeignKey(x => x.MaGiangVien)
                  .HasPrincipalKey(g => g.MaGiangVien)
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne<HocKy>()
+                 .WithMany()
+                 .HasForeignKey(x => x.MaHocKy)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -314,7 +334,7 @@ namespace DiemDanhQR_API.Data
                 e.ToTable("DiemDanh");
                 e.HasKey(x => x.MaDiemDanh);
                 e.Property(x => x.MaDiemDanh).ValueGeneratedOnAdd(); // IDENTITY
-                e.Property(x => x.ThoiGianQuet).HasColumnType("datetime").IsRequired(); // KHÔNG default trong SQL
+                e.Property(x => x.ThoiGianQuet).HasColumnType("datetime").IsRequired();
                 e.Property(x => x.LyDo).HasMaxLength(200);
                 e.Property(x => x.TrangThai).HasColumnType("bit").HasDefaultValue(true).IsRequired();
 

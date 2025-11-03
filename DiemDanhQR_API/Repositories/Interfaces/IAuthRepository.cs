@@ -6,7 +6,6 @@ namespace DiemDanhQR_API.Repositories.Interfaces
     public interface IAuthRepository
     {
         Task<NguoiDung?> GetByUserNameAsync(string tenDangNhap);
-        Task<NguoiDung?> GetByIdAsync(string maNguoiDung);
         Task<PhanQuyen?> GetRoleAsync(int maQuyen);
 
         Task UpdateRefreshTokenAsync(
@@ -19,7 +18,8 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task RevokeRefreshTokenAsync(NguoiDung user, DateTime revokedAtUtc, bool clearTokenFields = true);
         Task UpdatePasswordHashAsync(NguoiDung user, string newPasswordHash);
 
-        Task LogActivityAsync(string maNguoiDung, string hanhDong);
+        // Nhận TenDangNhap, repo tự ánh xạ sang MaNguoiDung (int) để ghi lịch sử
+        Task LogActivityAsync(string tenDangNhap, string hanhDong);
 
         Task SaveChangesAsync();
     }

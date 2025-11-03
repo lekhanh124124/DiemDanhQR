@@ -7,7 +7,6 @@ namespace DiemDanhQR_API.Models
         public string? TenMonHoc { get; set; }
         public byte? SoTinChi { get; set; }
         public byte? SoTiet { get; set; }
-        public byte? HocKy { get; set; }
         public string? MoTa { get; set; }
         public bool? TrangThai { get; set; }
     }

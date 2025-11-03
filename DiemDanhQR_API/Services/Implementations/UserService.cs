@@ -19,9 +19,9 @@ namespace DiemDanhQR_API.Services.Implementations
 
         public async Task<CreateUserResponse> CreateAsync(CreateUserRequest request)
         {
-            var maND = HelperFunctions.NormalizeCode(request.MaNguoiDung);
-            if (string.IsNullOrWhiteSpace(maND))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng không hợp lệ.");
+            var username = HelperFunctions.NormalizeCode(request.TenDangNhap);
+            if (string.IsNullOrWhiteSpace(username))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Tên đăng nhập không hợp lệ.");
 
             if (request.MaQuyen <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã quyền không hợp lệ.");
@@ -31,22 +31,17 @@ namespace DiemDanhQR_API.Services.Implementations
             if (role == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy quyền.");
 
-            // Kiểm tra trùng PK & Username (unique)
-            if (await _repo.ExistsByMaNguoiDungAsync(maND))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng đã tồn tại.");
-
-            if (await _repo.ExistsByTenDangNhapAsync(maND)) // TenDangNhap = MaNguoiDung
+            // Kiểm tra trùng Username (unique)
+            if (await _repo.ExistsByTenDangNhapAsync(username))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Tên đăng nhập đã tồn tại.");
 
-            // Mật khẩu khởi tạo = MaNguoiDung (được băm BCrypt)
-            var rawPassword = maND;
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(rawPassword);
+            // Mật khẩu khởi tạo = TenDangNhap (được băm BCrypt)
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(username);
 
             var entity = new NguoiDung
             {
-                MaNguoiDung = maND,
-                TenDangNhap = maND,
-                HoTen = maND,
+                TenDangNhap = username,
+                HoTen = username,
                 MatKhau = passwordHash,
                 MaQuyen = request.MaQuyen,
                 TrangThai = true
@@ -57,7 +52,7 @@ namespace DiemDanhQR_API.Services.Implementations
 
             var data = new CreateUserResponse
             {
-                MaNguoiDung = entity.MaNguoiDung!,
+                MaNguoiDung = entity.MaNguoiDung?.ToString() ?? "0",
                 TenDangNhap = entity.TenDangNhap!,
                 HoTen = entity.HoTen!,
                 MaQuyen = entity.MaQuyen!.Value,
@@ -67,29 +62,31 @@ namespace DiemDanhQR_API.Services.Implementations
             return data;
         }
 
-        public async Task<object> GetInfoAsync(string maNguoiDung)
+        public async Task<object> GetInfoAsync(string tenDangNhap)
         {
-            var maND = HelperFunctions.NormalizeCode(maNguoiDung);
-            if (string.IsNullOrWhiteSpace(maND))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã người dùng không hợp lệ.");
+            var username = HelperFunctions.NormalizeCode(tenDangNhap);
+            if (string.IsNullOrWhiteSpace(username))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Tên đăng nhập không hợp lệ.");
 
-            var user = await _repo.GetByMaNguoiDungAsync(maND);
+            var user = await _repo.GetByTenDangNhapAsync(username);
             if (user == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
 
             // Ưu tiên giảng viên nếu có; nếu không thì sinh viên
-            var gv = await _repo.GetLecturerByMaNguoiDungAsync(user!.MaNguoiDung!);
+            var userId = user!.MaNguoiDung ?? 0;
+
+            var gv = await _repo.GetLecturerByMaNguoiDungAsync(userId);
             if (gv != null)
             {
                 var payload = new LecturerInfoResponse
                 {
-                    MaNguoiDung = user.MaNguoiDung,
+                    MaNguoiDung = user.MaNguoiDung?.ToString(),
                     HoTen = user.HoTen,
                     GioiTinh = user.GioiTinh,
                     AnhDaiDien = user.AnhDaiDien,
                     Email = user.Email,
                     SoDienThoai = user.SoDienThoai,
-                    NgaySinh    = user.NgaySinh.HasValue 
+                    NgaySinh = user.NgaySinh.HasValue
                                     ? user.NgaySinh.Value.ToString("dd-MM-yyyy")
                                     : null,
                     DanToc = user.DanToc,
@@ -106,18 +103,18 @@ namespace DiemDanhQR_API.Services.Implementations
                 return payload;
             }
 
-            var sv = await _repo.GetStudentByMaNguoiDungAsync(user.MaNguoiDung!);
+            var sv = await _repo.GetStudentByMaNguoiDungAsync(userId);
             if (sv != null)
             {
                 var payload = new StudentInfoResponse
                 {
-                    MaNguoiDung = user.MaNguoiDung,
+                    MaNguoiDung = user.MaNguoiDung?.ToString(),
                     HoTen = user.HoTen,
                     GioiTinh = user.GioiTinh,
                     AnhDaiDien = user.AnhDaiDien,
                     Email = user.Email,
                     SoDienThoai = user.SoDienThoai,
-                    NgaySinh    = user.NgaySinh.HasValue 
+                    NgaySinh = user.NgaySinh.HasValue
                                     ? user.NgaySinh.Value.ToString("dd-MM-yyyy")
                                     : null,
                     DanToc = user.DanToc,
@@ -135,7 +132,7 @@ namespace DiemDanhQR_API.Services.Implementations
             }
 
             ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Người dùng không có hồ sơ Sinh viên/Giảng viên.");
-            throw new InvalidOperationException("Unreachable"); // for compiler satisfaction
+            throw new InvalidOperationException("Unreachable");
         }
 
         public async Task<PagedResult<UserActivityItem>> GetActivityAsync(UserActivityListRequest req)
@@ -147,8 +144,7 @@ namespace DiemDanhQR_API.Services.Implementations
             var desc = sortDir == "DESC";
 
             var (rows, total) = await _repo.SearchActivitiesAsync(
-                keyword: req.Keyword,
-                maNguoiDung: HelperFunctions.NormalizeCode(req.MaNguoiDung),
+                tenDangNhap: req.TenDangNhap,
                 from: req.DateFrom,
                 to: req.DateTo,
                 sortBy: sortBy,
@@ -166,7 +162,7 @@ namespace DiemDanhQR_API.Services.Implementations
                                     .ToString("dd-MM-yyyy HH:mm:ss")
                                 : null,
                     HanhDong = x.Log.HanhDong,
-                    MaNguoiDung = x.User.MaNguoiDung,
+                    MaNguoiDung = x.User.MaNguoiDung?.ToString(),
                     TenDangNhap = x.User.TenDangNhap
                 }
             ).ToList();
@@ -180,14 +176,14 @@ namespace DiemDanhQR_API.Services.Implementations
                 Items = items
             };
         }
+
         public async Task<UpdateUserProfileResponse> UpdateProfileAsync(
                     string maNguoiDungFromToken, UpdateUserProfileRequest req)
         {
-            var maND = HelperFunctions.NormalizeCode(maNguoiDungFromToken);
-            if (string.IsNullOrWhiteSpace(maND))
+            if (!int.TryParse(HelperFunctions.NormalizeCode(maNguoiDungFromToken), out var userId) || userId <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
 
-            var user = await _repo.GetByMaNguoiDungAsync(maND);
+            var user = await _repo.GetByIdAsync(userId);
             if (user == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
 
@@ -210,7 +206,7 @@ namespace DiemDanhQR_API.Services.Implementations
             user.AnhDaiDien = req.AnhDaiDien?.Trim();
             user.Email = req.Email?.Trim();
             user.SoDienThoai = req.SoDienThoai?.Trim();
-            user.NgaySinh = req.NgaySinh; // model là DATE (:contentReference[oaicite:6]{index=6})
+            user.NgaySinh = req.NgaySinh;
             user.DanToc = req.DanToc?.Trim();
             user.TonGiao = req.TonGiao?.Trim();
             user.DiaChi = req.DiaChi?.Trim();
@@ -230,7 +226,7 @@ namespace DiemDanhQR_API.Services.Implementations
 
             return new UpdateUserProfileResponse
             {
-                MaNguoiDung = user.MaNguoiDung!,
+                MaNguoiDung = user.MaNguoiDung?.ToString() ?? "0",
                 HoTen = user.HoTen,
                 GioiTinh = user.GioiTinh,
                 AnhDaiDien = user.AnhDaiDien,

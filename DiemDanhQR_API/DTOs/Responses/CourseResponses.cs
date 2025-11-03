@@ -13,12 +13,16 @@ namespace DiemDanhQR_API.DTOs.Responses
         public string? TenMonHoc { get; set; }
         public byte? SoTinChi { get; set; }
         public byte? SoTiet { get; set; }
-        public byte? HocKy { get; set; }
 
         public string? MaGiangVien { get; set; }
         public string? TenGiangVien { get; set; }
 
-        // NEW: thông tin tham gia (ẩn nếu null)
+        // HocKy
+        public int? MaHocKy { get; set; }
+        public short? NamHoc { get; set; }
+        public byte? Ky { get; set; }
+
+        // Thông tin tham gia (ẩn nếu null)
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public DateTime? NgayThamGia { get; set; }
 
@@ -32,30 +36,66 @@ namespace DiemDanhQR_API.DTOs.Responses
         public string? TenMonHoc { get; set; }
         public byte? SoTinChi { get; set; }
         public byte? SoTiet { get; set; }
-        public byte? HocKy { get; set; }
         public string? MoTa { get; set; }
         public bool? TrangThai { get; set; }
     }
 
     public class CreateSubjectResponse
     {
-        public string MaMonHoc { get; set; } = default!;
-        public string TenMonHoc { get; set; } = default!;
+        public string? MaMonHoc { get; set; } = default!;
+        public string? TenMonHoc { get; set; } = default!;
     }
 
     public class CreateCourseResponse
     {
-        public string MaLopHocPhan { get; set; } = default!;
-        public string TenLopHocPhan { get; set; } = default!;
-        public string MaMonHoc { get; set; } = default!;
-        public string MaGiangVien { get; set; } = default!;
+        public string? MaLopHocPhan { get; set; } = default!;
+        public string? TenLopHocPhan { get; set; } = default!;
+        public string? MaMonHoc { get; set; } = default!;
+        public string? MaGiangVien { get; set; } = default!;
+        public int? MaHocKy { get; set; }
     }
 
-    public class AddStudentToCourseResponse
+
+
+    public class SemesterListItem
     {
-        public string MaLopHocPhan { get; set; } = default!;
-        public string MaSinhVien { get; set; } = default!;
-        public string? NgayThamGia { get; set; }   // trả về dd-MM-yyyy
+        public int? MaHocKy { get; set; }
+        public short? NamHoc { get; set; }
+        public byte? Ky { get; set; }
+    }
+
+    public class CreateSemesterResponse
+    {
+        public int? MaHocKy { get; set; }
+        public short? NamHoc { get; set; }
+        public byte? Ky { get; set; }
+    }
+
+    public class UpdateSemesterResponse
+    {
+        public int? MaHocKy { get; set; }
+        public short? NamHoc { get; set; }
+        public byte? Ky { get; set; }
+    }
+
+    public class UpdateSubjectResponse
+    {
+        public string? MaMonHoc { get; set; }
+        public string? TenMonHoc { get; set; }
+        public byte? SoTinChi { get; set; }
+        public byte? SoTiet { get; set; }
+        public string? MoTa { get; set; }
         public bool? TrangThai { get; set; }
+    }
+
+    public class UpdateCourseResponse
+    {
+        public string? MaLopHocPhan { get; set; }
+        public string? TenLopHocPhan { get; set; }
+        public bool? TrangThai { get; set; }
+
+        public string? MaMonHoc { get; set; }
+        public string? MaGiangVien { get; set; }
+        public int? MaHocKy { get; set; }
     }
 }

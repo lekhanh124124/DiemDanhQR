@@ -1,3 +1,5 @@
+using System;
+
 // File: Models/LichSuHoatDong.cs
 namespace DiemDanhQR_API.Models
 {
@@ -6,6 +8,6 @@ namespace DiemDanhQR_API.Models
         public int? MaLichSu { get; set; }
         public DateTime? ThoiGian { get; set; }
         public string? HanhDong { get; set; }
-        public string? MaNguoiDung { get; set; }
+        public int? MaNguoiDung { get; set; }
     }
 }

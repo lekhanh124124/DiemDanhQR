@@ -13,7 +13,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
         public async Task<(List<(BuoiHoc b, PhongHoc p, LopHocPhan l, MonHoc m, GiangVien gv, NguoiDung ndGv)> Items, int Total)>
             SearchSchedulesAsync(
-                string? keyword,
+                // string? keyword, // removed
                 int? maBuoi,
                 int? maPhong,
                 string? tenPhong,
@@ -25,8 +25,8 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 byte? soTiet,
                 string? ghiChu,
                 bool? trangThai,
-                string? maSinhVien,    // NEW
-                string? maGiangVien,   // NEW
+                string? maSinhVien,
+                string? maGiangVien,
                 string? sortBy,
                 bool desc,
                 int page,
@@ -43,22 +43,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 join gv in _db.GiangVien.AsNoTracking() on l.MaGiangVien equals gv.MaGiangVien
                 join ndGv in _db.NguoiDung.AsNoTracking() on gv.MaNguoiDung equals ndGv.MaNguoiDung
                 select new { b, p, l, m, gv, ndGv };
-
-            // ===== Filters =====
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim().ToLower();
-                q = q.Where(x =>
-                    (x.b.MaBuoi.HasValue ? x.b.MaBuoi.Value.ToString() : "").Contains(kw) ||
-                    (x.p.TenPhong ?? "").ToLower().Contains(kw) ||
-                    (x.l.MaLopHocPhan ?? "").ToLower().Contains(kw) ||
-                    (x.l.TenLopHocPhan ?? "").ToLower().Contains(kw) ||
-                    (x.m.TenMonHoc ?? "").ToLower().Contains(kw) ||
-                    (x.ndGv.HoTen ?? "").ToLower().Contains(kw) ||
-                    (x.b.GhiChu ?? "").ToLower().Contains(kw) ||
-                    (x.b.TrangThai.HasValue ? (x.b.TrangThai.Value ? "true" : "false") : "").Contains(kw)
-                );
-            }
 
             if (maBuoi.HasValue) q = q.Where(x => x.b.MaBuoi == maBuoi.Value);
             if (maPhong.HasValue) q = q.Where(x => x.p.MaPhong == maPhong.Value);
@@ -143,12 +127,12 @@ namespace DiemDanhQR_API.Repositories.Implementations
         }
 
         public async Task<(List<PhongHoc> Items, int Total)> SearchRoomsAsync(
-            string? keyword,
+            // string? keyword, // removed
             int? maPhong,
             string? tenPhong,
             string? toaNha,
-            byte? tang,         // ← byte
-            byte? sucChua,      // ← byte
+            byte? tang,
+            byte? sucChua,
             bool? trangThai,
             string? sortBy,
             bool desc,
@@ -159,18 +143,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
             var q = _db.PhongHoc.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim().ToLower();
-                q = q.Where(p =>
-                    (p.MaPhong.HasValue ? p.MaPhong.Value.ToString() : "").Contains(kw) ||
-                    (p.TenPhong ?? "").ToLower().Contains(kw) ||
-                    (p.ToaNha ?? "").ToLower().Contains(kw) ||
-                    (p.Tang.HasValue ? p.Tang.Value.ToString() : "").Contains(kw) ||     // byte?
-                    (p.SucChua.HasValue ? p.SucChua.Value.ToString() : "").Contains(kw) // byte?
-                );
-            }
 
             if (maPhong.HasValue) q = q.Where(p => p.MaPhong == maPhong.Value);
             if (!string.IsNullOrWhiteSpace(tenPhong))
@@ -208,12 +180,24 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public async Task AddRoomAsync(PhongHoc room)
         {
             _db.PhongHoc.Add(room);
-            await _db.SaveChangesAsync(); // EF sẽ tự fill MaPhong (IDENTITY)
+            await _db.SaveChangesAsync();
         }
 
-        public async Task WriteActivityLogAsync(LichSuHoatDong log)
+        // filepath change: thay WriteActivityLogAsync bằng LogActivityAsync với TenDangNhap
+        public async Task LogActivityAsync(string? tenDangNhap, string hanhDong)
         {
-            _db.LichSuHoatDong.Add(log);
+            if (string.IsNullOrWhiteSpace(tenDangNhap)) return;
+
+            var user = await _db.NguoiDung.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.TenDangNhap == tenDangNhap);
+            if (user == null) return;
+
+            _db.LichSuHoatDong.Add(new LichSuHoatDong
+            {
+                MaNguoiDung = user.MaNguoiDung,
+                HanhDong = hanhDong,
+                ThoiGian = DateTime.Now
+            });
             await _db.SaveChangesAsync();
         }
 

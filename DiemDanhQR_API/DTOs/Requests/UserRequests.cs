@@ -3,16 +3,15 @@ namespace DiemDanhQR_API.DTOs.Requests
 {
     public class CreateUserRequest
     {
-        public required string MaNguoiDung { get; set; }
+        public required string TenDangNhap { get; set; }
         public required int MaQuyen { get; set; }
     }
 
     public class GetUserInfoRequest
     {
-        // Truyền 1 trong 2 (ưu tiên MaNguoiDung nếu đều có)
-        public string? MaNguoiDung { get; set; }
         public string? TenDangNhap { get; set; }
     }
+
     public class UserActivityListRequest
     {
         // Paging
@@ -24,12 +23,10 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? SortDir { get; set; } = "DESC";
 
         // Filters
-        public string? Keyword { get; set; }
-        public string? MaNguoiDung { get; set; }
+        public string? TenDangNhap { get; set; }
+
         public DateTime? DateFrom { get; set; }
         public DateTime? DateTo { get; set; }
-
-        public bool? AllUsers { get; set; } = false;
     }
 
     public class UpdateUserProfileRequest

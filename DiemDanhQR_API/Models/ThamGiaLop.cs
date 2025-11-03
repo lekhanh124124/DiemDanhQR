@@ -1,9 +1,9 @@
-// File: Models/ThamGiaLop.cs
+using System;
+
 namespace DiemDanhQR_API.Models
 {
     public class ThamGiaLop
     {
-        // public int? MaThamGia { get; set; }
         public DateTime? NgayThamGia { get; set; }
         public bool? TrangThai { get; set; }
         public string? MaSinhVien { get; set; }

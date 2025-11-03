@@ -80,17 +80,90 @@ namespace DiemDanhQR_API.Controllers
         }
 
         // POST: /api/course/add-student
-        [HttpPost("add-student")]
-        [Authorize(Roles = "ADMIN,GV")]
-        public async Task<ActionResult<ApiResponse<AddStudentToCourseResponse>>> AddStudentToCourse([FromForm] AddStudentToCourseRequest req)
-        {
-            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
-            var data = await _svc.AddStudentToCourseAsync(req, currentUserId);
+        // [HttpPost("add-student")]
+        // [Authorize(Roles = "ADMIN,GV")]
+        // public async Task<ActionResult<ApiResponse<AddStudentToCourseResponse>>> AddStudentToCourse([FromForm] AddStudentToCourseRequest req)
+        // {
+        //     var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+        //     var data = await _svc.AddStudentToCourseAsync(req, currentUserId);
+        //     return Ok(new ApiResponse<AddStudentToCourseResponse>
+        //     {
+        //         Status = 200,
+        //         Message = "Thêm sinh viên vào lớp học phần thành công.",
+        //         Data = data
+        //     });
+        // }
 
-            return Ok(new ApiResponse<AddStudentToCourseResponse>
+        // GET: /api/course/semesters
+        [HttpGet("semesters")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<SemesterListItem>>>> GetSemesters([FromQuery] SemesterListRequest req)
+        {
+            var data = await _svc.GetSemestersAsync(req);
+            return Ok(new ApiResponse<PagedResult<SemesterListItem>>
             {
                 Status = 200,
-                Message = "Thêm sinh viên vào lớp học phần thành công.",
+                Message = "Lấy danh sách học kỳ thành công.",
+                Data = data
+            });
+        }
+
+        // POST: /api/course/create-semester
+        [HttpPost("create-semester")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<CreateSemesterResponse>>> CreateSemester([FromForm] CreateSemesterRequest req)
+        {
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+            var data = await _svc.CreateSemesterAsync(req, currentUserId);
+            return Ok(new ApiResponse<CreateSemesterResponse>
+            {
+                Status = 200,
+                Message = "Tạo học kỳ thành công.",
+                Data = data
+            });
+        }
+
+        // PUT: /api/course/update-semester
+        [HttpPut("update-semester")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<UpdateSemesterResponse>>> UpdateSemester([FromForm] UpdateSemesterRequest req)
+        {
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+            var data = await _svc.UpdateSemesterAsync(req, currentUserId);
+            return Ok(new ApiResponse<UpdateSemesterResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật học kỳ thành công.",
+                Data = data
+            });
+        }
+
+        // PUT: /api/course/update-subject
+        [HttpPut("update-subject")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<UpdateSubjectResponse>>> UpdateSubject([FromForm] UpdateSubjectRequest req)
+        {
+            var currentUser = HelperFunctions.GetUserIdFromClaims(User);
+            var data = await _svc.UpdateSubjectAsync(req, currentUser);
+            return Ok(new ApiResponse<UpdateSubjectResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật môn học thành công.",
+                Data = data
+            });
+        }
+
+        // PUT: /api/course/update-course
+        [HttpPut("update-course")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<UpdateCourseResponse>>> UpdateCourse([FromForm] UpdateCourseRequest req)
+        {
+            var currentUser = HelperFunctions.GetUserIdFromClaims(User);
+            var data = await _svc.UpdateCourseAsync(req, currentUser);
+            return Ok(new ApiResponse<UpdateCourseResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật lớp học phần thành công.",
                 Data = data
             });
         }

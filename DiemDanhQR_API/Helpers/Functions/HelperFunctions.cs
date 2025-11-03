@@ -28,9 +28,13 @@ namespace DiemDanhQR_API.Helpers
             return b64;
         }
 
-        //Lấy MaNguoiDung từ Claims nếu có. Ưu tiên: NameIdentifier -> Name -> Identity.Name
+        // Lấy TenDangNhap từ Claims (ưu tiên NameIdentifier; fallback UniqueName, preferred_username, sub, Name)
         public static string? GetUserIdFromClaims(ClaimsPrincipal? user)
-            => user?.FindFirstValue(ClaimTypes.NameIdentifier);
+            => user?.FindFirstValue(ClaimTypes.NameIdentifier)
+               ?? user?.FindFirstValue(JwtRegisteredClaimNames.UniqueName)
+               ?? user?.FindFirstValue("preferred_username")
+               ?? user?.FindFirstValue(JwtRegisteredClaimNames.Sub)
+               ?? user?.Identity?.Name;
 
         // Giờ Việt Nam (Unspecified) -> UTC (DateTime UTC). Dùng khi đọc từ DB rồi cần chuẩn hoá về UTC.
         public static DateTime VietnamToUtc(DateTime vietnamTime)

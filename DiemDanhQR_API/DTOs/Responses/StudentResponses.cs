@@ -70,4 +70,18 @@ namespace DiemDanhQR_API.DTOs.Responses
         public string? TonGiao { get; set; }
         public string? DiaChi { get; set; }
     }
+
+    public class AddStudentToCourseResponse
+    {
+        public string? MaLopHocPhan { get; set; } = default!;
+        public string? MaSinhVien { get; set; } = default!;
+        public string? NgayThamGia { get; set; }
+        public bool? TrangThai { get; set; }
+    }
+    public class RemoveStudentFromCourseResponse
+    {
+        public string? MaLopHocPhan { get; set; }
+        public string? MaSinhVien { get; set; }
+        public bool? TrangThai { get; set; } // false = đã “xóa” (ngừng tham gia)
+    }
 }

@@ -6,7 +6,6 @@ namespace DiemDanhQR_API.Repositories.Interfaces
     public interface IPermissionRepository
     {
         Task<(List<PhanQuyen> Items, int Total)> SearchAsync(
-            string? keyword,
             int? maQuyen,
             string? codeQuyen,
             string? tenQuyen,
@@ -19,7 +18,6 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         );
 
         Task<(List<ChucNang> Items, int Total)> SearchFunctionsAsync(
-            string? keyword,
             int? maChucNang,
             string? codeChucNang,
             string? tenChucNang,

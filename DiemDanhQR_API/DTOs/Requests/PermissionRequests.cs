@@ -4,7 +4,7 @@ namespace DiemDanhQR_API.DTOs.Requests
     public class PermissionListRequest
     {
         // Lọc
-        public string? Keyword { get; set; }
+        // public string? Keyword { get; set; } // removed
         public int? MaQuyen { get; set; }
         public string? CodeQuyen { get; set; }
         public string? TenQuyen { get; set; }
@@ -23,7 +23,7 @@ namespace DiemDanhQR_API.DTOs.Requests
     public class FunctionListRequest
     {
         // Lọc
-        public string? Keyword { get; set; }
+        // public string? Keyword { get; set; } // removed
         public int? MaChucNang { get; set; }
         public string? CodeChucNang { get; set; }
         public string? TenChucNang { get; set; }

@@ -11,24 +11,26 @@ namespace DiemDanhQR_API.Repositories.Implementations
         private readonly AppDbContext _db;
         public CourseRepository(AppDbContext db) => _db = db;
 
-        public async Task<(List<(LopHocPhan Lhp, MonHoc Mh, GiangVien Gv, NguoiDung Nd, DateTime? NgayThamGia, bool? TrangThaiThamGia)> Items, int Total)>
-                    SearchCoursesAsync(
-                        string? keyword,
-                        string? maLopHocPhan,
-                        string? tenLopHocPhan,
-                        bool? trangThai,
-                        string? tenMonHoc,
-                        byte? soTinChi,
-                        byte? soTiet,
-                        byte? hocKy,
-                        string? tenGiangVien,
-                        string? maMonHoc,
-                        string? maGiangVien,
-                        string? maSinhVien,     // NEW
-                        string? sortBy,
-                        bool desc,
-                        int page,
-                        int pageSize)
+        public async Task<(List<(LopHocPhan Lhp, MonHoc Mh, GiangVien Gv, NguoiDung Nd, HocKy Hk, DateTime? NgayThamGia, bool? TrangThaiThamGia)> Items, int Total)>
+            SearchCoursesAsync(
+                // string? keyword, // removed
+                string? maLopHocPhan,
+                string? tenLopHocPhan,
+                bool? trangThai,
+                string? tenMonHoc,
+                byte? soTinChi,
+                byte? soTiet,
+                string? tenGiangVien,
+                string? maMonHoc,
+                string? maGiangVien,
+                int? maHocKy,
+                short? namHoc,
+                byte? ky,
+                string? maSinhVien,
+                string? sortBy,
+                bool desc,
+                int page,
+                int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
@@ -38,21 +40,10 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 join m in _db.MonHoc.AsNoTracking() on l.MaMonHoc equals m.MaMonHoc
                 join gv in _db.GiangVien.AsNoTracking() on l.MaGiangVien equals gv.MaGiangVien
                 join nd in _db.NguoiDung.AsNoTracking() on gv.MaNguoiDung equals nd.MaNguoiDung
-                select new { l, m, gv, nd };
+                join hk in _db.HocKy.AsNoTracking() on l.MaHocKy equals hk.MaHocKy
+                select new { l, m, gv, nd, hk };
 
-            // ===== Filters gốc ===== (giữ nguyên như trước)
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim().ToLower();
-                baseQ = baseQ.Where(x =>
-                    (x.l.MaLopHocPhan ?? "").ToLower().Contains(kw) ||
-                    (x.l.TenLopHocPhan ?? "").ToLower().Contains(kw) ||
-                    (x.m.TenMonHoc ?? "").ToLower().Contains(kw) ||
-                    (x.m.MaMonHoc ?? "").ToLower().Contains(kw) ||
-                    (x.gv.MaGiangVien ?? "").ToLower().Contains(kw) ||
-                    (x.nd.HoTen ?? "").ToLower().Contains(kw)
-                );
-            }
+
             if (!string.IsNullOrWhiteSpace(maLopHocPhan))
             {
                 var code = maLopHocPhan.Trim().Replace(" ", "");
@@ -73,7 +64,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
             }
             if (soTinChi.HasValue) baseQ = baseQ.Where(x => (x.m.SoTinChi ?? 0) == soTinChi.Value);
             if (soTiet.HasValue) baseQ = baseQ.Where(x => (x.m.SoTiet ?? 0) == soTiet.Value);
-            if (hocKy.HasValue) baseQ = baseQ.Where(x => x.m.HocKy == hocKy.Value);
 
             if (!string.IsNullOrWhiteSpace(tenGiangVien))
                 baseQ = baseQ.Where(x => (x.nd.HoTen ?? "").ToLower().Contains(tenGiangVien.Trim().ToLower()));
@@ -84,7 +74,11 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 baseQ = baseQ.Where(x => ((x.gv.MaGiangVien ?? "").Replace(" ", "")) == code);
             }
 
-            // ===== Sorting (giữ như cũ) =====
+            if (maHocKy.HasValue) baseQ = baseQ.Where(x => x.hk.MaHocKy == maHocKy.Value);
+            if (namHoc.HasValue) baseQ = baseQ.Where(x => x.hk.NamHoc == namHoc.Value);
+            if (ky.HasValue) baseQ = baseQ.Where(x => x.hk.Ky == ky.Value);
+
+            // Sorting
             var key = (sortBy ?? "MaLopHocPhan").Trim().ToLowerInvariant();
             baseQ = key switch
             {
@@ -94,47 +88,44 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 "tenmonhoc" => desc ? baseQ.OrderByDescending(x => x.m.TenMonHoc) : baseQ.OrderBy(x => x.m.TenMonHoc),
                 "sotinchi" => desc ? baseQ.OrderByDescending(x => x.m.SoTinChi) : baseQ.OrderBy(x => x.m.SoTinChi),
                 "sotiet" => desc ? baseQ.OrderByDescending(x => x.m.SoTiet) : baseQ.OrderBy(x => x.m.SoTiet),
-                "hocky" => desc ? baseQ.OrderByDescending(x => x.m.HocKy) : baseQ.OrderBy(x => x.m.HocKy),
                 "magiangvien" => desc ? baseQ.OrderByDescending(x => x.gv.MaGiangVien) : baseQ.OrderBy(x => x.gv.MaGiangVien),
                 "tengiangvien" => desc ? baseQ.OrderByDescending(x => x.nd.HoTen) : baseQ.OrderBy(x => x.nd.HoTen),
+                "namhoc" => desc ? baseQ.OrderByDescending(x => x.hk.NamHoc) : baseQ.OrderBy(x => x.hk.NamHoc),
+                "ky" => desc ? baseQ.OrderByDescending(x => x.hk.Ky) : baseQ.OrderBy(x => x.hk.Ky),
                 "malophocphan" or _ => desc ? baseQ.OrderByDescending(x => x.l.MaLopHocPhan) : baseQ.OrderBy(x => x.l.MaLopHocPhan),
             };
 
-            // ===== Tham gia: nếu có MaSinhVien -> join ThamGiaLop (lọc theo SV); nếu không -> null fields =====
-            var qFinalQuery = !string.IsNullOrWhiteSpace(maSinhVien)
+            // Join tham gia nếu lọc theo MaSinhVien
+            var qFinal = !string.IsNullOrWhiteSpace(maSinhVien)
                 ? (
                     from x in baseQ
                     join t in _db.ThamGiaLop.AsNoTracking()
-                         on x.l.MaLopHocPhan equals t.MaLopHocPhan
-                    where (t.MaSinhVien ?? "").Replace(" ", "") == maSinhVien.Trim().Replace(" ", "")
-                    select new { l = x.l, m = x.m, gv = x.gv, nd = x.nd, Ngay = t.NgayThamGia, TrangThai = t.TrangThai }
+                        on x.l.MaLopHocPhan equals t.MaLopHocPhan
+                    where (t.MaSinhVien ?? "").Replace(" ", "") == (maSinhVien!.Trim().Replace(" ", ""))
+                    select new { x.l, x.m, x.gv, x.nd, x.hk, Ngay = t.NgayThamGia, TrangThai = t.TrangThai }
                   )
                 : (
                     from x in baseQ
-                    select new { l = x.l, m = x.m, gv = x.gv, nd = x.nd, Ngay = (DateTime?)null, TrangThai = (bool?)null }
+                    select new { x.l, x.m, x.gv, x.nd, x.hk, Ngay = (DateTime?)null, TrangThai = (bool?)null }
                   );
 
-            var total = await qFinalQuery.CountAsync();
+            var total = await qFinal.CountAsync();
 
-            var list = await qFinalQuery
+            var list = await qFinal
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            var items = list
-                .Select(x => (x.l, x.m, x.gv, x.nd, x.Ngay, x.TrangThai)) // (Lhp, Mh, Gv, Nd, NgayThamGia?, TrangThaiThamGia?)
-                .ToList();
-
+            var items = list.Select(x => (x.l, x.m, x.gv, x.nd, x.hk, x.Ngay, x.TrangThai)).ToList();
             return (items, total);
         }
 
         public async Task<(List<MonHoc> Items, int Total)> SearchSubjectsAsync(
-            string? keyword,
+            // string? keyword, // removed
             string? maMonHoc,
             string? tenMonHoc,
             byte? soTinChi,
             byte? soTiet,
-            byte? hocKy,
             bool? trangThai,
             string? sortBy,
             bool desc,
@@ -145,17 +136,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
             var q = _db.MonHoc.AsNoTracking().AsQueryable();
-
-            // ===== Filters =====
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim().ToLower();
-                q = q.Where(m =>
-                    (m.MaMonHoc ?? "").ToLower().Contains(kw) ||
-                    (m.TenMonHoc ?? "").ToLower().Contains(kw) ||
-                    (m.MoTa ?? "").ToLower().Contains(kw)
-                );
-            }
 
             if (!string.IsNullOrWhiteSpace(maMonHoc))
             {
@@ -168,23 +148,18 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
             if (soTinChi.HasValue) q = q.Where(m => (m.SoTinChi ?? 0) == soTinChi.Value);
             if (soTiet.HasValue) q = q.Where(m => (m.SoTiet ?? 0) == soTiet.Value);
-            if (hocKy.HasValue) q = q.Where(m => m.HocKy == hocKy.Value);
             if (trangThai.HasValue) q = q.Where(m => (m.TrangThai ?? true) == trangThai.Value);
 
-            // ===== Sorting =====
             var key = (sortBy ?? "MaMonHoc").Trim().ToLowerInvariant();
             q = key switch
             {
                 "tenmonhoc" => desc ? q.OrderByDescending(m => m.TenMonHoc) : q.OrderBy(m => m.TenMonHoc),
                 "sotinchi" => desc ? q.OrderByDescending(m => m.SoTinChi) : q.OrderBy(m => m.SoTinChi),
                 "sotiet" => desc ? q.OrderByDescending(m => m.SoTiet) : q.OrderBy(m => m.SoTiet),
-                "hocky" => desc ? q.OrderByDescending(m => m.HocKy) : q.OrderBy(m => m.HocKy),
                 "trangthai" => desc ? q.OrderByDescending(m => m.TrangThai) : q.OrderBy(m => m.TrangThai),
-                "mamonhoc" or _
-                             => desc ? q.OrderByDescending(m => m.MaMonHoc) : q.OrderBy(m => m.MaMonHoc),
+                "mamonhoc" or _ => desc ? q.OrderByDescending(m => m.MaMonHoc) : q.OrderBy(m => m.MaMonHoc),
             };
 
-            // ===== Paging =====
             var total = await q.CountAsync();
             var items = await q.Skip((page - 1) * pageSize)
                                .Take(pageSize)
@@ -197,8 +172,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
         {
             if (string.IsNullOrWhiteSpace(maMonHoc)) return false;
             var code = maMonHoc.Trim();
-            return await _db.MonHoc.AsNoTracking()
-                .AnyAsync(m => (m.MaMonHoc ?? "") == code);
+            return await _db.MonHoc.AsNoTracking().AnyAsync(m => (m.MaMonHoc ?? "") == code);
         }
 
         public async Task AddSubjectAsync(MonHoc subject)
@@ -206,12 +180,24 @@ namespace DiemDanhQR_API.Repositories.Implementations
             _db.MonHoc.Add(subject);
             await _db.SaveChangesAsync();
         }
+
+        public Task<MonHoc?> GetSubjectByCodeAsync(string maMonHoc)
+        {
+            var code = (maMonHoc ?? "").Trim();
+            return _db.MonHoc.FirstOrDefaultAsync(m => (m.MaMonHoc ?? "") == code);
+        }
+
+        public async Task UpdateSubjectAsync(MonHoc subject)
+        {
+            _db.MonHoc.Update(subject);
+            await _db.SaveChangesAsync();
+        }
+
         public async Task<bool> CourseExistsAsync(string maLopHocPhan)
         {
             if (string.IsNullOrWhiteSpace(maLopHocPhan)) return false;
             var code = maLopHocPhan.Trim();
-            return await _db.LopHocPhan.AsNoTracking()
-                .AnyAsync(l => (l.MaLopHocPhan ?? "") == code);
+            return await _db.LopHocPhan.AsNoTracking().AnyAsync(l => (l.MaLopHocPhan ?? "") == code);
         }
 
         public async Task AddCourseAsync(LopHocPhan course)
@@ -220,37 +206,97 @@ namespace DiemDanhQR_API.Repositories.Implementations
             await _db.SaveChangesAsync();
         }
 
+        public Task<LopHocPhan?> GetCourseByCodeAsync(string maLopHocPhan)
+        {
+            var code = (maLopHocPhan ?? "").Trim();
+            return _db.LopHocPhan.FirstOrDefaultAsync(l => (l.MaLopHocPhan ?? "") == code);
+        }
+
+        public async Task UpdateCourseAsync(LopHocPhan course)
+        {
+            _db.LopHocPhan.Update(course);
+            await _db.SaveChangesAsync();
+        }
+
         public async Task<bool> LecturerExistsByCodeAsync(string maGiangVien)
         {
             if (string.IsNullOrWhiteSpace(maGiangVien)) return false;
             var code = maGiangVien.Trim();
-            return await _db.GiangVien.AsNoTracking()
-                .AnyAsync(g => (g.MaGiangVien ?? "") == code);
+            return await _db.GiangVien.AsNoTracking().AnyAsync(g => (g.MaGiangVien ?? "") == code);
         }
-        public async Task WriteActivityLogAsync(LichSuHoatDong log)
+
+        public async Task<bool> SemesterExistsByIdAsync(int maHocKy)
         {
-            _db.LichSuHoatDong.Add(log);
+            return await _db.HocKy.AsNoTracking().AnyAsync(h => h.MaHocKy == maHocKy);
+        }
+
+        public async Task LogActivityAsync(string? tenDangNhap, string hanhDong)
+        {
+            if (string.IsNullOrWhiteSpace(tenDangNhap)) return;
+            var user = await _db.NguoiDung.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.TenDangNhap == tenDangNhap);
+            if (user == null) return;
+
+            _db.LichSuHoatDong.Add(new LichSuHoatDong
+            {
+                MaNguoiDung = user.MaNguoiDung,
+                HanhDong = hanhDong,
+                ThoiGian = DateTime.Now
+            });
             await _db.SaveChangesAsync();
         }
-        public async Task<bool> StudentExistsByCodeAsync(string maSinhVien)
+
+        public async Task<(List<HocKy> Items, int Total)> SearchSemestersAsync(
+            short? namHoc,
+            byte? ky,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
         {
-            if (string.IsNullOrWhiteSpace(maSinhVien)) return false;
-            var code = maSinhVien.Trim();
-            return await _db.SinhVien.AsNoTracking()
-                .AnyAsync(s => (s.MaSinhVien ?? "") == code);
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
+
+            var q = _db.HocKy.AsNoTracking().AsQueryable();
+
+            if (namHoc.HasValue) q = q.Where(x => x.NamHoc == namHoc.Value);
+            if (ky.HasValue) q = q.Where(x => x.Ky == ky.Value);
+
+            var key = (sortBy ?? "MaHocKy").Trim().ToLowerInvariant();
+            q = key switch
+            {
+                "namhoc" => (desc ? q.OrderByDescending(x => x.NamHoc) : q.OrderBy(x => x.NamHoc)),
+                "ky" => (desc ? q.OrderByDescending(x => x.Ky) : q.OrderBy(x => x.Ky)),
+                "mahocky" or _ => (desc ? q.OrderByDescending(x => x.MaHocKy) : q.OrderBy(x => x.MaHocKy)),
+            };
+
+            var total = await q.CountAsync();
+            var items = await q.Skip((page - 1) * pageSize)
+                               .Take(pageSize)
+                               .ToListAsync();
+
+            return (items, total);
         }
 
-        public async Task<bool> ParticipationExistsAsync(string maLopHocPhan, string maSinhVien)
+        public async Task<bool> ExistsSemesterAsync(short? namHoc, byte? ky, int? excludeId = null)
         {
-            var lhp = maLopHocPhan?.Trim() ?? "";
-            var sv = maSinhVien?.Trim() ?? "";
-            return await _db.ThamGiaLop.AsNoTracking()
-                .AnyAsync(t => (t.MaLopHocPhan ?? "") == lhp && (t.MaSinhVien ?? "") == sv);
+            var q = _db.HocKy.AsNoTracking().Where(x => x.NamHoc == namHoc && x.Ky == ky);
+            if (excludeId.HasValue) q = q.Where(x => x.MaHocKy != excludeId.Value);
+            return await q.AnyAsync();
         }
 
-        public async Task AddParticipationAsync(ThamGiaLop thamGia)
+        public async Task AddSemesterAsync(HocKy hk)
         {
-            _db.ThamGiaLop.Add(thamGia);
+            _db.HocKy.Add(hk);
+            await _db.SaveChangesAsync();
+        }
+
+        public Task<HocKy?> GetSemesterByIdAsync(int maHocKy)
+            => _db.HocKy.FirstOrDefaultAsync(x => x.MaHocKy == maHocKy);
+
+        public async Task UpdateSemesterAsync(HocKy hk)
+        {
+            _db.HocKy.Update(hk);
             await _db.SaveChangesAsync();
         }
     }

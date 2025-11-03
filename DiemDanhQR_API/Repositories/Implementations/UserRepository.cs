@@ -11,9 +11,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
         private readonly AppDbContext _db;
         public UserRepository(AppDbContext db) => _db = db;
 
-        public Task<bool> ExistsByMaNguoiDungAsync(string maNguoiDung)
-            => _db.NguoiDung.AnyAsync(x => x.MaNguoiDung == maNguoiDung);
-
         public Task<bool> ExistsByTenDangNhapAsync(string tenDangNhap)
             => _db.NguoiDung.AnyAsync(x => x.TenDangNhap == tenDangNhap);
 
@@ -27,21 +24,20 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
         public Task SaveChangesAsync() => _db.SaveChangesAsync();
 
-        public Task<NguoiDung?> GetByMaNguoiDungAsync(string maNguoiDung)
+        public Task<NguoiDung?> GetByIdAsync(int maNguoiDung)
             => _db.NguoiDung.FirstOrDefaultAsync(u => u.MaNguoiDung == maNguoiDung);
 
         public Task<NguoiDung?> GetByTenDangNhapAsync(string tenDangNhap)
             => _db.NguoiDung.FirstOrDefaultAsync(u => u.TenDangNhap == tenDangNhap);
 
-        public Task<SinhVien?> GetStudentByMaNguoiDungAsync(string maNguoiDung)
+        public Task<SinhVien?> GetStudentByMaNguoiDungAsync(int maNguoiDung)
             => _db.SinhVien.FirstOrDefaultAsync(s => s.MaNguoiDung == maNguoiDung);
 
-        public Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung)
+        public Task<GiangVien?> GetLecturerByMaNguoiDungAsync(int maNguoiDung)
             => _db.GiangVien.FirstOrDefaultAsync(g => g.MaNguoiDung == maNguoiDung);
 
         public async Task<(List<(LichSuHoatDong Log, NguoiDung User)> Items, int Total)> SearchActivitiesAsync(
-            string? keyword,
-            string? maNguoiDung,
+            string? tenDangNhap,
             DateTime? from,
             DateTime? to,
             string? sortBy,
@@ -58,19 +54,10 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 select new { l, u };
 
             // Filters
-            if (!string.IsNullOrWhiteSpace(keyword))
+            if (!string.IsNullOrWhiteSpace(tenDangNhap))
             {
-                var kw = keyword.Trim().ToLower();
-                q = q.Where(x =>
-                    (x.l.HanhDong ?? "").ToLower().Contains(kw) ||
-                    (x.u.TenDangNhap ?? "").ToLower().Contains(kw) ||
-                    (x.u.MaNguoiDung ?? "").ToLower().Contains(kw));
-            }
-
-            if (!string.IsNullOrWhiteSpace(maNguoiDung))
-            {
-                var code = maNguoiDung.Trim().Replace(" ", "");
-                q = q.Where(x => ((x.u.MaNguoiDung ?? "").Replace(" ", "")) == code);
+                var userFilter = tenDangNhap.Trim();
+                q = q.Where(x => x.u.TenDangNhap == userFilter);
             }
 
             if (from.HasValue) q = q.Where(x => x.l.ThoiGian >= from.Value);
@@ -84,8 +71,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 "hanhdong" => desc ? q.OrderByDescending(x => x.l.HanhDong) : q.OrderBy(x => x.l.HanhDong),
                 "manguoidung" => desc ? q.OrderByDescending(x => x.u.MaNguoiDung) : q.OrderBy(x => x.u.MaNguoiDung),
                 "tendangnhap" => desc ? q.OrderByDescending(x => x.u.TenDangNhap) : q.OrderBy(x => x.u.TenDangNhap),
-                "thoigian" or _
-                              => desc ? q.OrderByDescending(x => x.l.ThoiGian) : q.OrderBy(x => x.l.ThoiGian),
+                "thoigian" or _ => desc ? q.OrderByDescending(x => x.l.ThoiGian) : q.OrderBy(x => x.l.ThoiGian),
             };
 
             // Paging
@@ -98,6 +84,7 @@ namespace DiemDanhQR_API.Repositories.Implementations
             var items = list.Select(x => (x.l, x.u)).ToList();
             return (items, total);
         }
+
         public Task UpdateAsync(NguoiDung entity)
         {
             _db.NguoiDung.Update(entity);

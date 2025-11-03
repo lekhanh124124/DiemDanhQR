@@ -32,11 +32,11 @@ namespace DiemDanhQR_API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<LogoutResponse>>> Logout()
         {
-            var userId = HelperFunctions.GetUserIdFromClaims(User);
-            if (string.IsNullOrWhiteSpace(userId))
+            var tenDangNhap = HelperFunctions.GetUserIdFromClaims(User);
+            if (string.IsNullOrWhiteSpace(tenDangNhap))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng hiện tại.");
 
-            var res = await _authService.LogoutAsync(userId!);
+            var res = await _authService.LogoutAsync(tenDangNhap!);
             return Ok(new ApiResponse<LogoutResponse>
             {
                 Status = 200,
@@ -62,11 +62,11 @@ namespace DiemDanhQR_API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<ChangePasswordResponse>>> ChangePassword([FromBody] ChangePasswordRequest req)
         {
-            var userId = HelperFunctions.GetUserIdFromClaims(User);
-            if (string.IsNullOrWhiteSpace(userId))
+            var tenDangNhap = HelperFunctions.GetUserIdFromClaims(User);
+            if (string.IsNullOrWhiteSpace(tenDangNhap))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng hiện tại.");
 
-            var res = await _authService.ChangePasswordAsync(userId!, req);
+            var res = await _authService.ChangePasswordAsync(tenDangNhap!, req);
             return Ok(new ApiResponse<ChangePasswordResponse>
             {
                 Status = 200,

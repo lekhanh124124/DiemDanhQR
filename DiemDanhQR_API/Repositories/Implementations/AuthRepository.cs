@@ -14,9 +14,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public Task<NguoiDung?> GetByUserNameAsync(string tenDangNhap)
             => _db.NguoiDung.FirstOrDefaultAsync(x => x.TenDangNhap == tenDangNhap);
 
-        public Task<NguoiDung?> GetByIdAsync(string maNguoiDung)
-            => _db.NguoiDung.FirstOrDefaultAsync(x => x.MaNguoiDung == maNguoiDung);
-
         public Task<PhanQuyen?> GetRoleAsync(int maQuyen)
             => _db.PhanQuyen.FirstOrDefaultAsync(r => r.MaQuyen == maQuyen);
 
@@ -54,16 +51,20 @@ namespace DiemDanhQR_API.Repositories.Implementations
             user.MatKhau = newPasswordHash;
             return Task.CompletedTask;
         }
-        
-        public async Task LogActivityAsync(string maNguoiDung, string hanhDong)
+
+        public async Task LogActivityAsync(string tenDangNhap, string hanhDong)
         {
+            var user = await _db.NguoiDung.AsNoTracking()
+                            .FirstOrDefaultAsync(x => x.TenDangNhap == tenDangNhap);
+
+            if (user == null) return; // không ghi nếu không xác định được user
+
             _db.LichSuHoatDong.Add(new LichSuHoatDong
             {
-                MaNguoiDung = maNguoiDung,
+                MaNguoiDung = user.MaNguoiDung,
                 HanhDong = hanhDong,
                 ThoiGian = DateTime.Now
             });
-            await Task.CompletedTask;
         }
 
         public Task SaveChangesAsync() => _db.SaveChangesAsync();

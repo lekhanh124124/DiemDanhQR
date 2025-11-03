@@ -10,9 +10,10 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task AddStudentAsync(SinhVien entity);
 
         // User
-        Task<NguoiDung?> GetUserByMaAsync(string maNguoiDung);
+        Task<NguoiDung?> GetUserByIdAsync(int maNguoiDung);
         Task<NguoiDung?> GetUserByUsernameAsync(string tenDangNhap);
         Task AddUserAsync(NguoiDung user);
+        Task UpdateUserAsync(NguoiDung user);
 
         // Role
         Task<PhanQuyen?> GetRoleAsync(int maQuyen);
@@ -20,23 +21,31 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task SaveChangesAsync();
 
         Task<(List<(SinhVien Sv, NguoiDung Nd)> Items, int Total)> SearchStudentsAsync(
-            string? keyword,
             string? khoa,
             string? nganh,
             int? namNhapHoc,
             bool? trangThaiUser,
-            string? maLopHocPhan,   // NEW
+            string? maLopHocPhan,
             string? sortBy,
             bool desc,
             int page,
             int pageSize
         );
 
-
-        Task<SinhVien?> GetStudentByMaNguoiDungAsync(string maNguoiDung);
+        Task<SinhVien?> GetStudentByMaNguoiDungAsync(int maNguoiDung);
+        Task<SinhVien?> GetStudentByMaSinhVienAsync(string maSinhVien);
         Task UpdateStudentAsync(SinhVien entity);
-        Task<bool> ExistsUsernameForAnotherAsync(string tenDangNhap, string maNguoiDungExclude);
-        Task UpdateUserAsync(NguoiDung user);
+
+        // Activity
         Task AddActivityAsync(LichSuHoatDong log);
+
+        // Moved from CourseRepository for adding student to course
+        Task<bool> CourseExistsAsync(string maLopHocPhan);
+        Task<bool> ParticipationExistsAsync(string maLopHocPhan, string maSinhVien);
+        Task AddParticipationAsync(ThamGiaLop thamGia);
+
+        // New for remove
+        Task<ThamGiaLop?> GetParticipationAsync(string maLopHocPhan, string maSinhVien);
+        Task UpdateParticipationAsync(ThamGiaLop thamGia);
     }
 }

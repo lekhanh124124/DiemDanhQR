@@ -22,7 +22,6 @@ namespace DiemDanhQR_API.Services.Implementations
             var desc = sortDir == "DESC";
 
             var (rows, total) = await _repo.SearchSchedulesAsync(
-                req.Keyword,
                 req.MaBuoi,
                 req.MaPhong,
                 req.TenPhong,
@@ -80,7 +79,6 @@ namespace DiemDanhQR_API.Services.Implementations
             var desc = sortDir == "DESC";
 
             var (rows, total) = await _repo.SearchRoomsAsync(
-                keyword: req.Keyword,
                 maPhong: req.MaPhong,
                 tenPhong: req.TenPhong,
                 toaNha: req.ToaNha,
@@ -114,7 +112,6 @@ namespace DiemDanhQR_API.Services.Implementations
         }
         public async Task<CreateRoomResponse> CreateRoomAsync(CreateRoomRequest req, string? currentUserId)
         {
-            // kiểm tra trùng tên phòng (không phân biệt hoa thường)
             var tenPhong = (req.TenPhong ?? "").Trim();
             if (await _repo.RoomNameExistsAsync(tenPhong))
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Tên phòng đã tồn tại.");
@@ -130,15 +127,10 @@ namespace DiemDanhQR_API.Services.Implementations
 
             await _repo.AddRoomAsync(entity);
 
-            // ghi log
-            var log = new LichSuHoatDong
-            {
-                MaNguoiDung = string.IsNullOrWhiteSpace(currentUserId) ? "system" : currentUserId,
-                HanhDong = $"Tạo phòng học: {entity.TenPhong}" +
-                           (string.IsNullOrWhiteSpace(entity.ToaNha) ? "" : $" - {entity.ToaNha}") +
-                           (entity.Tang.HasValue ? $" (Tầng {entity.Tang})" : "")
-            };
-            await _repo.WriteActivityLogAsync(log);
+            // Ghi log theo TenDangNhap -> map sang MaNguoiDung trong repo
+            await _repo.LogActivityAsync(currentUserId, $"Tạo phòng học: {entity.TenPhong}"
+                + (string.IsNullOrWhiteSpace(entity.ToaNha) ? "" : $" - {entity.ToaNha}")
+                + (entity.Tang.HasValue ? $" (Tầng {entity.Tang})" : ""));
 
             return new CreateRoomResponse
             {
@@ -159,19 +151,14 @@ namespace DiemDanhQR_API.Services.Implementations
             var tietBd = req.TietBatDau!.Value;
             var soTiet = req.SoTiet!.Value;
 
-            // 1) Check tồn tại lớp học phần & phòng
             if (!await _repo.CourseExistsByCodeAsync(maLhp))
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Lớp học phần không tồn tại.");
             if (!await _repo.RoomExistsByIdAsync(maPhong))
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Phòng học không tồn tại.");
 
-            // 2) Chặn trùng cùng lớp + cùng ngày + cùng tiết bắt đầu
             if (await _repo.ScheduleExistsAsync(maLhp, ngay, tietBd))
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Buổi học đã tồn tại (trùng lớp, ngày, tiết bắt đầu).");
 
-            // (tuỳ chọn) có thể kiểm tra va chạm phòng theo khung tiết ở đây
-
-            // 3) Tạo entity
             var entity = new BuoiHoc
             {
                 MaLopHocPhan = maLhp,
@@ -185,14 +172,9 @@ namespace DiemDanhQR_API.Services.Implementations
 
             await _repo.AddScheduleAsync(entity);
 
-            // 4) Log
-            await _repo.WriteActivityLogAsync(new LichSuHoatDong
-            {
-                MaNguoiDung = string.IsNullOrWhiteSpace(currentUserId) ? "system" : currentUserId,
-                HanhDong = $"Tạo buổi học: {entity.MaLopHocPhan} - {entity.NgayHoc:dd-MM-yyyy} (Tiết {entity.TietBatDau}, {entity.SoTiet} tiết) - Phòng {entity.MaPhong}"
-            });
+            await _repo.LogActivityAsync(currentUserId,
+                $"Tạo buổi học: {entity.MaLopHocPhan} - {entity.NgayHoc:dd-MM-yyyy} (Tiết {entity.TietBatDau}, {entity.SoTiet} tiết) - Phòng {entity.MaPhong}");
 
-            // 5) Lấy tên phòng (nếu muốn trả về đẹp)
             var phong = await _repo.GetRoomByIdAsync(entity.MaPhong ?? 0);
 
             return new CreateScheduleResponse

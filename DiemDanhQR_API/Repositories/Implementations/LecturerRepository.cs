@@ -17,7 +17,13 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public async Task AddLecturerAsync(GiangVien entity)
             => await _db.GiangVien.AddAsync(entity);
 
-        public Task<NguoiDung?> GetUserByMaAsync(string maNguoiDung)
+        public Task<GiangVien?> GetLecturerByMaNguoiDungAsync(int maNguoiDung)
+            => _db.GiangVien.FirstOrDefaultAsync(g => g.MaNguoiDung == maNguoiDung);
+
+        public Task<GiangVien?> GetLecturerByMaGiangVienAsync(string maGiangVien)
+            => _db.GiangVien.FirstOrDefaultAsync(g => g.MaGiangVien == maGiangVien);
+
+        public Task<NguoiDung?> GetUserByIdAsync(int maNguoiDung)
             => _db.NguoiDung.FirstOrDefaultAsync(u => u.MaNguoiDung == maNguoiDung);
 
         public Task<NguoiDung?> GetUserByUsernameAsync(string tenDangNhap)
@@ -29,9 +35,27 @@ namespace DiemDanhQR_API.Repositories.Implementations
         public Task<PhanQuyen?> GetRoleAsync(int maQuyen)
             => _db.PhanQuyen.FirstOrDefaultAsync(r => r.MaQuyen == maQuyen);
 
+        public Task UpdateLecturerAsync(GiangVien entity)
+        {
+            _db.GiangVien.Update(entity);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateUserAsync(NguoiDung user)
+        {
+            _db.NguoiDung.Update(user);
+            return Task.CompletedTask;
+        }
+
+        public async Task AddActivityAsync(LichSuHoatDong log)
+        {
+            await _db.LichSuHoatDong.AddAsync(log);
+        }
+
         public Task SaveChangesAsync() => _db.SaveChangesAsync();
+
         public async Task<(List<(GiangVien Gv, NguoiDung Nd)> Items, int Total)> SearchLecturersAsync(
-            string? keyword,
+            // string? keyword, // removed
             string? khoa,
             string? hocHam,
             string? hocVi,
@@ -51,16 +75,8 @@ namespace DiemDanhQR_API.Repositories.Implementations
                         on gv.MaNguoiDung equals nd.MaNguoiDung
                     select new { gv, nd };
 
-            if (!string.IsNullOrWhiteSpace(keyword))
-            {
-                var kw = keyword.Trim();
-                q = q.Where(x =>
-                    (x.gv.MaGiangVien ?? "").Contains(kw) ||
-                    (x.nd.HoTen ?? "").Contains(kw) ||
-                    (x.nd.Email ?? "").Contains(kw) ||
-                    (x.nd.SoDienThoai ?? "").Contains(kw)
-                );
-            }
+            // removed keyword OR filter
+            // if (!string.IsNullOrWhiteSpace(keyword)) { ... }
 
             if (!string.IsNullOrWhiteSpace(khoa))
                 q = q.Where(x => x.gv.Khoa == khoa);
@@ -91,7 +107,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 "hoten" or _ => (desc ? q.OrderByDescending(x => x.nd.HoTen) : q.OrderBy(x => x.nd.HoTen)),
             };
 
-
             var total = await q.CountAsync();
 
             var list = await q.Skip((page - 1) * pageSize)
@@ -101,29 +116,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
             var items = list.Select(x => (x.gv, x.nd)).ToList();
             return (items, total);
-        }
-
-        public Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung)
-            => _db.GiangVien.FirstOrDefaultAsync(g => g.MaNguoiDung == maNguoiDung);
-
-        public Task UpdateLecturerAsync(GiangVien entity)
-        {
-            _db.GiangVien.Update(entity);
-            return Task.CompletedTask;
-        }
-
-        public Task UpdateUserAsync(NguoiDung user)
-        {
-            _db.NguoiDung.Update(user);
-            return Task.CompletedTask;
-        }
-
-        public async Task<bool> ExistsUsernameForAnotherAsync(string tenDangNhap)
-            => await _db.NguoiDung.AnyAsync(u => u.TenDangNhap == tenDangNhap);
-
-        public async Task AddActivityAsync(LichSuHoatDong log)
-        {
-            await _db.LichSuHoatDong.AddAsync(log);
         }
     }
 }

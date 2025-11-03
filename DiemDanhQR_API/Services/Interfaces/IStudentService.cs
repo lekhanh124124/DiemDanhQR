@@ -9,5 +9,11 @@ namespace DiemDanhQR_API.Services.Interfaces
         Task<CreateStudentResponse> CreateAsync(CreateStudentRequest request);
         Task<PagedResult<StudentListItemResponse>> GetListAsync(GetStudentsRequest request);
         Task<UpdateStudentResponse> UpdateAsync(UpdateStudentRequest request);
+
+        // Moved from CourseService
+        Task<AddStudentToCourseResponse> AddStudentToCourseAsync(AddStudentToCourseRequest req, string? currentUserTenDangNhap);
+
+        // New: soft-remove participation
+        Task<RemoveStudentFromCourseResponse> RemoveStudentFromCourseAsync(RemoveStudentFromCourseRequest req, string? currentUserTenDangNhap);
     }
 }

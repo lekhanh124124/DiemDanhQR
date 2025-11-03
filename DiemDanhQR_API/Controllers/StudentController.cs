@@ -26,9 +26,13 @@ namespace DiemDanhQR_API.Controllers
         [RequestSizeLimit(5_000_000)]
         public async Task<ActionResult<ApiResponse<CreateStudentResponse>>> Create([FromForm] CreateStudentRequest req)
         {
-            req.MaNguoiDung ??= req.MaSinhVien; // mặc định
-            var data = await _svc.CreateAsync(req); // service sẽ tự xử lý file
-            return Ok(new ApiResponse<CreateStudentResponse> { Status = 200, Message = "Tạo sinh viên thành công.", Data = data });
+            var data = await _svc.CreateAsync(req); 
+            return Ok(new ApiResponse<CreateStudentResponse>
+            {
+                Status = 200,
+                Message = "Tạo sinh viên thành công.",
+                Data = data
+            });
 
         }
 
@@ -48,13 +52,47 @@ namespace DiemDanhQR_API.Controllers
         [HttpPut("update")]
         [Authorize(Roles = "ADMIN")]
         [RequestSizeLimit(5_000_000)]
-        public async Task<ActionResult<ApiResponse<UpdateStudentResponse>>> Update([FromForm] UpdateStudentRequest req, IFormFile? Avatar)
+        public async Task<ActionResult<ApiResponse<UpdateStudentResponse>>> Update([FromForm] UpdateStudentRequest req)
         {
-            var data = await _svc.UpdateAsync(req); // service sẽ tự xử lý file
-            return Ok(new ApiResponse<UpdateStudentResponse> { Status = 200, Message = "Cập nhật sinh viên thành công.", Data = data });
+            var data = await _svc.UpdateAsync(req); 
+            return Ok(new ApiResponse<UpdateStudentResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật sinh viên thành công.",
+                Data = data
+            });
+        }
 
+        // POST: /api/student/add-to-course
+        [HttpPost("add-to-course")]
+        [Authorize(Roles = "ADMIN,GV")]
+        public async Task<ActionResult<ApiResponse<AddStudentToCourseResponse>>> AddToCourse([FromForm] AddStudentToCourseRequest req)
+        {
+            var currentUser = HelperFunctions.GetUserIdFromClaims(User); // TenDangNhap từ token
+            var data = await _svc.AddStudentToCourseAsync(req, currentUser);
+
+            return Ok(new ApiResponse<AddStudentToCourseResponse>
+            {
+                Status = 200,
+                Message = "Thêm sinh viên vào lớp học phần thành công.",
+                Data = data
+            });
+        }
+
+        // PUT: /api/student/remove-from-course
+        [HttpPut("remove-from-course")]
+        [Authorize(Roles = "ADMIN,GV")]
+        public async Task<ActionResult<ApiResponse<RemoveStudentFromCourseResponse>>> RemoveFromCourse([FromForm] RemoveStudentFromCourseRequest req)
+        {
+            var currentUser = HelperFunctions.GetUserIdFromClaims(User); // TenDangNhap từ token
+            var data = await _svc.RemoveStudentFromCourseAsync(req, currentUser);
+
+            return Ok(new ApiResponse<RemoveStudentFromCourseResponse>
+            {
+                Status = 200,
+                Message = "Gỡ sinh viên khỏi lớp học phần thành công.",
+                Data = data
+            });
         }
     }
-
-
 }

@@ -1,4 +1,5 @@
-// File: Models/DiemDanh.cs
+using System;
+
 namespace DiemDanhQR_API.Models
 {
     public class DiemDanh

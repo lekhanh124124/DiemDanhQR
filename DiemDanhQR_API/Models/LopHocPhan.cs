@@ -9,5 +9,6 @@ namespace DiemDanhQR_API.Models
 
         public string? MaMonHoc { get; set; }
         public string? MaGiangVien { get; set; }
+        public int? MaHocKy { get; set; }
     }
 }

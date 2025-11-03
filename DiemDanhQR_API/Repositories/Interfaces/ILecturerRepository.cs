@@ -8,18 +8,23 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         // Lecturer
         Task<bool> ExistsLecturerAsync(string maGiangVien);
         Task AddLecturerAsync(GiangVien entity);
+        Task<GiangVien?> GetLecturerByMaNguoiDungAsync(int maNguoiDung);
+        Task<GiangVien?> GetLecturerByMaGiangVienAsync(string maGiangVien);
+        Task UpdateLecturerAsync(GiangVien entity);
 
         // User
-        Task<NguoiDung?> GetUserByMaAsync(string maNguoiDung);
+        Task<NguoiDung?> GetUserByIdAsync(int maNguoiDung);
         Task<NguoiDung?> GetUserByUsernameAsync(string tenDangNhap);
         Task AddUserAsync(NguoiDung user);
+        Task UpdateUserAsync(NguoiDung user);
 
         // Role
         Task<PhanQuyen?> GetRoleAsync(int maQuyen);
 
+        Task AddActivityAsync(LichSuHoatDong log);
         Task SaveChangesAsync();
+
         Task<(List<(GiangVien Gv, NguoiDung Nd)> Items, int Total)> SearchLecturersAsync(
-            string? keyword,
             string? khoa,
             string? hocHam,
             string? hocVi,
@@ -31,11 +36,5 @@ namespace DiemDanhQR_API.Repositories.Interfaces
             int page,
             int pageSize
         );
-
-        Task<GiangVien?> GetLecturerByMaNguoiDungAsync(string maNguoiDung);
-        Task UpdateLecturerAsync(GiangVien entity);
-        Task<bool> ExistsUsernameForAnotherAsync(string tenDangNhap);
-        Task UpdateUserAsync(NguoiDung user);
-        Task AddActivityAsync(LichSuHoatDong log);
     }
 }

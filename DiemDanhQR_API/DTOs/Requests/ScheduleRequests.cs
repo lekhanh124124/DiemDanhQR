@@ -6,7 +6,6 @@ namespace DiemDanhQR_API.DTOs.Requests
     public class ScheduleListRequest
     {
         // Tìm kiếm
-        public string? Keyword { get; set; }
         public int? MaBuoi { get; set; }
         public int? MaPhong { get; set; }
         public string? TenPhong { get; set; }
@@ -40,7 +39,6 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? SortDir { get; set; } = "ASC"; // ASC | DESC
 
         // Filters
-        public string? Keyword { get; set; }   // OR theo nhiều trường
         public int? MaPhong { get; set; }
         public string? TenPhong { get; set; }
         public string? ToaNha { get; set; }

@@ -7,9 +7,9 @@ namespace DiemDanhQR_API.Services.Interfaces
     public interface IAuthService
     {
         Task<LoginResponse> LoginAsync(LoginRequest request);
-        Task<LogoutResponse> LogoutAsync(string maNguoiDung);
+        Task<LogoutResponse> LogoutAsync(string tenDangNhap);
         Task<RefreshAccessTokenResponse> RefreshAccessTokenAsync(RefreshTokenRequest request);
-        Task<ChangePasswordResponse> ChangePasswordAsync(string maNguoiDungFromClaims, ChangePasswordRequest request);
+        Task<ChangePasswordResponse> ChangePasswordAsync(string tenDangNhapFromClaims, ChangePasswordRequest request);
         Task<RefreshPasswordResponse> RefreshPasswordToUserIdAsync(RefreshPasswordRequest request);
     }
 }
