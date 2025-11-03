@@ -235,5 +235,45 @@ namespace DiemDanhQR_API.Repositories.Implementations
             return await _db.PhongHoc.AsNoTracking()
                 .FirstOrDefaultAsync(p => (p.MaPhong ?? 0) == maPhong);
         }
+
+        public async Task<PhongHoc?> GetRoomForUpdateAsync(int maPhong)
+        {
+            return await _db.PhongHoc.FirstOrDefaultAsync(p => (p.MaPhong ?? 0) == maPhong);
+        }
+
+        public async Task<bool> RoomNameExistsExceptIdAsync(string tenPhong, int excludeMaPhong)
+        {
+            var name = (tenPhong ?? "").Trim().ToLower();
+            return await _db.PhongHoc.AsNoTracking()
+                .AnyAsync(p => (p.TenPhong ?? "").ToLower() == name && (p.MaPhong ?? 0) != excludeMaPhong);
+        }
+
+        public async Task UpdateRoomAsync(PhongHoc room)
+        {
+            _db.PhongHoc.Update(room);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<BuoiHoc?> GetScheduleByIdAsync(int maBuoi)
+        {
+            return await _db.BuoiHoc.FirstOrDefaultAsync(b => (b.MaBuoi ?? 0) == maBuoi);
+        }
+
+        public async Task UpdateScheduleAsync(BuoiHoc buoi)
+        {
+            _db.BuoiHoc.Update(buoi);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<bool> ScheduleExistsAsync(string maLopHocPhan, DateTime ngayHoc, byte tietBatDau, int excludeMaBuoi)
+        {
+            var code = (maLopHocPhan ?? "").Trim();
+            var d = ngayHoc.Date;
+            return await _db.BuoiHoc.AsNoTracking()
+                .AnyAsync(b => (b.MaLopHocPhan ?? "") == code
+                               && b.NgayHoc == d
+                               && (b.TietBatDau ?? 0) == tietBatDau
+                               && (b.MaBuoi ?? 0) != excludeMaBuoi);
+        }
     }
 }

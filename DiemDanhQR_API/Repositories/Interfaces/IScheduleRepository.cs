@@ -47,5 +47,12 @@ namespace DiemDanhQR_API.Repositories.Interfaces
         Task<bool> ScheduleExistsAsync(string maLopHocPhan, DateTime ngayHoc, byte tietBatDau);
         Task AddScheduleAsync(BuoiHoc buoi);
         Task<PhongHoc?> GetRoomByIdAsync(int maPhong);
+
+        Task<PhongHoc?> GetRoomForUpdateAsync(int maPhong);
+        Task<bool> RoomNameExistsExceptIdAsync(string tenPhong, int excludeMaPhong);
+        Task UpdateRoomAsync(PhongHoc room);
+        Task<BuoiHoc?> GetScheduleByIdAsync(int maBuoi);
+        Task UpdateScheduleAsync(BuoiHoc buoi);
+        Task<bool> ScheduleExistsAsync(string maLopHocPhan, DateTime ngayHoc, byte tietBatDau, int excludeMaBuoi);
     }
 }

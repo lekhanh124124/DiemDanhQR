@@ -33,4 +33,29 @@ namespace DiemDanhQR_API.DTOs.Responses
             TrangThai = trangThai;
         }
     }
+
+    public class RoleDetailResponse
+    {
+        public int MaQuyen { get; set; }
+        public string? CodeQuyen { get; set; }
+        public string? TenQuyen { get; set; }
+        public string? MoTa { get; set; }
+    }
+
+    public class FunctionDetailResponse
+    {
+        public int MaChucNang { get; set; }
+        public string? CodeChucNang { get; set; }
+        public string? TenChucNang { get; set; }
+        public string? MoTa { get; set; }
+        public bool TrangThai { get; set; }
+    }
+
+    public class RoleFunctionDetailResponse
+    {
+        public int MaQuyen { get; set; }
+        public string? CodeQuyen { get; set; }
+        public int MaChucNang { get; set; }
+        public string? CodeChucNang { get; set; }
+    }
 }

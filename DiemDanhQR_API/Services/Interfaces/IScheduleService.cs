@@ -11,6 +11,10 @@ namespace DiemDanhQR_API.Services.Interfaces
         Task<CreateRoomResponse> CreateRoomAsync(CreateRoomRequest req, string? currentUserId);
         Task<CreateScheduleResponse> CreateScheduleAsync(CreateScheduleRequest req, string? currentUserId);
 
+        // Update
+        Task<UpdateRoomResponse> UpdateRoomAsync(UpdateRoomRequest req, string? currentUserId);
+        Task<UpdateScheduleResponse> UpdateScheduleAsync(UpdateScheduleRequest req, string? currentUserId);
+
 
     }
 }

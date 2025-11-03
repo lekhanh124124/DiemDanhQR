@@ -47,4 +47,26 @@ namespace DiemDanhQR_API.DTOs.Responses
         public string? GhiChu { get; set; }
         public bool? TrangThai { get; set; }
     }
+    public class UpdateRoomResponse
+    {
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = default!;
+        public string? ToaNha { get; set; }
+        public byte? Tang { get; set; }
+        public byte? SucChua { get; set; }
+        public bool? TrangThai { get; set; }
+    }
+
+    public class UpdateScheduleResponse
+    {
+        public int MaBuoi { get; set; }
+        public string MaLopHocPhan { get; set; } = default!;
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = "";
+        public string NgayHoc { get; set; } = "";   // dd-MM-yyyy
+        public byte TietBatDau { get; set; }
+        public byte SoTiet { get; set; }
+        public string? GhiChu { get; set; }
+        public bool? TrangThai { get; set; }
+    }
 }

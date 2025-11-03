@@ -190,5 +190,99 @@ namespace DiemDanhQR_API.Services.Implementations
                 TrangThai = entity.TrangThai ?? true
             };
         }
+
+        public async Task<UpdateRoomResponse> UpdateRoomAsync(UpdateRoomRequest req, string? currentUserId)
+        {
+            if (!req.MaPhong.HasValue || req.MaPhong.Value <= 0)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã phòng không hợp lệ.");
+
+            var room = await _repo.GetRoomForUpdateAsync(req.MaPhong.Value);
+            if (room == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy phòng học.");
+
+            // Trùng tên (ngoại trừ chính nó)
+            if (!string.IsNullOrWhiteSpace(req.TenPhong))
+            {
+                var ten = req.TenPhong!.Trim();
+                if (await _repo.RoomNameExistsExceptIdAsync(ten, room.MaPhong ?? 0))
+                    ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Tên phòng đã tồn tại.");
+                room.TenPhong = ten;
+            }
+
+            if (req.ToaNha != null) room.ToaNha = string.IsNullOrWhiteSpace(req.ToaNha) ? null : req.ToaNha!.Trim();
+            if (req.Tang.HasValue) room.Tang = req.Tang;
+            if (req.SucChua.HasValue) room.SucChua = req.SucChua;
+            if (req.TrangThai.HasValue) room.TrangThai = req.TrangThai;
+
+            await _repo.UpdateRoomAsync(room);
+
+            await _repo.LogActivityAsync(currentUserId,
+                $"Cập nhật phòng học: {room.TenPhong}"
+                + (string.IsNullOrWhiteSpace(room.ToaNha) ? "" : $" - {room.ToaNha}")
+                + (room.Tang.HasValue ? $" (Tầng {room.Tang})" : ""));
+
+            return new UpdateRoomResponse
+            {
+                MaPhong = room.MaPhong ?? 0,
+                TenPhong = room.TenPhong ?? "",
+                ToaNha = room.ToaNha,
+                Tang = room.Tang,
+                SucChua = room.SucChua,
+                TrangThai = room.TrangThai
+            };
+        }
+
+        public async Task<UpdateScheduleResponse> UpdateScheduleAsync(UpdateScheduleRequest req, string? currentUserId)
+        {
+            if (!req.MaBuoi.HasValue || req.MaBuoi.Value <= 0)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã buổi học không hợp lệ.");
+
+            var buoi = await _repo.GetScheduleByIdAsync(req.MaBuoi.Value);
+            if (buoi == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy buổi học.");
+
+            // Chuẩn bị giá trị mới để check trùng trước khi cập nhật
+            var newMaPhong = req.MaPhong ?? (buoi.MaPhong ?? 0);
+            var newNgay = (req.NgayHoc ?? buoi.NgayHoc ?? DateTime.Now).Date;
+            var newTietBd = req.TietBatDau ?? (byte)(buoi.TietBatDau ?? 0);
+            var newSoTiet = req.SoTiet ?? (byte)(buoi.SoTiet ?? 0);
+
+            // Kiểm tra phòng tồn tại nếu có cập nhật
+            if (req.MaPhong.HasValue && !await _repo.RoomExistsByIdAsync(req.MaPhong.Value))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Phòng học không tồn tại.");
+
+            // Kiểm tra trùng (cùng lớp, cùng ngày, cùng tiết bắt đầu) nhưng loại trừ chính bản ghi hiện tại
+            var maLhp = buoi.MaLopHocPhan ?? "";
+            if (await _repo.ScheduleExistsAsync(maLhp, newNgay, newTietBd, excludeMaBuoi: buoi.MaBuoi ?? 0))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Buổi học đã tồn tại (trùng lớp, ngày, tiết bắt đầu).");
+
+            // Cập nhật
+            if (req.MaPhong.HasValue) buoi.MaPhong = newMaPhong;
+            if (req.NgayHoc.HasValue) buoi.NgayHoc = newNgay;
+            if (req.TietBatDau.HasValue) buoi.TietBatDau = newTietBd;
+            if (req.SoTiet.HasValue) buoi.SoTiet = newSoTiet;
+            if (req.GhiChu != null) buoi.GhiChu = string.IsNullOrWhiteSpace(req.GhiChu) ? null : req.GhiChu!.Trim();
+            if (req.TrangThai.HasValue) buoi.TrangThai = req.TrangThai;
+
+            await _repo.UpdateScheduleAsync(buoi);
+
+            var phong = await _repo.GetRoomByIdAsync(buoi.MaPhong ?? 0);
+
+            await _repo.LogActivityAsync(currentUserId,
+                $"Cập nhật buổi học: {buoi.MaLopHocPhan} - {buoi.NgayHoc:dd-MM-yyyy} (Tiết {buoi.TietBatDau}, {buoi.SoTiet} tiết) - Phòng {buoi.MaPhong}");
+
+            return new UpdateScheduleResponse
+            {
+                MaBuoi = buoi.MaBuoi ?? 0,
+                MaLopHocPhan = buoi.MaLopHocPhan ?? "",
+                MaPhong = buoi.MaPhong ?? 0,
+                TenPhong = phong?.TenPhong ?? "",
+                NgayHoc = buoi.NgayHoc?.ToString("dd-MM-yyyy") ?? "",
+                TietBatDau = (byte)(buoi.TietBatDau ?? 0),
+                SoTiet = (byte)(buoi.SoTiet ?? 0),
+                GhiChu = buoi.GhiChu,
+                TrangThai = buoi.TrangThai
+            };
+        }
     }
 }

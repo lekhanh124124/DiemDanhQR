@@ -74,5 +74,35 @@ namespace DiemDanhQR_API.Controllers
                 Data = data
             });
         }
+
+        [HttpPut("update-room")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<UpdateRoomResponse>>> UpdateRoom([FromForm] UpdateRoomRequest req)
+        {
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+            var data = await _svc.UpdateRoomAsync(req, currentUserId);
+
+            return Ok(new ApiResponse<UpdateRoomResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật phòng học thành công.",
+                Data = data
+            });
+        }
+
+        [HttpPut("update-schedule")]
+        [Authorize(Roles = "ADMIN,GV")]
+        public async Task<ActionResult<ApiResponse<UpdateScheduleResponse>>> UpdateSchedule([FromForm] UpdateScheduleRequest req)
+        {
+            var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
+            var data = await _svc.UpdateScheduleAsync(req, currentUserId);
+
+            return Ok(new ApiResponse<UpdateScheduleResponse>
+            {
+                Status = 200,
+                Message = "Cập nhật buổi học thành công.",
+                Data = data
+            });
+        }
     }
 }

@@ -89,4 +89,40 @@ namespace DiemDanhQR_API.DTOs.Requests
 
         public bool? TrangThai { get; set; } = true;
     }
+    public class UpdateRoomRequest
+    {
+        [Required(ErrorMessage = "Mã phòng là bắt buộc.")]
+        public int? MaPhong { get; set; }
+
+        [StringLength(100, ErrorMessage = "Tên phòng tối đa 100 ký tự.")]
+        public string? TenPhong { get; set; }
+
+        [StringLength(100, ErrorMessage = "Tòa nhà tối đa 100 ký tự.")]
+        public string? ToaNha { get; set; }
+
+        [Range(0, 100, ErrorMessage = "Tầng phải trong khoảng 0–100.")]
+        public byte? Tang { get; set; }
+
+        [Range(1, 500, ErrorMessage = "Sức chứa phải trong khoảng 1–500.")]
+        public byte? SucChua { get; set; }
+
+        public bool? TrangThai { get; set; }
+    }
+
+    public class UpdateScheduleRequest
+    {
+        [Required(ErrorMessage = "Mã buổi học là bắt buộc.")]
+        public int? MaBuoi { get; set; }
+
+        // Không cho đổi lớp học phần để tránh sai lệch dữ liệu. Nếu cần, có thể mở sau.
+        public int? MaPhong { get; set; }
+        public DateTime? NgayHoc { get; set; }   // chỉ lấy phần Date
+        [Range(1, 20, ErrorMessage = "Tiết bắt đầu phải trong khoảng 1–20.")]
+        public byte? TietBatDau { get; set; }
+        [Range(1, 20, ErrorMessage = "Số tiết phải trong khoảng 1–20.")]
+        public byte? SoTiet { get; set; }
+        [StringLength(200, ErrorMessage = "Ghi chú tối đa 200 ký tự.")]
+        public string? GhiChu { get; set; }
+        public bool? TrangThai { get; set; }
+    }
 }
