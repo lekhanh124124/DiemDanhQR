@@ -12,6 +12,8 @@ namespace DiemDanhQR_API.Helpers
         InternalServerError = 500,
         ValidationError = 1001,
         InternalError = 1002,
+        Conflict = 1003,
+
         // Thêm các mã lỗi khác nếu cần
     }
 
@@ -27,6 +29,7 @@ namespace DiemDanhQR_API.Helpers
             ApiErrorCode.InternalServerError => "Lỗi máy chủ.",
             ApiErrorCode.ValidationError => "Dữ liệu không hợp lệ.",
             ApiErrorCode.InternalError => "Lỗi nội bộ.",
+            ApiErrorCode.Conflict => "Xung đột dữ liệu.",
             _ => "Lỗi không xác định."
         };
 

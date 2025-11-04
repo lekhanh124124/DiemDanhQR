@@ -13,6 +13,9 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? TenLop { get; set; }
         public string? TenMonHoc { get; set; }
         public DateTime? NgayHoc { get; set; }
+        public int? Nam { get; set; }      // NEW: lọc theo năm
+        public int? Tuan { get; set; }
+        public int? Thang { get; set; }
         public byte? TietBatDau { get; set; }
         public byte? SoTiet { get; set; }
         public string? GhiChu { get; set; }
@@ -22,7 +25,7 @@ namespace DiemDanhQR_API.DTOs.Requests
         public string? MaGiangVien { get; set; }
 
         // Sắp xếp & phân trang
-        public string? SortBy { get; set; }
+        public string? SortBy { get; set; }  
         public string? SortDir { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;

@@ -14,6 +14,9 @@ namespace DiemDanhQR_API.Repositories.Interfaces
                 string? tenLop,
                 string? tenMonHoc,
                 DateTime? ngayHoc,
+                int? nam,        // NEW
+                int? tuan,
+                int? thang,
                 byte? tietBatDau,
                 byte? soTiet,
                 string? ghiChu,

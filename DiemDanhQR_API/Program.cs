@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Security.Claims;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,7 @@ builder.Services.AddScoped<ILecturerRepository, LecturerRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+// builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 
 // Đăng ký DI cho Service
 builder.Services.AddScoped<IUserService, UserService>();
@@ -48,6 +50,7 @@ builder.Services.AddScoped<ILecturerService, LecturerService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
+// builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 
 // CORS: chấp nhận frontend
 builder.Services.AddCors(opt =>
@@ -90,6 +93,10 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -108,6 +115,7 @@ app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseForwardedHeaders();
 
 app.UseStaticFiles();
 app.MapControllers();

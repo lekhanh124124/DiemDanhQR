@@ -29,6 +29,9 @@ namespace DiemDanhQR_API.Services.Implementations
                 req.TenLop,
                 req.TenMonHoc,
                 req.NgayHoc,
+                req.Nam,       // NEW
+                req.Tuan,      // keep
+                req.Thang,     // keep
                 req.TietBatDau,
                 req.SoTiet,
                 req.GhiChu,

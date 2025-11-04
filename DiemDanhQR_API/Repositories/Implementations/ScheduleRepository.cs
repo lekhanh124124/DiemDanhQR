@@ -13,7 +13,6 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
         public async Task<(List<(BuoiHoc b, PhongHoc p, LopHocPhan l, MonHoc m, GiangVien gv, NguoiDung ndGv)> Items, int Total)>
             SearchSchedulesAsync(
-                // string? keyword, // removed
                 int? maBuoi,
                 int? maPhong,
                 string? tenPhong,
@@ -21,6 +20,9 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 string? tenLop,
                 string? tenMonHoc,
                 DateTime? ngayHoc,
+                int? nam,            // NEW
+                int? tuan,
+                int? thang,
                 byte? tietBatDau,
                 byte? soTiet,
                 string? ghiChu,
@@ -72,6 +74,33 @@ namespace DiemDanhQR_API.Repositories.Implementations
             }
 
             if (ngayHoc.HasValue) q = q.Where(x => x.b.NgayHoc == ngayHoc.Value.Date);
+
+            // NEW: lọc theo năm
+            if (nam.HasValue)
+            {
+                var year = nam.Value;
+                q = q.Where(x => x.b.NgayHoc.HasValue && x.b.NgayHoc.Value.Year == year);
+            }
+
+            // Lọc theo tháng (1-12), nếu có 'nam' thì đã được ràng buộc ở trên
+            if (thang.HasValue)
+            {
+                var month = thang.Value;
+                q = q.Where(x => x.b.NgayHoc.HasValue && x.b.NgayHoc.Value.Month == month);
+            }
+
+            // Lọc theo tuần; dùng năm được truyền vào, nếu không thì mặc định năm hiện tại
+            if (tuan.HasValue)
+            {
+                var yearForWeek = nam ?? DateTime.Now.Year;
+                var startOfYear = new DateTime(yearForWeek, 1, 1);
+                var week = tuan.Value;
+                q = q.Where(x =>
+                    x.b.NgayHoc.HasValue
+                    && x.b.NgayHoc.Value.Year == yearForWeek
+                    && EF.Functions.DateDiffWeek(startOfYear, x.b.NgayHoc.Value) + 1 == week);
+            }
+
             if (tietBatDau.HasValue) q = q.Where(x => (x.b.TietBatDau ?? 0) == tietBatDau.Value);
             if (soTiet.HasValue) q = q.Where(x => (x.b.SoTiet ?? 0) == soTiet.Value);
 
@@ -99,6 +128,9 @@ namespace DiemDanhQR_API.Repositories.Implementations
 
             // ===== Sorting =====
             var key = (sortBy ?? "MaBuoi").Trim().ToLowerInvariant();
+            var sortYear = nam ?? DateTime.Now.Year;                                 // NEW
+            var sortStartOfYear = new DateTime(sortYear, 1, 1);                      // NEW
+
             q = key switch
             {
                 "maphong" => desc ? q.OrderByDescending(x => x.p.MaPhong) : q.OrderBy(x => x.p.MaPhong),
@@ -112,6 +144,18 @@ namespace DiemDanhQR_API.Repositories.Implementations
                 "ghichu" => desc ? q.OrderByDescending(x => x.b.GhiChu) : q.OrderBy(x => x.b.GhiChu),
                 "magiangvien" => desc ? q.OrderByDescending(x => x.gv.MaGiangVien) : q.OrderBy(x => x.gv.MaGiangVien),
                 "trangthai" => desc ? q.OrderByDescending(x => x.b.TrangThai) : q.OrderBy(x => x.b.TrangThai),
+                "thang" => desc
+                    ? q.OrderByDescending(x => x.b.NgayHoc!.Value.Month)
+                    : q.OrderBy(x => x.b.NgayHoc!.Value.Month),
+
+                "tuan" => desc
+                    ? q.OrderByDescending(x => EF.Functions.DateDiffWeek(sortStartOfYear, x.b.NgayHoc!.Value) + 1)
+                    : q.OrderBy(x => EF.Functions.DateDiffWeek(sortStartOfYear, x.b.NgayHoc!.Value) + 1),
+
+                "nam" => desc                                                     // NEW
+                    ? q.OrderByDescending(x => x.b.NgayHoc!.Value.Year)
+                    : q.OrderBy(x => x.b.NgayHoc!.Value.Year),
+
                 "mabuoi" or _ => desc ? q.OrderByDescending(x => x.b.MaBuoi) : q.OrderBy(x => x.b.MaBuoi),
             };
 
