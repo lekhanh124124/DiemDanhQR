@@ -1,0 +1,235 @@
+// File: Models/BuoiHoc.cs
+namespace api.Models
+{
+    public class BuoiHoc
+    {
+
+        public int MaBuoi { get; set; }
+        public DateOnly NgayHoc { get; set; }
+        public byte TietBatDau { get; set; }
+        public byte SoTiet { get; set; }
+        public string? GhiChu { get; set; }
+        public string MaLopHocPhan { get; set; } = null!;
+        public int? MaPhong { get; set; }
+        public bool TrangThai { get; set; } = true;
+    }
+}
+
+// File: Models/ChucNang.cs
+namespace api.Models
+{
+    public class ChucNang
+    {
+        public int MaChucNang { get; set; }
+        public string CodeChucNang { get; set; } = null!;
+        public string TenChucNang { get; set; } = null!;
+        public string? MoTa { get; set; }
+    }
+}
+
+// File: Models/DiemDanh.cs
+namespace api.Models
+{
+    public class DiemDanh
+    {
+        public int MaDiemDanh { get; set; }
+        public DateTime ThoiGianQuet { get; set; }
+        public int MaTrangThai { get; set; }
+        public string? LyDo { get; set; }
+        public bool TrangThai { get; set; } = true;
+        public int MaBuoi { get; set; }
+        public string MaSinhVien { get; set; } = null!;
+    }
+}
+
+// File: Models/GiangVien.cs
+namespace api.Models
+{
+    public class GiangVien
+    {
+        public int MaNguoiDung { get; set; }
+        public string MaGiangVien { get; set; } = null!;
+        public int? MaKhoa { get; set; }
+        public string? HocHam { get; set; }
+        public string? HocVi { get; set; }
+        public DateOnly? NgayTuyenDung { get; set; }
+    }
+}
+
+// File: Models/HocKy.cs
+namespace api.Models
+{
+    public class HocKy
+    {
+        public int MaHocKy { get; set; }
+        public short NamHoc { get; set; }
+        public byte Ky { get; set; }
+    }
+}
+
+// File: Models/Khoa.cs
+namespace api.Models
+{
+    public class Khoa
+    {
+        public int MaKhoa { get; set; }
+        public string CodeKhoa { get; set; } = null!;
+        public string TenKhoa { get; set; } = null!;
+    }
+}
+
+// File: Models/LichSuHoatDong.cs
+namespace api.Models
+{
+    public class LichSuHoatDong
+    {
+        public int MaLichSu { get; set; }
+        public DateTime ThoiGian { get; set; }
+        public string HanhDong { get; set; } = null!;
+        public int? MaNguoiDung { get; set; }
+    }
+}
+
+// File: Models/LopHocPhan.cs
+namespace api.Models
+{
+    public class LopHocPhan
+    {
+        public string MaLopHocPhan { get; set; } = null!;
+        public string TenLopHocPhan { get; set; } = null!;
+        public bool TrangThai { get; set; } = true;
+
+        public string MaMonHoc { get; set; } = null!;
+        public string? MaGiangVien { get; set; }
+        public int MaHocKy { get; set; }
+    }
+}
+
+// File: Models/MonHoc.cs
+namespace api.Models
+{
+    public class MonHoc
+    {
+        public string MaMonHoc { get; set; } = null!;
+        public string TenMonHoc { get; set; } = null!;
+        public byte SoTinChi { get; set; }
+        public byte SoTiet { get; set; }
+        public string? MoTa { get; set; }
+        public bool TrangThai { get; set; } = true;
+        public byte LoaiMon { get; set; } = 1;
+    }
+}
+
+// File: Models/Nganh.cs
+namespace api.Models
+{
+    public class Nganh
+    {
+        public int MaNganh { get; set; }
+        public string CodeNganh { get; set; } = null!;
+        public string TenNganh { get; set; } = null!;
+        public int MaKhoa { get; set; }
+    }
+}
+
+// File: Models/NguoiDung.cs
+namespace api.Models
+{
+    public class NguoiDung
+    {
+        public int MaNguoiDung { get; set; }
+
+        public string HoTen { get; set; } = null!;
+        public byte? GioiTinh { get; set; }
+        public string? AnhDaiDien { get; set; }
+        public string? Email { get; set; }
+        public string? SoDienThoai { get; set; }
+        public DateOnly? NgaySinh { get; set; }
+        public string? DiaChi { get; set; }
+
+        public string TenDangNhap { get; set; } = null!;
+        public string MatKhau { get; set; } = null!;
+        public bool TrangThai { get; set; } = true;
+
+        public string? RefreshTokenHash { get; set; }
+        public DateTime? RefreshTokenIssuedAt { get; set; }
+        public DateTime? RefreshTokenExpiresAt { get; set; }
+        public Guid? RefreshTokenId { get; set; }
+        public DateTime? RefreshTokenRevokedAt { get; set; }
+
+        public int MaQuyen { get; set; }
+    }
+}
+
+// File: Models/NhomChucNang.cs
+namespace api.Models
+{
+    public class NhomChucNang
+    {
+        public int MaQuyen { get; set; }
+        public int MaChucNang { get; set; }
+        public bool TrangThai { get; set; } = true;
+    }
+}
+
+// File: Models/PhanQuyen.cs
+namespace api.Models
+{
+    public class PhanQuyen
+    {
+        public int MaQuyen { get; set; }
+        public string CodeQuyen { get; set; } = null!;
+        public string TenQuyen { get; set; } = null!;
+        public string? MoTa { get; set; }
+    }
+}
+
+// File: Models/PhongHoc.cs
+namespace api.Models
+{
+    public class PhongHoc
+    {
+        public int MaPhong { get; set; }
+        public string TenPhong { get; set; } = null!;
+        public string? ToaNha { get; set; }
+        public byte? Tang { get; set; }
+        public byte SucChua { get; set; }
+        public bool TrangThai { get; set; } = true;
+    }
+}
+
+// File: Models/SinhVien.cs
+namespace api.Models
+{
+    public class SinhVien
+    {
+        public int MaNguoiDung { get; set; } // PK & FK -> NguoiDung
+        public string MaSinhVien { get; set; } = null!;
+        public int NamNhapHoc { get; set; }
+        public int? MaNganh { get; set; }
+    }
+}
+
+// File: Models/ThamGiaLop.cs
+namespace api.Models
+{
+    public class ThamGiaLop
+    {
+        public DateOnly NgayThamGia { get; set; }
+        public bool TrangThai { get; set; } = true;
+        public string MaSinhVien { get; set; } = null!;
+        public string MaLopHocPhan { get; set; } = null!;
+    }
+}
+
+// File: Models/TrangThaiDiemDanh.cs
+namespace api.Models
+{
+    public class TrangThaiDiemDanh
+    {
+        public int MaTrangThai { get; set; }
+        public string TenTrangThai { get; set; } = null!;
+        public string CodeTrangThai { get; set; } = null!;
+    }
+}
+

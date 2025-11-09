@@ -1,12 +1,15 @@
-namespace api.Models;
-
-public class LopHocPhan
+// File: Models/LopHocPhan.cs
+namespace api.Models
 {
-    public string MaLopHocPhan { get; set; } = null!;
-    public string TenLopHocPhan { get; set; } = null!;
-    public bool TrangThai { get; set; } = true;
+    public class LopHocPhan
+    {
+        public string MaLopHocPhan { get; set; } = null!;
+        public string TenLopHocPhan { get; set; } = null!;
+        public bool TrangThai { get; set; } = true;
 
-    public string MaMonHoc { get; set; } = null!;
-    public string? MaGiangVien { get; set; }
-    public int MaHocKy { get; set; }
+        public string MaMonHoc { get; set; } = null!;
+        public string? MaGiangVien { get; set; }
+        public int MaHocKy { get; set; }
+    }
 }
+

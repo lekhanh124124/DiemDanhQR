@@ -1,8 +1,7 @@
 using System.Security.Claims;
+using api.DTOs;
 using api.ErrorHandling;
 using api.Services.Interfaces;
-using api.DTOs.Requests;
-using api.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

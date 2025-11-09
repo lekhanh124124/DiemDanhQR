@@ -1,4 +1,4 @@
-// File: DTOs/Responses/AllModelsDTOs.cs
+// File: DTOs/AllModelsDTOs.cs
 using System.Text.Json.Serialization;
 
 namespace api.DTOs
@@ -25,7 +25,6 @@ namespace api.DTOs
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MaDiemDanh { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ThoiGianQuet { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MaTrangThai { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? LyDo { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TrangThai { get; set; }
     }
@@ -33,7 +32,6 @@ namespace api.DTOs
     public class GiangVienDTO
     {
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MaGiangVien { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MaKhoa { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? HocHam { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? HocVi { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? NgayTuyenDung { get; set; }

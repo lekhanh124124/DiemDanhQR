@@ -1,3 +1,4 @@
+// File: Repositories/Interfaces/IUserRepository.cs
 using api.Models;
 
 namespace api.Repositories.Interfaces
@@ -22,6 +23,17 @@ namespace api.Repositories.Interfaces
             string? tenDangNhap,
             DateTime? from,
             DateTime? to,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize);
+
+        // Thêm: tìm kiếm danh sách người dùng
+        Task<(List<(NguoiDung User, PhanQuyen Role)> Items, int Total)> SearchUsersAsync(
+            string? tenDangNhap,
+            string? hoTen,
+            int? maQuyen,
+            bool? trangThai,
             string? sortBy,
             bool desc,
             int page,

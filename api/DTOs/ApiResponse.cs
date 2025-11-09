@@ -1,5 +1,5 @@
-// File: DTOs/Responses/ApiResponse.cs
-namespace api.DTOs.Responses
+// File: DTOs/ApiResponse.cs
+namespace api.DTOs
 {
     public class ApiResponse<T>
     {

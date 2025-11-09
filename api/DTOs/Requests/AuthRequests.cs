@@ -1,6 +1,6 @@
 // File: DTOs/Requests/AuthRequests.cs
 using System.ComponentModel.DataAnnotations;
-namespace api.DTOs.Requests
+namespace api.DTOs
 {
     public class LoginRequest
     {

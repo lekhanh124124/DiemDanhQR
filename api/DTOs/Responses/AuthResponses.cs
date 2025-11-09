@@ -1,6 +1,6 @@
 // File: DTOs/Responses/AuthResponses.cs
 
-namespace api.DTOs.Responses
+namespace api.DTOs
 {
     public class LoginResponse
     {
@@ -8,6 +8,8 @@ namespace api.DTOs.Responses
         public required string RefreshToken { get; set; }
         public required NguoiDungDTO NguoiDung { get; set; }
         public required PhanQuyenDTO PhanQuyen { get; set; }      
+        public required IEnumerable<RoleFunctionDetailResponse> NhomChucNang { get; set; }
+
     }
 
     public class LogoutResponse

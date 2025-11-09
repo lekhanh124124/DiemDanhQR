@@ -1,5 +1,4 @@
-using api.DTOs.Requests;
-using api.DTOs.Responses;
+using api.DTOs;
 
 namespace api.Services.Interfaces
 {

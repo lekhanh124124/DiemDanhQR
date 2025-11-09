@@ -22,5 +22,9 @@ namespace api.ErrorHandling
         {
             throw new ApiException(code, message);
         }
+        public static ApiException New(ApiErrorCode code, string? message = null)
+        {
+            return new ApiException(code, message);
+        }
     }
 }

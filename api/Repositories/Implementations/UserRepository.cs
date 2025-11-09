@@ -1,3 +1,4 @@
+// File: Repositories/Implementations/UserRepository.cs
 using api.Data;
 using api.Models;
 using api.Repositories.Interfaces;
@@ -52,7 +53,6 @@ namespace api.Repositories.Implementations
                 join u in _db.NguoiDung.AsNoTracking() on l.MaNguoiDung equals u.MaNguoiDung
                 select new { l, u };
 
-            // Filters
             if (!string.IsNullOrWhiteSpace(tenDangNhap))
             {
                 var userFilter = tenDangNhap.Trim();
@@ -62,7 +62,6 @@ namespace api.Repositories.Implementations
             if (from.HasValue) q = q.Where(x => x.l.ThoiGian >= from.Value);
             if (to.HasValue) q = q.Where(x => x.l.ThoiGian <= to.Value);
 
-            // Sorting
             var key = (sortBy ?? "ThoiGian").Trim().ToLowerInvariant();
             q = key switch
             {
@@ -73,7 +72,6 @@ namespace api.Repositories.Implementations
                 "thoigian" or _ => desc ? q.OrderByDescending(x => x.l.ThoiGian) : q.OrderBy(x => x.l.ThoiGian),
             };
 
-            // Paging
             var total = await q.CountAsync();
             var list = await q.Skip((page - 1) * pageSize)
                               .Take(pageSize)
@@ -93,6 +91,55 @@ namespace api.Repositories.Implementations
         public async Task AddActivityAsync(LichSuHoatDong log)
         {
             await _db.LichSuHoatDong.AddAsync(log);
+        }
+
+        public async Task<(List<(NguoiDung User, PhanQuyen Role)> Items, int Total)> SearchUsersAsync(
+            string? tenDangNhap,
+            string? hoTen,
+            int? maQuyen,
+            bool? trangThai,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
+        {
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
+
+            var q = from u in _db.NguoiDung.AsNoTracking()
+                    join r in _db.PhanQuyen.AsNoTracking() on u.MaQuyen equals r.MaQuyen
+                    select new { u, r };
+
+            if (!string.IsNullOrWhiteSpace(tenDangNhap))
+            {
+                var s = tenDangNhap.Trim();
+                q = q.Where(x => x.u.TenDangNhap.Contains(s));
+            }
+            if (!string.IsNullOrWhiteSpace(hoTen))
+            {
+                var s = hoTen.Trim();
+                q = q.Where(x => (x.u.HoTen ?? "").Contains(s));
+            }
+            if (maQuyen.HasValue) q = q.Where(x => x.u.MaQuyen == maQuyen.Value);
+            if (trangThai.HasValue) q = q.Where(x => x.u.TrangThai == trangThai.Value);
+
+            var key = (sortBy ?? "MaNguoiDung").Trim().ToLowerInvariant();
+            q = key switch
+            {
+                "tendangnhap" => desc ? q.OrderByDescending(x => x.u.TenDangNhap) : q.OrderBy(x => x.u.TenDangNhap),
+                "hoten" => desc ? q.OrderByDescending(x => x.u.HoTen) : q.OrderBy(x => x.u.HoTen),
+                "maquyen" => desc ? q.OrderByDescending(x => x.u.MaQuyen) : q.OrderBy(x => x.u.MaQuyen),
+                "trangthai" => desc ? q.OrderByDescending(x => x.u.TrangThai) : q.OrderBy(x => x.u.TrangThai),
+                _ => desc ? q.OrderByDescending(x => x.u.MaNguoiDung) : q.OrderBy(x => x.u.MaNguoiDung),
+            };
+
+            var total = await q.CountAsync();
+            var list = await q.Skip((page - 1) * pageSize).Take(pageSize)
+                              .Select(x => new { x.u, x.r })
+                              .ToListAsync();
+
+            var items = list.Select(x => (x.u, x.r)).ToList();
+            return (items, total);
         }
     }
 }

@@ -4,22 +4,22 @@ using api.ErrorHandling;
 using api.Helpers;
 using api.Repositories.Interfaces;
 using api.Services.Interfaces;
-using api.DTOs.Requests;
-using api.DTOs.Responses;
 
 namespace api.Services.Implementations
 {
     public class AuthService : IAuthService
     {
         private readonly IAuthRepository _repo;
+        private readonly IPermissionRepository _permRepo; // NEW: để lấy danh sách chức năng theo role
         private readonly IConfiguration _cfg;
 
-        public AuthService(IAuthRepository repo, IConfiguration cfg)
+        public AuthService(IAuthRepository repo, IPermissionRepository permRepo, IConfiguration cfg)
         {
             _repo = repo;
+            _permRepo = permRepo;
             _cfg = cfg;
         }
-
+        private string inputResponse(string input) => input ?? "null";
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             var username = request.TenDangNhap?.Trim();
@@ -29,11 +29,11 @@ namespace api.Services.Implementations
             if (string.IsNullOrWhiteSpace(request.MatKhau))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mật khẩu không được trống.");
 
-            var user = await _repo.GetByUserNameAsync(username);
+            var user = await _repo.GetByUserNameAsync(username!);
             if (user == null || user.TrangThai == false)
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Sai tài khoản hoặc tài khoản bị khoá.");
 
-            if (string.IsNullOrWhiteSpace(user.MatKhau) ||
+            if (string.IsNullOrWhiteSpace(user!.MatKhau) ||
                 !BCrypt.Net.BCrypt.Verify(request.MatKhau, user.MatKhau))
             {
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Sai mật khẩu.");
@@ -47,55 +47,86 @@ namespace api.Services.Implementations
             var jwtOpts = JwtHelper.Read(_cfg);
             var claims = new List<Claim>
             {
-                new("TenDangNhap", user.TenDangNhap ?? username),
+                new("TenDangNhap", user.TenDangNhap ?? username!),
                 new("CodeQuyen", roleCode),
                 new(ClaimTypes.Role, roleCode),
-                new(ClaimTypes.Name, user.HoTen ?? username),
-                new(ClaimTypes.NameIdentifier, user.TenDangNhap ?? username)
+                new(ClaimTypes.Name, user.HoTen ?? username!),
+                new(ClaimTypes.NameIdentifier, user.TenDangNhap ?? username!)
             };
             var accessToken = JwtHelper.GenerateAccessToken(claims, jwtOpts);
-            var accessExpiresUtc = DateTime.UtcNow.AddMinutes(jwtOpts.ExpireMinutes);
 
             // Refresh token (plain + hash)
             var refreshPlain = JwtHelper.GenerateSecureRefreshToken();
             var refreshHash = BCrypt.Net.BCrypt.HashPassword(refreshPlain);
 
+            // Ghi DB: dùng giờ VN, không format
             var issuedLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
             var expiresLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow.AddDays(jwtOpts.RefreshDays));
-
             await _repo.UpdateRefreshTokenAsync(user, refreshHash, Guid.NewGuid(), issuedLocal, expiresLocal);
-            await _repo.LogActivityAsync(user.TenDangNhap ?? username, "Đăng nhập");
+            await _repo.LogActivityAsync(user.TenDangNhap ?? username!, "Đăng nhập");
             await _repo.SaveChangesAsync();
 
-            // Build DTOs
+            // Build NguoiDung / PhanQuyen DTO
             var nguoiDungDto = new NguoiDungDTO
             {
-                MaNguoiDung = user.MaNguoiDung.ToString() ?? "null",
-                HoTen = user.HoTen ?? "null",
-                GioiTinh = user.GioiTinh?.ToString() ?? "null",
-                AnhDaiDien = user.AnhDaiDien ?? "null",
-                Email = user.Email ?? "null",
-                SoDienThoai = user.SoDienThoai ?? "null",
-                NgaySinh = user.NgaySinh?.ToString("dd-MM-yyyy") ?? "null",
-                DiaChi = user.DiaChi ?? "null",
-                TenDangNhap = user.TenDangNhap ?? "null",
-                TrangThai = user.TrangThai.ToString().ToLowerInvariant() ?? "null"
+                MaNguoiDung = inputResponse(user.MaNguoiDung.ToString()),
+                HoTen = inputResponse(user.HoTen),
+                TenDangNhap = inputResponse(user.TenDangNhap),
+                TrangThai = inputResponse(user.TrangThai.ToString().ToLowerInvariant())
             };
 
             var phanQuyenDto = new PhanQuyenDTO
             {
-                MaQuyen = role?.MaQuyen.ToString() ?? "null",
-                CodeQuyen = roleCode ?? "null",
-                TenQuyen = role?.TenQuyen ?? "null",
-                MoTa = role?.MoTa ?? "null"
+                MaQuyen = inputResponse(role?.MaQuyen.ToString()),
+                CodeQuyen = inputResponse(role?.CodeQuyen),
+                TenQuyen = inputResponse(role?.TenQuyen),
             };
+
+            // === NEW: Danh sách chức năng theo phân quyền (Role -> Functions) ===
+            // Lấy tất cả chức năng thuộc quyền hiện tại bằng repo permission (filter theo MaQuyen)
+            var roleFunctions = new List<RoleFunctionDetailResponse>();
+            if (role?.MaQuyen is int mk && mk > 0)
+            {
+                // Lấy danh sách chức năng theo quyền
+                var (funcItems, _) = await _permRepo.SearchFunctionsAsync(
+                    maChucNang: null,
+                    codeChucNang: null,
+                    tenChucNang: null,
+                    moTa: null,
+                    maQuyen: mk,
+                    sortBy: "MaChucNang",
+                    desc: false,
+                    page: 1,
+                    pageSize: 10_000 // đủ lớn để gom hết
+                );
+
+                foreach (var fn in funcItems)
+                {
+                    var map = await _permRepo.GetRoleFunctionAsync(mk, fn.MaChucNang);
+
+                    roleFunctions.Add(new RoleFunctionDetailResponse
+                    {
+                        ChucNang = new ChucNangDTO
+                        {
+                            MaChucNang = inputResponse(fn.MaChucNang.ToString()),
+                            CodeChucNang = inputResponse(fn.CodeChucNang),
+                            TenChucNang = inputResponse(fn.TenChucNang),
+                        },
+                        NhomChucNang = map == null ? null : new NhomChucNangDTO
+                        {
+                            TrangThai = inputResponse(map.TrangThai.ToString().ToLowerInvariant())
+                        }
+                    });
+                }
+            }
 
             return new LoginResponse
             {
-                AccessToken = accessToken ?? "null",
-                RefreshToken = refreshPlain ?? "null",
+                AccessToken = inputResponse(accessToken),
+                RefreshToken = inputResponse(refreshPlain),
                 NguoiDung = nguoiDungDto,
-                PhanQuyen = phanQuyenDto
+                PhanQuyen = phanQuyenDto,
+                NhomChucNang = roleFunctions
             };
         }
 
@@ -105,22 +136,22 @@ namespace api.Services.Implementations
             if (string.IsNullOrWhiteSpace(username))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng.");
 
-            var user = await _repo.GetByUserNameAsync(username);
+            var user = await _repo.GetByUserNameAsync(username!);
             if (user == null || user.TrangThai == false)
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
 
             var revokedAtLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
-            await _repo.RevokeRefreshTokenAsync(user, revokedAtLocal, clearTokenFields: true);
-            await _repo.LogActivityAsync(username, "Đăng xuất");
+            await _repo.RevokeRefreshTokenAsync(user!, revokedAtLocal, clearTokenFields: true);
+            await _repo.LogActivityAsync(username!, "Đăng xuất");
             await _repo.SaveChangesAsync();
 
             return new LogoutResponse
             {
                 NguoiDung = new NguoiDungDTO
                 {
-                    MaNguoiDung = user.MaNguoiDung.ToString() ?? "null",
-                    HoTen = user.HoTen ?? "null",
-                    TenDangNhap = user.TenDangNhap ?? "null"
+                    MaNguoiDung = inputResponse(user!.MaNguoiDung.ToString()),
+                    HoTen = inputResponse(user.HoTen),
+                    TenDangNhap = inputResponse(user.TenDangNhap)
                 }
             };
         }
@@ -134,15 +165,14 @@ namespace api.Services.Implementations
             if (string.IsNullOrWhiteSpace(request?.RefreshToken))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu refresh token.");
 
-            var user = await _repo.GetByUserNameAsync(username);
+            var user = await _repo.GetByUserNameAsync(username!);
             if (user == null || user.TrangThai == false)
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
 
-            if (string.IsNullOrWhiteSpace(user.RefreshTokenHash) ||
-                !BCrypt.Net.BCrypt.Verify(request.RefreshToken, user.RefreshTokenHash))
+            if (string.IsNullOrWhiteSpace(user!.RefreshTokenHash) ||
+                !BCrypt.Net.BCrypt.Verify(request!.RefreshToken, user.RefreshTokenHash))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Refresh token sai.");
 
-            // Kiểm tra hạn refresh token (đã lưu ở giờ VN)
             var nowLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
             if (user.RefreshTokenRevokedAt.HasValue)
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Refresh token đã bị thu hồi.");
@@ -153,15 +183,14 @@ namespace api.Services.Implementations
             var role = maQuyen > 0 ? await _repo.GetRoleAsync(maQuyen) : null;
             var roleCode = role?.CodeQuyen ?? "USER";
 
-            // JWT mới
             var jwtOpts = JwtHelper.Read(_cfg);
             var claims = new List<Claim>
             {
-                new("TenDangNhap", user.TenDangNhap ?? username),
+                new("TenDangNhap", user.TenDangNhap ?? username!),
                 new("CodeQuyen", roleCode),
                 new(ClaimTypes.Role, roleCode),
-                new(ClaimTypes.Name, user.HoTen ?? username),
-                new(ClaimTypes.NameIdentifier, user.TenDangNhap ?? username)
+                new(ClaimTypes.Name, user.HoTen ?? username!),
+                new(ClaimTypes.NameIdentifier, user.TenDangNhap ?? username!)
             };
             var newAccessToken = JwtHelper.GenerateAccessToken(claims, jwtOpts);
 
@@ -170,16 +199,10 @@ namespace api.Services.Implementations
                 AccessToken = newAccessToken,
                 NguoiDung = new NguoiDungDTO
                 {
-                    MaNguoiDung = user.MaNguoiDung.ToString() ?? "null",
-                    HoTen = user.HoTen ?? "null",
-                    GioiTinh = user.GioiTinh?.ToString() ?? "null",
-                    AnhDaiDien = user.AnhDaiDien ?? "null",
-                    Email = user.Email ?? "null",
-                    SoDienThoai = user.SoDienThoai ?? "null",
-                    NgaySinh = user.NgaySinh?.ToString("dd-MM-yyyy") ?? "null",
-                    DiaChi = user.DiaChi ?? "null",
-                    TenDangNhap = user.TenDangNhap ?? "null",
-                    TrangThai = user.TrangThai.ToString().ToLowerInvariant() ?? "null"
+                    MaNguoiDung = inputResponse(user.MaNguoiDung.ToString()),
+                    HoTen = inputResponse(user.HoTen),
+                    TenDangNhap = inputResponse(user.TenDangNhap),
+                    TrangThai = inputResponse(user.TrangThai.ToString().ToLowerInvariant())
                 }
             };
         }
@@ -193,14 +216,14 @@ namespace api.Services.Implementations
             if (string.IsNullOrWhiteSpace(request?.MatKhauCu) || string.IsNullOrWhiteSpace(request?.MatKhauMoi))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu mật khẩu cũ hoặc mật khẩu mới.");
 
-            if (request.MatKhauMoi.Length < 6)
+            if (request!.MatKhauMoi!.Length < 6)
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mật khẩu mới phải có ít nhất 6 ký tự.");
 
-            var user = await _repo.GetByUserNameAsync(username);
+            var user = await _repo.GetByUserNameAsync(username!);
             if (user == null || user.TrangThai == false)
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
 
-            if (string.IsNullOrWhiteSpace(user.MatKhau) ||
+            if (string.IsNullOrWhiteSpace(user!.MatKhau) ||
                 !BCrypt.Net.BCrypt.Verify(request.MatKhauCu, user.MatKhau))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Mật khẩu cũ không đúng.");
 
@@ -210,22 +233,21 @@ namespace api.Services.Implementations
             var newHash = BCrypt.Net.BCrypt.HashPassword(request.MatKhauMoi);
             await _repo.UpdatePasswordHashAsync(user, newHash);
 
-            // Thu hồi refresh token hiện tại
             var changedAtLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
             await _repo.RevokeRefreshTokenAsync(user, changedAtLocal, clearTokenFields: true);
 
-            await _repo.LogActivityAsync(username, "Đổi mật khẩu");
+            await _repo.LogActivityAsync(username!, "Đổi mật khẩu");
             await _repo.SaveChangesAsync();
 
             return new ChangePasswordResponse
             {
                 NguoiDung = new NguoiDungDTO
                 {
-                    MaNguoiDung = user.MaNguoiDung.ToString() ?? "null",
-                    HoTen = user.HoTen ?? "null",
-                    TenDangNhap = user.TenDangNhap ?? "null"
+                    MaNguoiDung = inputResponse(user.MaNguoiDung.ToString()),
+                    HoTen = inputResponse(user.HoTen),
+                    TenDangNhap = inputResponse(user.TenDangNhap)
                 },
-                ChangedAt = changedAtLocal.ToString("dd-MM-yyyy HH:mm:ss") ?? "null"
+                ChangedAt = inputResponse(changedAtLocal.ToString("dd-MM-yyyy HH:mm:ss"))
             };
         }
 
@@ -235,30 +257,29 @@ namespace api.Services.Implementations
             if (string.IsNullOrWhiteSpace(username))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu tên đăng nhập.");
 
-            var user = await _repo.GetByUserNameAsync(username);
+            var user = await _repo.GetByUserNameAsync(username!);
             if (user == null || user.TrangThai == false)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy tài khoản hoặc tài khoản bị khoá.");
 
-            // Mật khẩu mới = TenDangNhap
-            var newPlain = user.TenDangNhap ?? username;
+            var newPlain = user!.TenDangNhap ?? username;
             var newHash = BCrypt.Net.BCrypt.HashPassword(newPlain);
             await _repo.UpdatePasswordHashAsync(user, newHash);
 
             var refreshAtLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
             await _repo.RevokeRefreshTokenAsync(user, refreshAtLocal, clearTokenFields: true);
 
-            await _repo.LogActivityAsync(username, "Làm mới mật khẩu");
+            await _repo.LogActivityAsync(username!, "Làm mới mật khẩu");
             await _repo.SaveChangesAsync();
 
             return new RefreshPasswordResponse
             {
                 NguoiDung = new NguoiDungDTO
                 {
-                    MaNguoiDung = user.MaNguoiDung.ToString() ?? "null",
-                    HoTen = user.HoTen ?? "null",
-                    TenDangNhap = user.TenDangNhap ?? "null"
+                    MaNguoiDung = inputResponse(user.MaNguoiDung.ToString()),
+                    HoTen = inputResponse(user.HoTen),
+                    TenDangNhap = inputResponse(user.TenDangNhap)
                 },
-                RefreshAt = refreshAtLocal.ToString("dd-MM-yyyy HH:mm:ss") ?? "null"
+                RefreshAt = inputResponse(refreshAtLocal.ToString("dd-MM-yyyy HH:mm:ss"))
             };
         }
     }

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using api.DTOs.Responses;
+using api.DTOs;
 
 namespace api.ErrorHandling
 {

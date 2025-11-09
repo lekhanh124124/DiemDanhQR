@@ -1,108 +1,136 @@
-// // File: ScheduleController.cs
-// // Bảng BuoiHoc + PhongHoc
-// using DiemDanhQR_API.DTOs.Requests;
-// using DiemDanhQR_API.DTOs.Responses;
-// using DiemDanhQR_API.Helpers;
-// using DiemDanhQR_API.Services.Interfaces;
-// using Microsoft.AspNetCore.Authorization;
-// using Microsoft.AspNetCore.Mvc;
+// File: Controllers/ScheduleController.cs
+// Bảng: BuoiHoc + PhongHoc
+using api.DTOs;
+using api.ErrorHandling;
+using api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
-// namespace DiemDanhQR_API.Controllers
-// {
-//     [ApiController]
-//     [Route("api/[controller]")]
-//     public class ScheduleController : ControllerBase
-//     {
-//         private readonly IScheduleService _svc;
-//         public ScheduleController(IScheduleService svc) => _svc = svc;
+namespace api.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ScheduleController : ControllerBase
+    {
+        private readonly IScheduleService _svc;
+        public ScheduleController(IScheduleService svc) => _svc = svc;
 
-//         // GET: /api/schedule/list
-//         [HttpGet("list")]
-//         [Authorize]
-//         public async Task<ActionResult<ApiResponse<PagedResult<ScheduleListItem>>>> GetList([FromQuery] ScheduleListRequest req)
-//         {
-//             var data = await _svc.GetListAsync(req);
+        private string inputResponse(string input) => input ?? "null";
 
-//             return Ok(new ApiResponse<PagedResult<ScheduleListItem>>
-//             {
-//                 Status = 200,
-//                 Message = "Lấy danh sách buổi học thành công.",
-//                 Data = data
-//             });
-//         }
+        [HttpGet("list")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<ScheduleListItem>>>> GetList([FromQuery] ScheduleListRequest req)
+        {
+            var data = await _svc.GetListAsync(req);
 
-//         // GET: /api/schedule/rooms
-//         [HttpGet("rooms")]
-//         [Authorize]
-//         public async Task<ActionResult<ApiResponse<PagedResult<RoomListItem>>>> GetRooms([FromQuery] RoomListRequest req)
-//         {
-//             var data = await _svc.GetRoomsAsync(req);
-//             return Ok(new ApiResponse<PagedResult<RoomListItem>>
-//             {
-//                 Status = 200,
-//                 Message = "Lấy danh sách phòng học thành công.",
-//                 Data = data
-//             });
-//         }
+            // PagedResult trong dự án dùng string -> đảm bảo đổ string
+            var shaped = new PagedResult<ScheduleListItem>
+            {
+                Page = inputResponse(data.Page),
+                PageSize = inputResponse(data.PageSize),
+                TotalRecords = inputResponse(data.TotalRecords),
+                TotalPages = inputResponse(data.TotalPages),
+                Items = data.Items
+            };
 
-//         [HttpPost("create-room")]
-//         [Authorize(Roles = "ADMIN")]
-//         public async Task<ActionResult<ApiResponse<CreateRoomResponse>>> CreateRoom([FromForm] CreateRoomRequest req)
-//         {
-//             var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
-//             var data = await _svc.CreateRoomAsync(req, currentUserId);
+            return Ok(new ApiResponse<PagedResult<ScheduleListItem>>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Lấy danh sách buổi học thành công."),
+                Data = shaped
+            });
+        }
 
-//             return Ok(new ApiResponse<CreateRoomResponse>
-//             {
-//                 Status = 200,
-//                 Message = "Tạo phòng học thành công.",
-//                 Data = data
-//             });
-//         }
+        [HttpGet("rooms")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<PagedResult<RoomListItem>>>> GetRooms([FromQuery] RoomListRequest req)
+        {
+            var data = await _svc.GetRoomsAsync(req);
 
-//         [HttpPost("create-schedule")]
-//         [Authorize(Roles = "ADMIN,GV")]
-//         public async Task<ActionResult<ApiResponse<CreateScheduleResponse>>> CreateSchedule([FromForm] CreateScheduleRequest req)
-//         {
-//             var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
-//             var data = await _svc.CreateScheduleAsync(req, currentUserId);
+            var shaped = new PagedResult<RoomListItem>
+            {
+                Page = inputResponse(data.Page),
+                PageSize = inputResponse(data.PageSize),
+                TotalRecords = inputResponse(data.TotalRecords),
+                TotalPages = inputResponse(data.TotalPages),
+                Items = data.Items
+            };
 
-//             return Ok(new ApiResponse<CreateScheduleResponse>
-//             {
-//                 Status = 200,
-//                 Message = "Tạo buổi học thành công.",
-//                 Data = data
-//             });
-//         }
+            return Ok(new ApiResponse<PagedResult<RoomListItem>>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Lấy danh sách phòng học thành công."),
+                Data = shaped
+            });
+        }
 
-//         [HttpPut("update-room")]
-//         [Authorize(Roles = "ADMIN")]
-//         public async Task<ActionResult<ApiResponse<UpdateRoomResponse>>> UpdateRoom([FromForm] UpdateRoomRequest req)
-//         {
-//             var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
-//             var data = await _svc.UpdateRoomAsync(req, currentUserId);
+        [HttpPost("create-room")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<CreateRoomResponse>>> CreateRoom([FromForm] CreateRoomRequest req)
+        {
+            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
+                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
 
-//             return Ok(new ApiResponse<UpdateRoomResponse>
-//             {
-//                 Status = 200,
-//                 Message = "Cập nhật phòng học thành công.",
-//                 Data = data
-//             });
-//         }
+            var data = await _svc.CreateRoomAsync(req, tenDangNhap);
 
-//         [HttpPut("update-schedule")]
-//         [Authorize(Roles = "ADMIN,GV")]
-//         public async Task<ActionResult<ApiResponse<UpdateScheduleResponse>>> UpdateSchedule([FromForm] UpdateScheduleRequest req)
-//         {
-//             var currentUserId = HelperFunctions.GetUserIdFromClaims(User);
-//             var data = await _svc.UpdateScheduleAsync(req, currentUserId);
+            return Ok(new ApiResponse<CreateRoomResponse>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Tạo phòng học thành công."),
+                Data = data
+            });
+        }
 
-//             return Ok(new ApiResponse<UpdateScheduleResponse>
-//             {
-//                 Status = 200,
-//                 Message = "Cập nhật buổi học thành công.",
-//                 Data = data
-//             });
-//         }
-//     }
-// }
+        [HttpPost("create-schedule")]
+        [Authorize(Roles = "ADMIN,GV")]
+        public async Task<ActionResult<ApiResponse<CreateScheduleResponse>>> CreateSchedule([FromForm] CreateScheduleRequest req)
+        {
+            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
+                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
+
+            var data = await _svc.CreateScheduleAsync(req, tenDangNhap);
+
+            return Ok(new ApiResponse<CreateScheduleResponse>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Tạo buổi học thành công."),
+                Data = data
+            });
+        }
+
+        [HttpPut("update-room")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<UpdateRoomResponse>>> UpdateRoom([FromForm] UpdateRoomRequest req)
+        {
+            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
+                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
+
+            var data = await _svc.UpdateRoomAsync(req, tenDangNhap);
+
+            return Ok(new ApiResponse<UpdateRoomResponse>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Cập nhật phòng học thành công."),
+                Data = data
+            });
+        }
+
+        [HttpPut("update-schedule")]
+        [Authorize(Roles = "ADMIN,GV")]
+        public async Task<ActionResult<ApiResponse<UpdateScheduleResponse>>> UpdateSchedule([FromForm] UpdateScheduleRequest req)
+        {
+            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
+                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
+
+            var data = await _svc.UpdateScheduleAsync(req, tenDangNhap);
+
+            return Ok(new ApiResponse<UpdateScheduleResponse>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Cập nhật buổi học thành công."),
+                Data = data
+            });
+        }
+    }
+}

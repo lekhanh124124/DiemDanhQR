@@ -29,24 +29,24 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // Đăng ký DI cho Repository
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-// builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-// builder.Services.AddScoped<ILecturerRepository, LecturerRepository>();
-// builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<ILecturerRepository, LecturerRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 // builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
-// builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
 // builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
-// builder.Services.AddScoped<IAcademicRepository, AcademicRepository>();
+builder.Services.AddScoped<IAcademicRepository, AcademicRepository>();
 
 // Đăng ký DI cho Service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-// builder.Services.AddScoped<IStudentService, StudentService>();
-// builder.Services.AddScoped<ILecturerService, LecturerService>();
-// builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ILecturerService, LecturerService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
 // builder.Services.AddScoped<IScheduleService, ScheduleService>();
-// builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 // builder.Services.AddScoped<IAttendanceService, AttendanceService>();
-// builder.Services.AddScoped<IAcademicService, AcademicService>();
+builder.Services.AddScoped<IAcademicService, AcademicService>();
 
 // CORS: chấp nhận frontend
 builder.Services.AddCors(opt =>

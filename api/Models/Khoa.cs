@@ -1,8 +1,11 @@
-namespace api.Models;
-
-public class Khoa
+// File: Models/Khoa.cs
+namespace api.Models
 {
-    public int MaKhoa { get; set; }
-    public string CodeKhoa { get; set; } = null!;
-    public string TenKhoa { get; set; } = null!;
+    public class Khoa
+    {
+        public int MaKhoa { get; set; }
+        public string CodeKhoa { get; set; } = null!;
+        public string TenKhoa { get; set; } = null!;
+    }
 }
+
