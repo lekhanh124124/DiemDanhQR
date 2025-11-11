@@ -5,9 +5,6 @@ namespace api.DTOs
 {
     public class CreateStudentRequest
     {
-        [Required(ErrorMessage = "Tên đăng nhập là bắt buộc.")]
-        public string? MaSinhVien { get; set; }
-
         // Hồ sơ người dùng 
         public string? HoTen { get; set; }
         public byte? GioiTinh { get; set; }
@@ -18,7 +15,7 @@ namespace api.DTOs
         public string? DiaChi { get; set; }
 
         // Thông tin sinh viên
-        public int? NamNhapHoc { get; set; }
+        public int? NamNhapHoc { get; set; } // Nếu null sẽ dùng năm hiện tại
         [Required(ErrorMessage = "Mã ngành là bắt buộc.")]
         public int? MaNganh { get; set; }
     }
@@ -60,7 +57,7 @@ namespace api.DTOs
         public string? DiaChi { get; set; }
     }
 
-        public class AddStudentToCourseRequest
+    public class AddStudentToCourseRequest
     {
         [Required(ErrorMessage = "Mã lớp học phần là bắt buộc.")]
         public string? MaLopHocPhan { get; set; }
@@ -78,5 +75,24 @@ namespace api.DTOs
 
         [Required(ErrorMessage = "Mã sinh viên là bắt buộc.")]
         public string? MaSinhVien { get; set; }
+    }
+
+    public class BulkImportStudentsRequest
+    {
+        [Required]
+        public IFormFile? File { get; set; } // Excel (.xlsx/.xls)
+        // Dùng khi cột NamNhapHoc trống
+        public int? DefaultNamNhapHoc { get; set; }
+    }
+
+    public class BulkAddStudentsToCourseRequest
+    {
+        [Required(ErrorMessage = "Mã lớp học phần là bắt buộc.")]
+        public string? MaLopHocPhan { get; set; }
+
+        [Required(ErrorMessage = "File Excel là bắt buộc.")]
+        public IFormFile? File { get; set; } 
+        public DateOnly? DefaultNgayThamGia { get; set; }
+        public bool? DefaultTrangThai { get; set; } = true;
     }
 }

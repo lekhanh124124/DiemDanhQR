@@ -54,5 +54,8 @@ namespace api.Repositories.Interfaces
         Task UpdateSubjectAsync(MonHoc subject);
         Task<LopHocPhan?> GetCourseByCodeAsync(string maLopHocPhan);
         Task UpdateCourseAsync(LopHocPhan course);
+
+        Task<string> GenerateNextSubjectCodeAsync(string tenMonHoc);
+        Task<string> GenerateNextCourseCodeAsync(string tenMonHoc, short namHoc, byte ky);
     }
 }

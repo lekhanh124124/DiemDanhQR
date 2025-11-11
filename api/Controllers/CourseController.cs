@@ -36,7 +36,7 @@ namespace api.Controllers
 
         // GET: /api/course/subjects
         [HttpGet("subjects")]
-        [Authorize]
+        [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<ApiResponse<PagedResult<SubjectListItem>>>> GetSubjects([FromQuery] SubjectListRequest req)
         {
             var data = await _svc.GetSubjectsAsync(req);
@@ -82,7 +82,7 @@ namespace api.Controllers
 
         // GET: /api/course/semesters
         [HttpGet("semesters")]
-        [Authorize]
+        [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<ApiResponse<PagedResult<SemesterListItem>>>> GetSemesters([FromQuery] SemesterListRequest req)
         {
             var data = await _svc.GetSemestersAsync(req);

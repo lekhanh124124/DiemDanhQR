@@ -11,5 +11,6 @@ namespace api.Services.Interfaces
         Task<CreateScheduleResponse> CreateScheduleAsync(CreateScheduleRequest req, string? tenDangNhap);
         Task<UpdateRoomResponse> UpdateRoomAsync(UpdateRoomRequest req, string? tenDangNhap);
         Task<UpdateScheduleResponse> UpdateScheduleAsync(UpdateScheduleRequest req, string? tenDangNhap);
+        Task<List<ScheduleListItem>> AutoGenerateAsync(string maLopHocPhan, string? tenDangNhap);
     }
 }

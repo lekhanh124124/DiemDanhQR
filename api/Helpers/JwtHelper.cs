@@ -55,5 +55,61 @@ namespace api.Helpers
                 .Replace('+', '-')
                 .Replace('/', '_');
         }
+
+        /// <summary>
+        /// Lấy username ưu tiên theo thứ tự: TenDangNhap -> NameIdentifier -> Name -> Identity.Name.
+        /// </summary>
+        public static string? GetUsername(ClaimsPrincipal user)
+        {
+            if (user == null) return null;
+            return user.FindFirst("TenDangNhap")?.Value
+                ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? user.FindFirst(ClaimTypes.Name)?.Value
+                ?? user.Identity?.Name;
+        }
+
+        /// <summary>
+        /// Kiểm tra 1 chuỗi role có được coi là ADMIN hay không.
+        /// Tiêu chí:
+        /// - Chứa "ADMIN" (không phân biệt hoa/thường), ví dụ: "ADMIN_QTND"
+        /// - Hoặc bắt đầu bằng "AD" (phổ biến "AD_" rút gọn của ADMIN), ví dụ: "AD_QTGV"
+        /// </summary>
+        public static bool IsAdminRoleString(string? role)
+        {
+            if (string.IsNullOrWhiteSpace(role)) return false;
+            var r = role.Trim();
+            if (r.IndexOf("ADMIN", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            if (r.StartsWith("AD", StringComparison.OrdinalIgnoreCase)) return true; // chấp nhận AD, AD_, AD-...
+            return false;
+        }
+
+        /// <summary>
+        /// Lấy tất cả role từ ClaimsPrincipal (Role & "role") và xác định có ADMIN hay không theo IsAdminRoleString.
+        /// </summary>
+        public static bool IsAdmin(ClaimsPrincipal user)
+        {
+            if (user == null) return false;
+
+            // Gom cả ClaimTypes.Role và claim "role" tuỳ backend phát hành token
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value)
+                            .Concat(user.FindAll("role").Select(c => c.Value));
+
+            foreach (var r in roles)
+            {
+                if (IsAdminRoleString(r)) return true;
+            }
+
+            // Một số hệ thống nhét role vào "roles" dạng chuỗi CSV
+            var rolesCsv = user.FindFirst("roles")?.Value;
+            if (!string.IsNullOrWhiteSpace(rolesCsv))
+            {
+                foreach (var r in rolesCsv.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (IsAdminRoleString(r)) return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

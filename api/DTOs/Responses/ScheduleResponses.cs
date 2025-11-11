@@ -7,7 +7,8 @@ namespace api.DTOs
         public PhongHocDTO? PhongHoc { get; set; } // MaPhong, TenPhong, TrangThai
         public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLop, TrangThai
         public MonHocDTO? MonHoc { get; set; } // MaMonHoc, TenMonHoc, TrangThai
-        public GiangVienDTO? GiangVien { get; set; } // MaGiangVien, HoTen
+        public GiangVienDTO? GiangVien { get; set; } // MaGiangVien
+        public NguoiDungDTO? GiangVienInfo { get; set; } // HoTen
     }
     public class CreateScheduleResponse
     {

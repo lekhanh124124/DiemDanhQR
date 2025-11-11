@@ -59,5 +59,18 @@ namespace api.Repositories.Interfaces
         Task UpdateScheduleAsync(BuoiHoc buoi);
 
         Task<bool> ScheduleExistsExceptAsync(string maLopHocPhan, DateOnly ngayHoc, byte tietBatDau, int excludeMaBuoi);
+
+        // bundle thông tin cần cho auto-generate
+        Task<(LopHocPhan Lhp, MonHoc Mh, HocKy Hk, GiangVien? Gv)?> GetCourseBundleAsync(string maLopHocPhan);
+        Task<List<PhongHoc>> GetActiveRoomsAsync();
+
+        // Kiểm tra trùng lịch (room & course)
+        Task<bool> AnyRoomConflictAsync(int maPhong, DateOnly ngayHoc, byte tietBatDau, byte soTiet);
+        Task<bool> AnyCourseConflictAsync(string maLopHocPhan, DateOnly ngayHoc, byte tietBatDau, byte soTiet);
+
+        // Thêm hàng loạt buổi học
+        Task AddSchedulesAsync(IEnumerable<BuoiHoc> items);
+        Task<NguoiDung?> GetUserByIdAsync(int maNguoiDung);
+
     }
 }

@@ -136,20 +136,34 @@ namespace api.Services.Implementations
 
         public async Task<CreateSubjectResponse> CreateSubjectAsync(CreateSubjectRequest req, string? currentUserLogin)
         {
-            var code = NormalizeCode(req.MaMonHoc)!;
+            // Validate cơ bản
+            if (string.IsNullOrWhiteSpace(req.TenMonHoc))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Tên môn học là bắt buộc.");
+            if (!req.SoTinChi.HasValue)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Số tín chỉ là bắt buộc.");
+            if (!req.SoTiet.HasValue)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Số tiết là bắt buộc.");
+            if (req.LoaiMon.HasValue)
+            {
+                if (req.LoaiMon < 1 || req.LoaiMon > 3)
+                    ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Loại môn không hợp lệ.");
+            }
 
-            var existed = await _repo.SubjectExistsAsync(code);
-            if (existed)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Mã môn học đã tồn tại.");
+            var autoCode = await _repo.GenerateNextSubjectCodeAsync(req.TenMonHoc!.Trim());
+
+            // Double-check (phòng trùng hi hữu)
+            if (await _repo.SubjectExistsAsync(autoCode))
+                ApiExceptionHelper.Throw(ApiErrorCode.Conflict, "Không thể sinh mã môn học (bị trùng). Vui lòng thử lại.");
 
             var entity = new MonHoc
             {
-                MaMonHoc = code,
+                MaMonHoc = autoCode,
                 TenMonHoc = req.TenMonHoc!.Trim(),
                 SoTinChi = req.SoTinChi!.Value,
                 SoTiet = req.SoTiet!.Value,
                 MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim(),
-                TrangThai = req.TrangThai ?? true
+                TrangThai = req.TrangThai ?? true,
+                LoaiMon = req.LoaiMon ?? 1
             };
 
             await _repo.AddSubjectAsync(entity);
@@ -164,6 +178,7 @@ namespace api.Services.Implementations
                     SoTinChi = inputResponse(entity.SoTinChi.ToString()),
                     SoTiet = inputResponse(entity.SoTiet.ToString()),
                     MoTa = inputResponse(entity.MoTa ?? "null"),
+                    LoaiMon = inputResponse(entity.LoaiMon.ToString()),
                     TrangThai = inputResponse(entity.TrangThai.ToString())
                 }
             };
@@ -171,47 +186,51 @@ namespace api.Services.Implementations
 
         public async Task<CreateCourseResponse> CreateCourseAsync(CreateCourseRequest req, string? currentUserLogin)
         {
-            var maLhp = NormalizeCode(req.MaLopHocPhan)!;
             var maMon = NormalizeCode(req.MaMonHoc)!;
             var maGv = NormalizeCode(req.MaGiangVien)!;
 
             if (!req.MaHocKy.HasValue || req.MaHocKy.Value <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Mã học kỳ không hợp lệ.");
 
-            var existed = await _repo.CourseExistsAsync(maLhp);
-            if (existed)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Mã lớp học phần đã tồn tại.");
-
-            var subjectOk = await _repo.SubjectExistsAsync(maMon);
-            if (!subjectOk)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Môn học không tồn tại.");
+            // Tồn tại các thực thể liên quan
+            var subject = await _repo.GetSubjectByCodeAsync(maMon)
+                ?? throw ApiExceptionHelper.New(ApiErrorCode.BadRequest, "Môn học không tồn tại.");
 
             var lecturerOk = await _repo.LecturerExistsByCodeAsync(maGv);
-            if (!lecturerOk)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Giảng viên không tồn tại.");
+            if (!lecturerOk) ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Giảng viên không tồn tại.");
 
-            var hkOk = await _repo.SemesterExistsByIdAsync(req.MaHocKy!.Value);
-            if (!hkOk)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Học kỳ không tồn tại.");
+            var semester = await _repo.GetSemesterByIdAsync(req.MaHocKy!.Value)
+                ?? throw ApiExceptionHelper.New(ApiErrorCode.BadRequest, "Học kỳ không tồn tại.");
+
+            // >>> Sinh mã lớp học phần: PREFIX-<NAMHOC>-K<KY>-STT
+            var autoCode = await _repo.GenerateNextCourseCodeAsync(subject.TenMonHoc ?? subject.MaMonHoc!, semester.NamHoc, semester.Ky);
+
+            // Check hi hữu
+            if (await _repo.CourseExistsAsync(autoCode))
+                ApiExceptionHelper.Throw(ApiErrorCode.Conflict, "Không thể sinh mã lớp học phần (bị trùng). Vui lòng thử lại.");
 
             var entity = new LopHocPhan
             {
-                MaLopHocPhan = maLhp,
+                MaLopHocPhan = autoCode,
                 TenLopHocPhan = req.TenLopHocPhan!.Trim(),
                 TrangThai = req.TrangThai ?? true,
                 MaMonHoc = maMon,
                 MaGiangVien = maGv,
-                MaHocKy = req.MaHocKy.Value
+                MaHocKy = semester.MaHocKy
             };
 
             await _repo.AddCourseAsync(entity);
-            await _repo.LogActivityAsync(currentUserLogin, $"Tạo lớp học phần: {entity.MaLopHocPhan} - {entity.TenLopHocPhan} (Môn: {entity.MaMonHoc}, GV: {entity.MaGiangVien}, HK: {entity.MaHocKy})");
+            await _repo.LogActivityAsync(currentUserLogin,
+                $"Tạo lớp học phần: {entity.MaLopHocPhan} - {entity.TenLopHocPhan} (Môn: {entity.MaMonHoc}, GV: {entity.MaGiangVien}, HK: {entity.MaHocKy})");
 
-            // Lấy lại dữ liệu liên quan để build response đúng cấu trúc
-            var (rows, _) = await _repo.SearchCoursesAsync(maLopHocPhan: maLhp,
-                tenLopHocPhan: null, trangThai: null, maMonHoc: null, soTinChi: null,
-                maGiangVien: null, maHocKy: null, namHoc: null, ky: null,
-                maSinhVien: null, sortBy: null, desc: false, page: 1, pageSize: 1);
+            // Build response từ dữ liệu vừa tạo
+            var (rows, _) = await _repo.SearchCoursesAsync(
+                maLopHocPhan: entity.MaLopHocPhan,
+                tenLopHocPhan: null, trangThai: null,
+                maMonHoc: null, soTinChi: null,
+                maGiangVien: null, maHocKy: null,
+                namHoc: null, ky: null, maSinhVien: null,
+                sortBy: null, desc: false, page: 1, pageSize: 1);
 
             var x = rows.First();
 

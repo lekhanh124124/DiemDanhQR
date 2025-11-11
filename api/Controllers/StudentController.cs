@@ -99,6 +99,44 @@ namespace api.Controllers
                 Data = data
             });
         }
+
+        // POST: /api/student/bulk-import
+        [HttpPost("bulk-import")]
+        [Authorize(Roles = "ADMIN")]
+        [RequestSizeLimit(20_000_000)]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<BulkImportStudentsResponse>>> BulkImport([FromForm] BulkImportStudentsRequest req)
+        {
+            var result = await _svc.BulkImportAsync(req);
+            return Ok(new ApiResponse<BulkImportStudentsResponse>
+            {
+                Status = "200",
+                Message = "Import sinh viên hoàn tất.",
+                Data = result
+            });
+        }
+        
+        // POST: /api/student/add-to-course-bulk
+        [HttpPost("add-to-course-bulk")]
+        [Authorize(Roles = "ADMIN,GV")]
+        [RequestSizeLimit(20_000_000)]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<ApiResponse<BulkImportStudentsResponse>>> AddToCourseBulk([FromForm] BulkAddStudentsToCourseRequest req)
+        {
+            var currentUser = User.FindFirst("TenDangNhap")?.Value
+                              ?? User.FindFirst(ClaimTypes.Name)?.Value
+                              ?? string.Empty;
+
+            var result = await _svc.BulkAddStudentsToCourseAsync(req, currentUser);
+
+            return Ok(new ApiResponse<BulkImportStudentsResponse>
+            {
+                Status = "200",
+                Message = "Import tham gia lớp hoàn tất.",
+                Data = result
+            });
+        }
     }
+
 }
 

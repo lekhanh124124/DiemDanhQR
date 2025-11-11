@@ -5,13 +5,12 @@ namespace api.DTOs
 {
     public class CreateLecturerRequest
     {
-        [Required(ErrorMessage = "Mã giảng viên là bắt buộc.")]
-        public string? MaGiangVien { get; set; }
         public string? HoTen { get; set; }
+        [Required(ErrorMessage = "Mã khoa là bắt buộc.")]
         public int? MaKhoa { get; set; }
         public string? HocHam { get; set; }
         public string? HocVi { get; set; }
-        public DateOnly? NgayTuyenDung { get; set; }
+        public DateOnly? NgayTuyenDung { get; set; } // Nếu null sẽ dùng năm hiện tại (VN)
 
         // Tuỳ chọn hồ sơ người dùng
         public byte? GioiTinh { get; set; }

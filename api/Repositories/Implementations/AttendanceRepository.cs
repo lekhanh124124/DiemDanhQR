@@ -158,7 +158,7 @@ namespace api.Repositories.Implementations
             SearchAttendancesAsync(
                 int? maDiemDanh,
                 DateOnly? thoiGianQuetDateOnly,
-                string? codeTrangThai,
+                int? maTrangThai,
                 bool? trangThai,
                 int? maBuoi,
                 string? maSinhVien,
@@ -184,8 +184,7 @@ namespace api.Repositories.Implementations
                 var end = start.AddDays(1);
                 q = q.Where(x => x.d.ThoiGianQuet >= start && x.d.ThoiGianQuet < end);
             }
-            if (!string.IsNullOrWhiteSpace(codeTrangThai))
-                q = q.Where(x => x.t != null && x.t.CodeTrangThai == codeTrangThai);
+            if (maTrangThai.HasValue) q = q.Where(x => x.t != null && x.t.MaTrangThai == maTrangThai.Value);
             if (trangThai.HasValue) q = q.Where(x => x.d.TrangThai == trangThai.Value);
             if (maBuoi.HasValue) q = q.Where(x => x.d.MaBuoi == maBuoi.Value);
             if (!string.IsNullOrWhiteSpace(maSinhVien))
@@ -197,7 +196,7 @@ namespace api.Repositories.Implementations
             q = key switch
             {
                 "thoigianquet" => desc ? q.OrderByDescending(x => x.d.ThoiGianQuet) : q.OrderBy(x => x.d.ThoiGianQuet),
-                "codetrangthai" => desc ? q.OrderByDescending(x => x.t!.CodeTrangThai) : q.OrderBy(x => x.t!.CodeTrangThai),
+                "matrangthai" => desc ? q.OrderByDescending(x => x.t!.MaTrangThai) : q.OrderBy(x => x.t!.MaTrangThai),
                 "trangthai" => desc ? q.OrderByDescending(x => x.d.TrangThai) : q.OrderBy(x => x.d.TrangThai),
                 "mabuoi" => desc ? q.OrderByDescending(x => x.d.MaBuoi) : q.OrderBy(x => x.d.MaBuoi),
                 "masinhvien" => desc ? q.OrderByDescending(x => x.d.MaSinhVien) : q.OrderBy(x => x.d.MaSinhVien),

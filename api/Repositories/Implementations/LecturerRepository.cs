@@ -1,4 +1,5 @@
 // File: Repositories/Implementations/LecturerRepository.cs
+using System.Text.RegularExpressions;
 using api.Data;
 using api.Models;
 using api.Repositories.Interfaces;
@@ -106,17 +107,63 @@ namespace api.Repositories.Implementations
             q = key switch
             {
                 "magiangvien" => (desc ? q.OrderByDescending(x => x.gv.MaGiangVien) : q.OrderBy(x => x.gv.MaGiangVien)),
-                "makhoa"      => (desc ? q.OrderByDescending(x => x.gv.MaKhoa)      : q.OrderBy(x => x.gv.MaKhoa)),
-                "hocham"      => (desc ? q.OrderByDescending(x => x.gv.HocHam)      : q.OrderBy(x => x.gv.HocHam)),
-                "hocvi"       => (desc ? q.OrderByDescending(x => x.gv.HocVi)       : q.OrderBy(x => x.gv.HocVi)),
+                "makhoa" => (desc ? q.OrderByDescending(x => x.gv.MaKhoa) : q.OrderBy(x => x.gv.MaKhoa)),
+                "hocham" => (desc ? q.OrderByDescending(x => x.gv.HocHam) : q.OrderBy(x => x.gv.HocHam)),
+                "hocvi" => (desc ? q.OrderByDescending(x => x.gv.HocVi) : q.OrderBy(x => x.gv.HocVi)),
                 "ngaytuyendung" => (desc ? q.OrderByDescending(x => x.gv.NgayTuyenDung) : q.OrderBy(x => x.gv.NgayTuyenDung)),
-                "hoten" or _  => (desc ? q.OrderByDescending(x => x.nd.HoTen)       : q.OrderBy(x => x.nd.HoTen)),
+                "hoten" or _ => (desc ? q.OrderByDescending(x => x.nd.HoTen) : q.OrderBy(x => x.nd.HoTen)),
             };
 
             var total = await q.CountAsync();
             var list = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
             var items = list.Select(x => (x.gv, x.nd)).ToList();
             return (items, total);
+        }
+        public async Task<string> GenerateNextMaGiangVienAsync(string codeKhoa, int year)
+        {
+            // Mã = CodeKhoa + YY + STT(D4)
+            var yy = (year % 100).ToString("D2");
+            const int sttWidth = 4;
+
+            // Giả định độ dài tối đa MaGiangVien = 20 (nếu cột của bạn khác, điều chỉnh số 20)
+            var maxLen = 20;
+            var maxCodeLen = maxLen - 2 - sttWidth; // chừa chỗ cho YY + STT
+            if (maxCodeLen < 1) maxCodeLen = 1;
+
+            codeKhoa = (codeKhoa ?? "").Trim();
+            if (codeKhoa.Length > maxCodeLen)
+                codeKhoa = codeKhoa.Substring(0, maxCodeLen);
+
+            var prefix = $"{codeKhoa}{yy}";
+
+            // Lấy các mã có cùng prefix để tìm STT lớn nhất
+            var existing = await _db.GiangVien
+                .AsNoTracking()
+                .Where(g => EF.Functions.Like(g.MaGiangVien!, prefix + "%"))
+                .Select(g => g.MaGiangVien!)
+                .ToListAsync();
+
+            int maxStt = 0;
+            var rx = new Regex($"^{Regex.Escape(prefix)}(\\d+)$");
+            foreach (var id in existing)
+            {
+                var m = rx.Match(id);
+                if (m.Success && int.TryParse(m.Groups[1].Value, out var n) && n > maxStt)
+                    maxStt = n;
+            }
+
+            // Tạo STT kế tiếp, bảo đảm không trùng
+            string next;
+            int attempt = 0;
+            do
+            {
+                var stt = (maxStt + 1 + attempt).ToString($"D{sttWidth}");
+                next = prefix + stt;
+                attempt++;
+            }
+            while (await _db.GiangVien.AsNoTracking().AnyAsync(g => g.MaGiangVien == next));
+
+            return next;
         }
     }
 }

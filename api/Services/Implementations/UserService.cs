@@ -11,11 +11,16 @@ namespace api.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _repo;
+        private readonly IPermissionRepository _permRepo;
+        private readonly IAcademicRepository _academicRepo;
+
         private readonly IWebHostEnvironment _env;
 
-        public UserService(IUserRepository repo, IWebHostEnvironment env)
+        public UserService(IUserRepository repo, IPermissionRepository permRepo, IAcademicRepository academicRepo, IWebHostEnvironment env)
         {
             _repo = repo;
+            _permRepo = permRepo;
+            _academicRepo = academicRepo;
             _env = env;
         }
 
@@ -215,10 +220,24 @@ namespace api.Services.Implementations
             if (user == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
 
-            var userId = user!.MaNguoiDung;
+            GiangVien gv = await _repo.GetLecturerByMaNguoiDungAsync(user.MaNguoiDung);
+            PhanQuyen pq = await _permRepo.GetRoleByIdAsync(user.MaQuyen);
+            SinhVien sv = null!;
+            Khoa kh = null!;
+            Nganh ng = null!;
 
-            var gv = await _repo.GetLecturerByMaNguoiDungAsync(userId);
-            var sv = gv == null ? await _repo.GetStudentByMaNguoiDungAsync(userId) : null;
+
+            if (gv == null)
+            {
+                sv = await _repo.GetStudentByMaNguoiDungAsync(user.MaNguoiDung);
+                ng = await _academicRepo.GetNganhByIdAsync((int)sv.MaNganh);
+                kh = await _academicRepo.GetKhoaByIdAsync(ng.MaKhoa);
+            }
+            else
+            {
+                kh = await _academicRepo.GetKhoaByIdAsync((int)gv.MaKhoa);
+            }
+
 
             var nguoiDungDto = new NguoiDungDTO
             {
@@ -234,28 +253,58 @@ namespace api.Services.Implementations
 
             if (gv != null)
             {
-                return new
+                return new LecturerInfoResponse
                 {
                     NguoiDung = nguoiDungDto,
                     GiangVien = new GiangVienDTO
                     {
-                        MaGiangVien = inputResponse(gv.MaGiangVien),
+                        MaGiangVien = inputResponse(gv.MaGiangVien.ToString()),
                         HocHam = inputResponse(gv.HocHam),
                         HocVi = inputResponse(gv.HocVi),
                         NgayTuyenDung = inputResponse(FDateOnly(gv.NgayTuyenDung))
+                    },
+                    Khoa = new KhoaDTO
+                    {
+                        MaKhoa = inputResponse(kh.MaKhoa.ToString()),
+                        CodeKhoa = inputResponse(kh.CodeKhoa),
+                        TenKhoa = inputResponse(kh.TenKhoa)
+                    },
+                    PhanQuyen = new PhanQuyenDTO
+                    {
+                        MaQuyen = inputResponse(pq.MaQuyen.ToString()),
+                        CodeQuyen = inputResponse(pq.CodeQuyen),
+                        TenQuyen = inputResponse(pq.TenQuyen)
                     }
                 };
             }
 
             if (sv != null)
             {
-                return new
+                return new StudentInfoResponse
                 {
                     NguoiDung = nguoiDungDto,
                     SinhVien = new SinhVienDTO
                     {
-                        MaSinhVien = inputResponse(sv.MaSinhVien),
-                        NamNhapHoc = inputResponse(sv.NamNhapHoc.ToString())
+                        MaSinhVien = inputResponse(sv.MaSinhVien.ToString()),
+                        NamNhapHoc = inputResponse(sv.NamNhapHoc.ToString()),
+                    },
+                    Nganh = new NganhDTO
+                    {
+                        MaNganh = inputResponse(ng.MaNganh.ToString()),
+                        CodeNganh = inputResponse(ng.CodeNganh),
+                        TenNganh = inputResponse(ng.TenNganh)
+                    },
+                    Khoa = new KhoaDTO
+                    {
+                        MaKhoa = inputResponse(kh.MaKhoa.ToString()),
+                        CodeKhoa = inputResponse(kh.CodeKhoa),
+                        TenKhoa = inputResponse(kh.TenKhoa)
+                    },
+                    PhanQuyen = new PhanQuyenDTO
+                    {
+                        MaQuyen = inputResponse(pq.MaQuyen.ToString()),
+                        CodeQuyen = inputResponse(pq.CodeQuyen),
+                        TenQuyen = inputResponse(pq.TenQuyen)
                     }
                 };
             }

@@ -1,4 +1,5 @@
 // File: Repositories/Implementations/StudentRepository.cs
+using System.Text.RegularExpressions;
 using api.Data;
 using api.Models;
 using api.Repositories.Interfaces;
@@ -34,61 +35,82 @@ namespace api.Repositories.Implementations
 
         public Task SaveChangesAsync() => _db.SaveChangesAsync();
 
-        public async Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh)> Items, int Total)> SearchStudentsAsync(
-            int? maKhoa,
-            int? maNganh,
-            int? namNhapHoc,
-            bool? trangThaiUser,
-            string? maLopHocPhan,
-            string? sortBy,
-            bool desc,
-            int page,
-            int pageSize
-        )
+        public async Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh, DateOnly? NgayTG, bool? TrangThaiTG)> Items, int Total)>
+    SearchStudentsAsync(int? maKhoa, int? maNganh, int? namNhapHoc, bool? trangThaiUser,
+                        string? maLopHocPhan, string? sortBy, bool desc, int page, int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
-            var q = from sv in _db.SinhVien.AsNoTracking()
-                    join nd in _db.NguoiDung.AsNoTracking() on sv.MaNguoiDung equals nd.MaNguoiDung
-                    join ng in _db.Nganh.AsNoTracking() on sv.MaNganh equals ng.MaNganh into ngLeft
-                    from ng in ngLeft.DefaultIfEmpty()
-                    join kh in _db.Khoa.AsNoTracking() on ng!.MaKhoa equals kh.MaKhoa into khLeft
-                    from kh in khLeft.DefaultIfEmpty()
-                    select new { sv, nd, ng, kh };
+            // 1) Base query: KHÔNG join ThamGiaLop
+            var q =
+                from sv in _db.SinhVien.AsNoTracking()
+                join nd in _db.NguoiDung.AsNoTracking() on sv.MaNguoiDung equals nd.MaNguoiDung
+                join ng0 in _db.Nganh.AsNoTracking() on sv.MaNganh equals ng0.MaNganh into ngLeft
+                from ng in ngLeft.DefaultIfEmpty()
+                join kh0 in _db.Khoa.AsNoTracking() on ng!.MaKhoa equals kh0.MaKhoa into khLeft
+                from kh in khLeft.DefaultIfEmpty()
+                select new { Sv = sv, Nd = nd, Ng = ng, Kh = kh };
 
-            if (maKhoa.HasValue) q = q.Where(x => x.kh != null && x.kh.MaKhoa == maKhoa.Value);
-            if (maNganh.HasValue) q = q.Where(x => x.ng != null && x.ng.MaNganh == maNganh.Value);
-            if (namNhapHoc.HasValue) q = q.Where(x => x.sv.NamNhapHoc == namNhapHoc.Value);
-            if (trangThaiUser.HasValue) q = q.Where(x => x.nd.TrangThai == trangThaiUser.Value);
+            // 2) Filters chung
+            if (maKhoa.HasValue) q = q.Where(x => x.Kh != null && x.Kh.MaKhoa == maKhoa.Value);
+            if (maNganh.HasValue) q = q.Where(x => x.Ng != null && x.Ng.MaNganh == maNganh.Value);
+            if (namNhapHoc.HasValue) q = q.Where(x => x.Sv.NamNhapHoc == namNhapHoc.Value);
+            if (trangThaiUser.HasValue) q = q.Where(x => x.Nd.TrangThai == trangThaiUser.Value);
 
-            if (!string.IsNullOrWhiteSpace(maLopHocPhan))
-            {
-                var lhp = maLopHocPhan.Trim();
-                q = q.Where(x => _db.ThamGiaLop.AsNoTracking()
-                    .Any(t => t.MaSinhVien == x.sv.MaSinhVien && t.MaLopHocPhan == lhp));
-            }
-
+            // 3) Sort (không dùng dynamic)
             var key = (sortBy ?? "HoTen").Trim().ToLowerInvariant();
             q = key switch
             {
-                "masinhvien" => desc ? q.OrderByDescending(x => x.sv.MaSinhVien) : q.OrderBy(x => x.sv.MaSinhVien),
-                "namnhaphoc" => desc ? q.OrderByDescending(x => x.sv.NamNhapHoc) : q.OrderBy(x => x.sv.NamNhapHoc),
-                "makhoa" => desc ? q.OrderByDescending(x => x.kh!.MaKhoa) : q.OrderBy(x => x.kh!.MaKhoa),
-                "manganh" => desc ? q.OrderByDescending(x => x.ng!.MaNganh) : q.OrderBy(x => x.ng!.MaNganh),
-                "hoten" or _ => desc ? q.OrderByDescending(x => x.nd.HoTen) : q.OrderBy(x => x.nd.HoTen),
+                "masinhvien" => (desc ? q.OrderByDescending(x => x.Sv.MaSinhVien) : q.OrderBy(x => x.Sv.MaSinhVien)),
+                "namnhaphoc" => (desc ? q.OrderByDescending(x => x.Sv.NamNhapHoc) : q.OrderBy(x => x.Sv.NamNhapHoc)),
+                "makhoa" => (desc ? q.OrderByDescending(x => x.Kh!.MaKhoa) : q.OrderBy(x => x.Kh!.MaKhoa)),
+                "manganh" => (desc ? q.OrderByDescending(x => x.Ng!.MaNganh) : q.OrderBy(x => x.Ng!.MaNganh)),
+                _ => (desc ? q.OrderByDescending(x => x.Nd.HoTen) : q.OrderBy(x => x.Nd.HoTen)),
             };
 
-            var total = await q.CountAsync();
+            if (string.IsNullOrWhiteSpace(maLopHocPhan))
+            {
+                // 4A) KHÔNG lọc theo lớp → không join ThamGiaLop → không phát sinh duplicate
+                var total = await q.CountAsync();
 
-            var list = await q
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new { x.sv, x.nd, x.ng, x.kh })
-                .ToListAsync();
+                var pageRows = await q
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(x => new { x.Sv, x.Nd, x.Ng, x.Kh })
+                    .ToListAsync();
 
-            var items = list.Select(x => (x.sv, x.nd, x.ng, x.kh)).ToList();
-            return (items, total);
+                var items = pageRows
+                    .Select(x => (x.Sv, x.Nd, x.Ng, x.Kh, (DateOnly?)null, (bool?)null))
+                    .ToList();
+
+                return (items, total);
+            }
+            else
+            {
+                // 4B) CÓ MaLopHocPhan → INNER JOIN để chỉ lấy SV thuộc lớp đó
+                var q2 =
+                    from x in q
+                    join tg in _db.ThamGiaLop.AsNoTracking()
+                         on new { x.Sv.MaSinhVien, MaLopHocPhan = maLopHocPhan! }
+                         equals new { tg.MaSinhVien, tg.MaLopHocPhan }
+                    select new { x.Sv, x.Nd, x.Ng, x.Kh, Tg = tg };
+
+                var total = await q2.CountAsync();
+
+                var pageRows = await q2
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var items = pageRows
+                    .Select(z => (z.Sv, z.Nd, z.Ng, z.Kh,
+                                  (DateOnly?)z.Tg.NgayThamGia,
+                                  (bool?)z.Tg.TrangThai))
+                    .ToList();
+
+                return (items, total);
+            }
         }
 
         public Task<SinhVien?> GetStudentByMaNguoiDungAsync(int maNguoiDung)
@@ -139,6 +161,69 @@ namespace api.Repositories.Implementations
             _db.ThamGiaLop.Update(thamGia);
             await _db.SaveChangesAsync();
         }
+        public async Task<string> GenerateNextMaSinhVienAsync(string codeNganh, int namNhapHoc)
+        {
+            var yy = (namNhapHoc % 100).ToString("D2");
+            const int sttWidth = 4;
+
+            // Độ dài tối đa của MaSinhVien là 20 (mapping EF) :contentReference[oaicite:2]{index=2}
+            // -> Tiền tố (prefix) = CodeNganh + YY, hậu tố (suffix) = STT(3)
+            // => codeNganh tối đa 20 - 2 - 3 = 15 ký tự.
+            var maxCodeLen = 20 - 2 - sttWidth; // 15
+            if (codeNganh.Length > maxCodeLen)
+                codeNganh = codeNganh.Substring(0, maxCodeLen);
+
+            var prefix = $"{yy}{codeNganh}";
+
+            // Lấy tất cả SV có cùng prefix, parse phần STT số ở cuối rồi lấy max
+            // (SQL: WHERE MaSinhVien LIKE prefix + '%')
+            var candidates = await _db.SinhVien
+                .AsNoTracking()
+                .Where(s => EF.Functions.Like(s.MaSinhVien, prefix + "%"))
+                .Select(s => s.MaSinhVien)
+                .ToListAsync();
+
+            int maxStt = 0;
+            var rx = new Regex($"^{Regex.Escape(prefix)}(\\d+)$");
+            foreach (var id in candidates)
+            {
+                var m = rx.Match(id);
+                if (m.Success && int.TryParse(m.Groups[1].Value, out var n))
+                    if (n > maxStt) maxStt = n;
+            }
+
+            // Tạo mã mới
+            string next;
+            int attempt = 0;
+            do
+            {
+                var stt = (maxStt + 1 + attempt).ToString($"D{sttWidth}");
+                next = prefix + stt;
+                attempt++;
+            }
+            while (await _db.SinhVien.AsNoTracking().AnyAsync(s => s.MaSinhVien == next));
+
+            return next;
+        }
+
+        // Lấy ngành theo CodeNganh
+        public Task<Nganh?> GetNganhByCodeAsync(string code)
+        {
+            var c = (code ?? "").Trim();
+            return _db.Nganh.FirstOrDefaultAsync(n => n.CodeNganh == c);
+        }
+
+        // Kiểm tra username tồn tại
+        public Task<NguoiDung?> GetUserByLoginAsync(string tenDangNhap)
+            => _db.NguoiDung.FirstOrDefaultAsync(u => u.TenDangNhap == tenDangNhap);
+
+        // Tìm theo email/sđt (tránh trùng option)
+        public Task<bool> ExistsUserByEmailAsync(string? email)
+            => string.IsNullOrWhiteSpace(email) ? Task.FromResult(false)
+               : _db.NguoiDung.AsNoTracking().AnyAsync(u => u.Email == email!.Trim());
+
+        public Task<bool> ExistsUserByPhoneAsync(string? phone)
+            => string.IsNullOrWhiteSpace(phone) ? Task.FromResult(false)
+               : _db.NguoiDung.AsNoTracking().AnyAsync(u => u.SoDienThoai == phone!.Trim());
     }
 }
-// File:

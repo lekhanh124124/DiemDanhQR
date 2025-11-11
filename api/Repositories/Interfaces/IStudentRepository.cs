@@ -21,7 +21,7 @@ namespace api.Repositories.Interfaces
         Task SaveChangesAsync();
 
         // Tìm kiếm danh sách SV (join NguoiDung + Nganh (+Khoa qua Nganh))
-        Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh)> Items, int Total)> SearchStudentsAsync(
+        Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh, DateOnly? NgayTG, bool? TrangThaiTG)> Items, int Total)> SearchStudentsAsync(
             int? maKhoa,
             int? maNganh,
             int? namNhapHoc,
@@ -42,5 +42,12 @@ namespace api.Repositories.Interfaces
 
         // Log
         Task AddActivityAsync(LichSuHoatDong log);
+
+        Task<string> GenerateNextMaSinhVienAsync(string codeNganh, int namNhapHoc);
+
+        Task<Nganh?> GetNganhByCodeAsync(string code);
+        Task<NguoiDung?> GetUserByLoginAsync(string tenDangNhap);
+        Task<bool> ExistsUserByEmailAsync(string? email);
+        Task<bool> ExistsUserByPhoneAsync(string? phone);
     }
 }

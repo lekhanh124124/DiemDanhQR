@@ -27,70 +27,64 @@ namespace api.Services.Implementations
             _env = env;
         }
 
-        private string inputResponse(string input)
-        {
-            return input ?? "null";
-        }
+        private string inputResponse(string input) => input ?? "null";
+        private static DateTime NowVN() => TimeHelper.UtcToVietnam(DateTime.UtcNow);
 
         public async Task<CreateLecturerResponse> CreateAsync(CreateLecturerRequest request)
         {
-            var maGV = request.MaGiangVien?.Trim();
-            if (string.IsNullOrWhiteSpace(maGV))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã giảng viên không hợp lệ.");
-
+            // Validate bắt buộc
             if (!request.MaKhoa.HasValue || request.MaKhoa <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu hoặc sai mã khoa.");
 
-            // Khoa phải tồn tại
-            var khoa = await _academicRepo.GetKhoaByIdAsync(request.MaKhoa!.Value);
-            if (khoa == null)
-                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Khoa không tồn tại.");
-            // Lấy role mặc định cho giảng viên theo CodeQuyen = "GV"
-            var role = await _permissionRepo.GetRoleByCodeAsync("GV");
-            if (role == null)
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Không tìm thấy quyền giảng viên (GV).");
+            // Lấy thông tin Khoa để có CodeKhoa
+            var khoa = await _academicRepo.GetKhoaByIdAsync(request.MaKhoa.Value)
+                ?? throw ApiExceptionHelper.New(ApiErrorCode.NotFound, "Khoa không tồn tại.");
 
-            // Avatar
+            // Năm tuyển dụng (YY) lấy từ NgayTuyenDung; nếu null dùng năm hiện tại (VN)
+            var year = request.NgayTuyenDung?.Year ?? NowVN().Year;
+
+            // Sinh mã giảng viên: CodeKhoa + YY + STT(D4)
+            var maGV = await _repo.GenerateNextMaGiangVienAsync(khoa.CodeKhoa, year);
+
+            // Lấy role mặc định cho giảng viên (GV)
+            var role = await _permissionRepo.GetRoleByCodeAsync("GV")
+                ?? throw ApiExceptionHelper.New(ApiErrorCode.ValidationError, "Không tìm thấy quyền giảng viên (GV).");
+
+            // Lưu avatar (nếu có)
             string? avatarUrl = null;
             if (request.AnhDaiDien != null)
-            {
-                avatarUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath ?? "", maGV!);
-            }
+                avatarUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath ?? "", maGV);
 
-            // User: TenDangNhap = MaGiangVien
-            var user = await _repo.GetUserByUsernameAsync(maGV!);
-            if (user == null)
-            {
-                user = new NguoiDung
-                {
-                    TenDangNhap = maGV!,
-                    HoTen = string.IsNullOrWhiteSpace(request.HoTen) ? maGV! : request.HoTen!.Trim(),
-                    MatKhau = BCrypt.Net.BCrypt.HashPassword(maGV),
-                    TrangThai = true,
-                    GioiTinh = request.GioiTinh,
-                    AnhDaiDien = avatarUrl,
-                    Email = request.Email,
-                    SoDienThoai = request.SoDienThoai,
-                    NgaySinh = request.NgaySinh,
-                    DiaChi = request.DiaChi,
-                    MaQuyen = role.MaQuyen
-                };
-                await _repo.AddUserAsync(user);
-                await _repo.SaveChangesAsync();
-            }
-            else
-            {
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Người dùng đã tồn tại.");
-            }
+            // User: TenDangNhap = MaGiangVien, pass = hash(MaGiangVien)
+            var existed = await _repo.GetUserByUsernameAsync(maGV);
+            if (existed != null)
+                ApiExceptionHelper.Throw(ApiErrorCode.Conflict, "Tên đăng nhập đã tồn tại.");
 
-            // Không trùng mã giảng viên
-            if (await _repo.ExistsLecturerAsync(maGV!))
+            var user = new NguoiDung
+            {
+                TenDangNhap = maGV,
+                HoTen = string.IsNullOrWhiteSpace(request.HoTen) ? maGV : request.HoTen!.Trim(),
+                MatKhau = BCrypt.Net.BCrypt.HashPassword(maGV),
+                TrangThai = true,
+                GioiTinh = request.GioiTinh,
+                AnhDaiDien = avatarUrl,
+                Email = request.Email,
+                SoDienThoai = request.SoDienThoai,
+                NgaySinh = request.NgaySinh,
+                DiaChi = request.DiaChi,
+                MaQuyen = role.MaQuyen
+            };
+            await _repo.AddUserAsync(user);
+            await _repo.SaveChangesAsync();
+
+            // Không trùng mã GV
+            if (await _repo.ExistsLecturerAsync(maGV))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã giảng viên đã tồn tại.");
 
             var gv = new GiangVien
             {
                 MaNguoiDung = user.MaNguoiDung,
-                MaGiangVien = maGV!,
+                MaGiangVien = maGV,
                 MaKhoa = request.MaKhoa,
                 HocHam = request.HocHam,
                 HocVi = request.HocVi,
@@ -102,14 +96,13 @@ namespace api.Services.Implementations
             {
                 MaNguoiDung = user.MaNguoiDung,
                 HanhDong = $"Tạo giảng viên [{gv.MaGiangVien}]",
-                ThoiGian = TimeHelper.UtcToVietnam(DateTime.UtcNow)
+                ThoiGian = NowVN()
             });
             await _repo.SaveChangesAsync();
-            
-            var department = await _academicRepo.GetKhoaByIdAsync((int)gv.MaKhoa);
+
+            // Response
             return new CreateLecturerResponse
             {
-                // NguoiDung: xuất theo comment
                 NguoiDung = new NguoiDungDTO
                 {
                     HoTen = inputResponse(user.HoTen),
@@ -131,19 +124,18 @@ namespace api.Services.Implementations
                 },
                 Khoa = new KhoaDTO
                 {
-                    MaKhoa = inputResponse(department!.MaKhoa.ToString()),
-                    TenKhoa = inputResponse(department.TenKhoa),
-                    CodeKhoa = inputResponse(department.CodeKhoa)
+                    MaKhoa = inputResponse(khoa.MaKhoa.ToString()),
+                    TenKhoa = inputResponse(khoa.TenKhoa),
+                    CodeKhoa = inputResponse(khoa.CodeKhoa)
                 },
                 PhanQuyen = new PhanQuyenDTO
                 {
-                    MaQuyen = inputResponse(role!.MaQuyen.ToString()),
+                    MaQuyen = inputResponse(role.MaQuyen.ToString()),
                     CodeQuyen = inputResponse(role.CodeQuyen),
                     TenQuyen = inputResponse(role.TenQuyen)
                 }
             };
         }
-
         public async Task<PagedResult<LecturerListItemResponse>> GetListAsync(GetLecturersRequest request)
         {
             var page = Math.Max(request.Page ?? 1, 1);

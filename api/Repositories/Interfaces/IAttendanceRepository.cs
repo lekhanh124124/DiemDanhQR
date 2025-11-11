@@ -46,7 +46,7 @@ namespace api.Repositories.Interfaces
         Task<(List<(DiemDanh d, TrangThaiDiemDanh? t, BuoiHoc b, SinhVien s, LopHocPhan lhp)> Items, int Total)> SearchAttendancesAsync(
             int? maDiemDanh,
             DateOnly? thoiGianQuetDateOnly,
-            string? codeTrangThai,
+            int? maTrangThai,
             bool? trangThai,
             int? maBuoi,
             string? maSinhVien,

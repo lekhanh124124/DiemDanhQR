@@ -51,9 +51,7 @@ namespace api.DTOs
 
     public class CreateSubjectRequest
     {
-        [Required(ErrorMessage = "Mã môn học là bắt buộc.")]
-        public string? MaMonHoc { get; set; }
-
+        // MaMonHoc: bỏ, sẽ tự sinh
         [Required(ErrorMessage = "Tên môn học là bắt buộc.")]
         public string? TenMonHoc { get; set; }
 
@@ -64,15 +62,12 @@ namespace api.DTOs
         public byte? SoTiet { get; set; }
 
         public string? MoTa { get; set; }
-
         public bool? TrangThai { get; set; }
+        public byte? LoaiMon { get; set; } // 1: Lý thuyết, 2: Thực hành, 3: Tổng hợp
     }
 
     public class CreateCourseRequest
     {
-        [Required(ErrorMessage = "Mã lớp học phần là bắt buộc.")]
-        public string? MaLopHocPhan { get; set; }
-
         [Required(ErrorMessage = "Tên lớp học phần là bắt buộc.")]
         public string? TenLopHocPhan { get; set; }
 
@@ -84,7 +79,6 @@ namespace api.DTOs
 
         [Required(ErrorMessage = "Mã học kỳ là bắt buộc.")]
         public int? MaHocKy { get; set; }
-
         public bool? TrangThai { get; set; }
     }
 

@@ -223,7 +223,7 @@ namespace api.Services.Implementations
             var (rows, total) = await _repo.SearchAttendancesAsync(
                 req.MaDiemDanh,
                 req.ThoiGianQuet,
-                req.CodeTrangThai,
+                req.MaTrangThai,
                 req.TrangThai,
                 req.MaBuoi,
                 req.MaSinhVien,
@@ -367,19 +367,9 @@ namespace api.Services.Implementations
             if (await _repo.AttendanceExistsAsync(req.MaBuoi, req.MaSinhVien))
                 throw new ApiException(ApiErrorCode.Conflict, "Sinh viên đã điểm danh buổi này.");
 
-            int statusId;
-            if (!string.IsNullOrWhiteSpace(req.CodeTrangThai))
-            {
-                statusId = await _repo.TryGetTrangThaiIdByCodeAsync(req.CodeTrangThai.Trim().ToUpperInvariant())
-                    ?? throw new ApiException(ApiErrorCode.ValidationError, "CodeTrangThai không hợp lệ.");
-            }
-            else
-            {
-                // Nếu không truyền thì mặc định dùng ONTIME/LATE theo thời điểm hiện tại
-                var statusCode = AttendanceQrHelper.ResolveStatusCode(buoi, DateTime.UtcNow);
-                statusId = await _repo.TryGetTrangThaiIdByCodeAsync(statusCode)
-                    ?? throw new ApiException(ApiErrorCode.InternalError, "Không tìm thấy mã trạng thái mặc định.");
-            }
+            int statusId = await _repo.GetStatusByIdAsync(req.MaTrangThai ?? 0) is null
+                ? throw new ApiException(ApiErrorCode.ValidationError, "MaTrangThai không hợp lệ.")
+                : req.MaTrangThai!.Value;
 
             // Ghi DB = giờ Việt Nam
             var nowLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
@@ -398,7 +388,7 @@ namespace api.Services.Implementations
             if (!string.IsNullOrWhiteSpace(currentUsername))
             {
                 var nd = await _repo.GetNguoiDungByUsernameAsync(currentUsername);
-                await _repo.LogHistoryAsync(nd?.MaNguoiDung, $"CREATE_ATTENDANCE|MaDiemDanh:{saved.MaDiemDanh}|Buoi:{req.MaBuoi}|SV:{req.MaSinhVien}|Code:{req.CodeTrangThai}");
+                await _repo.LogHistoryAsync(nd?.MaNguoiDung, $"CREATE_ATTENDANCE|MaDiemDanh:{saved.MaDiemDanh}|Buoi:{req.MaBuoi}|SV:{req.MaSinhVien}|Status:{statusId}");
             }
 
             var t = await _repo.GetStatusByIdAsync(saved.MaTrangThai);
@@ -446,18 +436,12 @@ namespace api.Services.Implementations
             if (req.MaDiemDanh <= 0)
                 throw new ApiException(ApiErrorCode.ValidationError, "MaDiemDanh không hợp lệ.");
 
-            if (req.CodeTrangThai is null && req.LyDo is null && req.TrangThai is null)
-                throw new ApiException(ApiErrorCode.ValidationError, "Cần cung cấp ít nhất một trường để cập nhật (CodeTrangThai, LyDo, TrangThai).");
-
             var entity = await _repo.GetAttendanceByIdAsync(req.MaDiemDanh)
                 ?? throw new ApiException(ApiErrorCode.NotFound, "Không tìm thấy bản ghi điểm danh.");
 
-            if (!string.IsNullOrWhiteSpace(req.CodeTrangThai))
+            if (req.MaTrangThai.HasValue)
             {
-                var newId = await _repo.TryGetTrangThaiIdByCodeAsync(req.CodeTrangThai.Trim().ToUpperInvariant());
-                if (!newId.HasValue)
-                    throw new ApiException(ApiErrorCode.ValidationError, "CodeTrangThai không hợp lệ.");
-                entity.MaTrangThai = newId.Value;
+                entity.MaTrangThai = req.MaTrangThai.Value;
             }
 
             if (req.LyDo != null)
@@ -473,7 +457,7 @@ namespace api.Services.Implementations
             if (!string.IsNullOrWhiteSpace(currentUsername))
             {
                 var nd = await _repo.GetNguoiDungByUsernameAsync(currentUsername);
-                await _repo.LogHistoryAsync(nd?.MaNguoiDung, $"UPDATE_ATTENDANCE|MaDiemDanh:{entity.MaDiemDanh}|Code:{req.CodeTrangThai}|TrangThai:{req.TrangThai}|LyDo:{(req.LyDo ?? "")}");
+                await _repo.LogHistoryAsync(nd?.MaNguoiDung, $"UPDATE_ATTENDANCE|MaDiemDanh:{entity.MaDiemDanh}|Code:{req.MaTrangThai}|TrangThai:{req.TrangThai}|LyDo:{req.LyDo ?? ""}");
             }
 
             var buoi = await _repo.GetBuoiByIdAsync(entity.MaBuoi);

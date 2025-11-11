@@ -28,7 +28,7 @@ namespace api.DTOs
         // Filters (tên trùng cột)
         public int? MaDiemDanh { get; set; }
         public DateOnly? ThoiGianQuet { get; set; }
-        public string? CodeTrangThai { get; set; }
+        public int? MaTrangThai { get; set; }
         public bool? TrangThai { get; set; }
         public int? MaBuoi { get; set; }
         public string? MaSinhVien { get; set; }
@@ -48,7 +48,8 @@ namespace api.DTOs
         public int MaBuoi { get; set; }
         [Required(ErrorMessage = "Mã sinh viên không được để trống.")]
         public string? MaSinhVien { get; set; }
-        public string? CodeTrangThai { get; set; }
+        [Required(ErrorMessage = "Mã trạng thái không được để trống.")]
+        public int? MaTrangThai { get; set; }
         public string? LyDo { get; set; }
         public bool? TrangThai { get; set; }
     }
@@ -58,7 +59,7 @@ namespace api.DTOs
         [Required(ErrorMessage = "Mã điểm danh không được để trống.")]
         public int MaDiemDanh { get; set; }
 
-        public string? CodeTrangThai { get; set; }
+        public int? MaTrangThai { get; set; }
         public string? LyDo { get; set; }
         public bool? TrangThai { get; set; }
     }

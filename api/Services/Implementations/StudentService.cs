@@ -1,11 +1,12 @@
 // File: Services/Implementations/StudentService.cs
+using System.ComponentModel;
 using api.DTOs;
 using api.ErrorHandling;
 using api.Helpers;
 using api.Models;
 using api.Repositories.Interfaces;
 using api.Services.Interfaces;
-
+using OfficeOpenXml;
 namespace api.Services.Implementations
 {
     public class StudentService : IStudentService
@@ -39,19 +40,28 @@ namespace api.Services.Implementations
 
         public async Task<CreateStudentResponse> CreateAsync(CreateStudentRequest request)
         {
-            var maSV = (request.MaSinhVien ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(maSV))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã sinh viên không hợp lệ.");
-
-            if (await _repo.ExistsStudentAsync(maSV))
-                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã sinh viên đã tồn tại.");
-
-            // Lấy role mặc định cho sinh viên theo CodeQuyen = "SV"
+            // Lấy role mặc định cho SV
             var role = await _permRepo.GetRoleByCodeAsync("SV");
             if (role == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Không tìm thấy quyền sinh viên (SV).");
 
-            // Save avatar (nếu có)
+            // Lấy ngành để có CodeNganh và liên kết Khoa
+            if (!request.MaNganh.HasValue)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã ngành là bắt buộc.");
+
+            var ng = await _academicRepo.GetNganhByIdAsync(request.MaNganh.Value);
+            if (ng == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy ngành.");
+
+            var kh = await _academicRepo.GetKhoaByIdAsync(ng.MaKhoa);
+
+            // Xác định năm nhập học
+            var year = request.NamNhapHoc ?? TimeHelper.UtcToVietnam(DateTime.UtcNow).Year;
+
+            // Generate MaSinhVien = CodeNganh + YY + STT
+            var maSV = await _repo.GenerateNextMaSinhVienAsync(ng.CodeNganh, year);
+
+            // Lưu avatar (nếu có)
             string? avatarUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath, maSV);
 
             // Tạo tài khoản: TenDangNhap = MaSinhVien, mật khẩu = hash(MaSinhVien)
@@ -75,28 +85,20 @@ namespace api.Services.Implementations
                 AnhDaiDien = avatarUrl
             };
             await _repo.AddUserAsync(user);
-            await _repo.SaveChangesAsync(); // có MaNguoiDung
+            await _repo.SaveChangesAsync(); // lấy MaNguoiDung
 
-            // Thông tin SV
+            // Thêm bản ghi SinhVien
             var sv = new SinhVien
             {
                 MaNguoiDung = user.MaNguoiDung,
                 MaSinhVien = maSV,
-                NamNhapHoc = request.NamNhapHoc ?? DateTime.UtcNow.Year,
+                NamNhapHoc = year,
                 MaNganh = request.MaNganh
             };
             await _repo.AddStudentAsync(sv);
             await _repo.SaveChangesAsync();
 
-            // Liên kết ngành/khoa (theo AppDbContext: SinhVien.MaNganh -> Nganh.MaKhoa)
-            Nganh? ng = null; Khoa? kh = null;
-            if (sv.MaNganh.HasValue)
-            {
-                ng = await _academicRepo.GetNganhByIdAsync(sv.MaNganh.Value);
-                if (ng != null) kh = await _academicRepo.GetKhoaByIdAsync(ng.MaKhoa);
-            }
-
-            // Trả response: mọi field đi qua inputResponse
+            // Trả response
             return new CreateStudentResponse
             {
                 NguoiDung = new NguoiDungDTO
@@ -125,9 +127,9 @@ namespace api.Services.Implementations
                 },
                 Khoa = new KhoaDTO
                 {
-                    MaKhoa = inputResponse(kh.MaKhoa.ToString()),
-                    CodeKhoa = inputResponse(kh.CodeKhoa),
-                    TenKhoa = inputResponse(kh.TenKhoa)
+                    MaKhoa = inputResponse(kh?.MaKhoa.ToString()),
+                    CodeKhoa = inputResponse(kh?.CodeKhoa),
+                    TenKhoa = inputResponse(kh?.TenKhoa)
                 },
                 PhanQuyen = new PhanQuyenDTO
                 {
@@ -158,6 +160,7 @@ namespace api.Services.Implementations
                 pageSize: pageSize
             );
 
+            string F(DateOnly? d) => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : null!;
             var list = items.Select(x => new StudentListItemResponse
             {
                 NguoiDung = new NguoiDungDTO
@@ -174,16 +177,23 @@ namespace api.Services.Implementations
                 },
                 Nganh = new NganhDTO
                 {
-                    MaNganh = inputResponse(x.Ng.MaNganh.ToString()),
-                    CodeNganh = inputResponse(x.Ng.CodeNganh),
-                    TenNganh = inputResponse(x.Ng.TenNganh)
+                    MaNganh = inputResponse(x.Ng?.MaNganh.ToString()),
+                    CodeNganh = inputResponse(x.Ng?.CodeNganh),
+                    TenNganh = inputResponse(x.Ng?.TenNganh)
                 },
                 Khoa = new KhoaDTO
                 {
-                    MaKhoa = inputResponse(x.Kh.MaKhoa.ToString()),
-                    CodeKhoa = inputResponse(x.Kh.CodeKhoa),
-                    TenKhoa = inputResponse(x.Kh.TenKhoa)
-                }
+                    MaKhoa = inputResponse(x.Kh?.MaKhoa.ToString()),
+                    CodeKhoa = inputResponse(x.Kh?.CodeKhoa),
+                    TenKhoa = inputResponse(x.Kh?.TenKhoa)
+                },
+                ThamGiaLop = string.IsNullOrWhiteSpace(request.MaLopHocPhan)
+                    ? null
+                    : new ThamGiaLopDTO
+                    {
+                        NgayThamGia = inputResponse(F(x.NgayTG)),
+                        TrangThai = inputResponse(x.TrangThaiTG?.ToString())
+                    }
             }).ToList();
 
             return new PagedResult<StudentListItemResponse>
@@ -436,6 +446,317 @@ namespace api.Services.Implementations
                 }
             };
         }
+        public async Task<BulkImportStudentsResponse> BulkImportAsync(BulkImportStudentsRequest req)
+        {
+            if (req.File == null || req.File.Length <= 0)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu file Excel.");
+
+            var role = await _permRepo.GetRoleByCodeAsync("SV")
+                       ?? throw ApiExceptionHelper.New(ApiErrorCode.ValidationError, "Không tìm thấy quyền SV.");
+
+            // EPPlus 8+: đặt license trước khi khởi tạo ExcelPackage
+            ExcelPackage.License.SetNonCommercialPersonal("lekhanh8224");
+
+            using var ms = new MemoryStream();
+            await req.File.CopyToAsync(ms);
+            ms.Position = 0;
+
+            int success = 0, failed = 0;
+            var failedRows = new List<int>();
+
+            // ====== Caches để giảm query ======
+            var nganhById = new Dictionary<int, Nganh>();
+            var nganhByCode = new Dictionary<string, Nganh>(StringComparer.OrdinalIgnoreCase);
+
+            using var pkg = new ExcelPackage(ms);
+            var ws = pkg.Workbook.Worksheets.FirstOrDefault()
+                     ?? throw ApiExceptionHelper.New(ApiErrorCode.ValidationError, "Không tìm thấy sheet trong Excel.");
+
+            // ----- Đọc header -----
+            var header = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var colMax = ws.Dimension.End.Column;
+            for (int c = 1; c <= colMax; c++)
+            {
+                var name = ws.Cells[1, c].Text?.Trim();
+                if (!string.IsNullOrWhiteSpace(name) && !header.ContainsKey(name)) header[name] = c;
+            }
+
+            int Col(string name) => header.TryGetValue(name, out var ci) ? ci : -1;
+
+            // Chấp nhận 2 phương án: MaNganh hoặc CodeNganh (chỉ cần 1 trong 2)
+            var hasMaNganh = Col("MaNganh") > 0;
+            var hasCodeNganh = Col("CodeNganh") > 0;
+
+            // Các cột còn lại
+            foreach (var col in new[] { "HoTen" })
+                if (Col(col) <= 0)
+                    ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, $"Thiếu cột '{col}'.");
+
+            if (!hasMaNganh && !hasCodeNganh)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu cột 'MaNganh' hoặc 'CodeNganh'.");
+
+            var rowMax = ws.Dimension.End.Row;
+
+            for (int r = 2; r <= rowMax; r++)
+            {
+                try
+                {
+                    string? hoTen = ExcelStudentHelper.CleanString(Col("HoTen") > 0 ? ws.Cells[r, Col("HoTen")].Text : null);
+                    if (string.IsNullOrWhiteSpace(hoTen))
+                        throw new Exception("HoTen trống.");
+
+                    byte? gioiTinh = ExcelStudentHelper.ParseGender(Col("GioiTinh") > 0 ? ws.Cells[r, Col("GioiTinh")].Text : null);
+
+                    string? email = ExcelStudentHelper.CleanString(Col("Email") > 0 ? ws.Cells[r, Col("Email")].Text : null);
+                    if (!string.IsNullOrEmpty(email) && !ExcelStudentHelper.IsValidEmail(email))
+                        throw new Exception("Email không hợp lệ.");
+
+                    string? sdt = ExcelStudentHelper.NormalizePhone(Col("SoDienThoai") > 0 ? ws.Cells[r, Col("SoDienThoai")].Text : null);
+                    if ((Col("SoDienThoai") > 0 ? ws.Cells[r, Col("SoDienThoai")].Text?.Length : 0) > 0 && sdt == null)
+                        throw new Exception("Số điện thoại không hợp lệ.");
+
+                    DateOnly? ngaySinh = ExcelStudentHelper.ParseDate(Col("NgaySinh") > 0 ? ws.Cells[r, Col("NgaySinh")].Text : null);
+                    string? diaChi = ExcelStudentHelper.CleanString(Col("DiaChi") > 0 ? ws.Cells[r, Col("DiaChi")].Text : null);
+
+                    int namNhapHoc;
+                    var rawYear = ExcelStudentHelper.CleanString(Col("NamNhapHoc") > 0 ? ws.Cells[r, Col("NamNhapHoc")].Text : null);
+                    if (!string.IsNullOrEmpty(rawYear) && int.TryParse(rawYear, out var y) && y > 1900 && y < 3000)
+                        namNhapHoc = y;
+                    else
+                        namNhapHoc = req.DefaultNamNhapHoc ?? TimeHelper.UtcToVietnam(DateTime.UtcNow).Year;
+
+                    // ======= Resolve NGÀNH: ưu tiên MaNganh, fallback CodeNganh =======
+                    Nganh nganh;
+
+                    if (hasMaNganh)
+                    {
+                        var rawMaNganh = ExcelStudentHelper.CleanString(ws.Cells[r, Col("MaNganh")].Text);
+                        if (!string.IsNullOrWhiteSpace(rawMaNganh) && int.TryParse(rawMaNganh, out var maNgInt))
+                        {
+                            if (!nganhById.TryGetValue(maNgInt, out nganh!))
+                            {
+                                nganh = await _academicRepo.GetNganhByIdAsync(maNgInt)
+                                        ?? throw new Exception($"Không tìm thấy ngành với MaNganh={maNgInt}.");
+                                nganhById[maNgInt] = nganh;
+                            }
+                        }
+                        else
+                        {
+                            // nếu MaNganh trống, thử CodeNganh (nếu có)
+                            nganh = null!;
+                        }
+                    }
+                    else nganh = null!;
+
+                    if (nganh == null && hasCodeNganh)
+                    {
+                        var codeNganh = ExcelStudentHelper.CleanString(ws.Cells[r, Col("CodeNganh")].Text);
+                        if (string.IsNullOrWhiteSpace(codeNganh))
+                            throw new Exception("Thiếu MaNganh/CodeNganh.");
+
+                        if (!nganhByCode.TryGetValue(codeNganh!, out nganh!))
+                        {
+                            nganh = await _academicRepo.GetNganhByCodeAsync(codeNganh!)
+                                    ?? throw new Exception($"Không tìm thấy ngành với CodeNganh={codeNganh}.");
+                            nganhByCode[codeNganh!] = nganh;
+                            nganhById[nganh.MaNganh] = nganh; // đồng bộ cache
+                        }
+                    }
+
+                    if (nganh == null)
+                        throw new Exception("Thiếu thông tin ngành.");
+
+                    // ======= Mã SV (ưu tiên cột, trống thì auto-gen theo CodeNganh) =======
+                    string? maSV = ExcelStudentHelper.CleanString(Col("MaSinhVien") > 0 ? ws.Cells[r, Col("MaSinhVien")].Text : null);
+                    if (string.IsNullOrEmpty(maSV))
+                    {
+                        var codeForId = nganh.CodeNganh ?? string.Empty;
+                        if (string.IsNullOrEmpty(codeForId))
+                            throw new Exception($"Ngành (MaNganh={nganh.MaNganh}) không có CodeNganh để sinh mã SV.");
+                        maSV = await _repo.GenerateNextMaSinhVienAsync(codeForId, namNhapHoc);
+                    }
+                    else
+                    {
+                        if (await _repo.ExistsStudentAsync(maSV))
+                            throw new Exception($"Mã sinh viên đã tồn tại: {maSV}");
+                    }
+
+                    if (!string.IsNullOrEmpty(email) && await _repo.ExistsUserByEmailAsync(email))
+                        throw new Exception($"Email đã tồn tại: {email}");
+                    if (!string.IsNullOrEmpty(sdt) && await _repo.ExistsUserByPhoneAsync(sdt))
+                        throw new Exception($"Số điện thoại đã tồn tại: {sdt}");
+
+                    // ======= Tạo User =======
+                    var user = new NguoiDung
+                    {
+                        TenDangNhap = maSV,
+                        HoTen = hoTen,
+                        MatKhau = BCrypt.Net.BCrypt.HashPassword(maSV),
+                        TrangThai = true,
+                        MaQuyen = role.MaQuyen,
+                        GioiTinh = gioiTinh,
+                        Email = email,
+                        SoDienThoai = sdt,
+                        NgaySinh = ngaySinh,
+                        DiaChi = diaChi
+                    };
+                    await _repo.AddUserAsync(user);
+                    await _repo.SaveChangesAsync();
+
+                    // ======= Tạo SinhVien (ghi MaNganh) =======
+                    var sv = new SinhVien
+                    {
+                        MaNguoiDung = user.MaNguoiDung,
+                        MaSinhVien = maSV,
+                        NamNhapHoc = namNhapHoc,
+                        MaNganh = nganh.MaNganh
+                    };
+                    await _repo.AddStudentAsync(sv);
+
+                    // Log
+                    await _repo.AddActivityAsync(new LichSuHoatDong
+                    {
+                        MaNguoiDung = user.MaNguoiDung,
+                        HanhDong = $"Import sinh viên [{sv.MaSinhVien}]",
+                        ThoiGian = TimeHelper.UtcToVietnam(DateTime.UtcNow)
+                    });
+
+                    await _repo.SaveChangesAsync();
+                    success++;
+                }
+                catch
+                {
+                    failed++;
+                    failedRows.Add(r);
+                }
+            }
+
+            return new BulkImportStudentsResponse
+            {
+                SuccessCount = success,
+                FailedCount = failed,
+                FailedRows = failedRows
+            };
+        }
+        public async Task<BulkImportStudentsResponse> BulkAddStudentsToCourseAsync(BulkAddStudentsToCourseRequest req, string? currentUserTenDangNhap)
+        {
+            var maLhp = (req.MaLopHocPhan ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(maLhp))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu mã lớp học phần.");
+
+            if (!await _repo.CourseExistsAsync(maLhp))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Lớp học phần không tồn tại.");
+
+            if (req.File == null || req.File.Length <= 0)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu file Excel.");
+
+            // EPPlus 8: đặt license trước khi mở
+            ExcelPackage.License.SetNonCommercialPersonal("lekhanh8224");
+
+            using var ms = new MemoryStream();
+            await req.File.CopyToAsync(ms);
+            ms.Position = 0;
+
+            using var pkg = new ExcelPackage(ms);
+            var ws = pkg.Workbook.Worksheets.FirstOrDefault()
+                     ?? throw ApiExceptionHelper.New(ApiErrorCode.ValidationError, "Không tìm thấy sheet trong Excel.");
+
+            // Map header
+            var header = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var colMax = ws.Dimension.End.Column;
+            for (int c = 1; c <= colMax; c++)
+            {
+                var name = ws.Cells[1, c].Text?.Trim();
+                if (!string.IsNullOrWhiteSpace(name) && !header.ContainsKey(name)) header[name] = c;
+            }
+            int Col(string name) => header.TryGetValue(name, out var ci) ? ci : -1;
+
+            // Bắt buộc: MaSinhVien
+            if (Col("MaSinhVien") <= 0)
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Thiếu cột 'MaSinhVien'.");
+
+            var rowMax = ws.Dimension.End.Row;
+
+            int success = 0, failed = 0;
+            var failedRows = new List<int>();
+
+            // Lấy default
+            DateOnly defaultNgayTG = req.DefaultNgayThamGia ?? DateOnly.FromDateTime(TimeHelper.UtcToVietnam(DateTime.UtcNow));
+            bool defaultTrangThai = req.DefaultTrangThai ?? true;
+
+            for (int r = 2; r <= rowMax; r++)
+            {
+                try
+                {
+                    // MaSinhVien (bắt buộc)
+                    var maSv = ExcelStudentHelper.CleanString(ws.Cells[r, Col("MaSinhVien")].Text);
+                    if (string.IsNullOrWhiteSpace(maSv))
+                        throw new Exception("MaSinhVien trống.");
+
+                    // Kiểm tra SV tồn tại
+                    if (!await _repo.ExistsStudentAsync(maSv))
+                        throw new Exception($"Sinh viên không tồn tại: {maSv}");
+
+                    // Nếu đã tồn tại tham gia lớp → coi như lỗi (tránh trùng)
+                    if (await _repo.ParticipationExistsAsync(maLhp, maSv))
+                        throw new Exception($"Sinh viên đã tham gia lớp: {maSv}");
+
+                    // Ngày tham gia (tuỳ chọn)
+                    DateOnly? ngayTG = null;
+                    if (Col("NgayThamGia") > 0)
+                        ngayTG = ExcelStudentHelper.ParseDate(ws.Cells[r, Col("NgayThamGia")].Text);
+                    var ngayUse = ngayTG ?? defaultNgayTG;
+
+                    // Trạng thái (tuỳ chọn)
+                    bool? st = null;
+                    if (Col("TrangThai") > 0)
+                        st = ExcelStudentHelper.ParseBool(ws.Cells[r, Col("TrangThai")].Text);
+                    var trangThaiUse = st ?? defaultTrangThai;
+
+                    // Tạo bản ghi tham gia
+                    var entity = new ThamGiaLop
+                    {
+                        MaLopHocPhan = maLhp,
+                        MaSinhVien = maSv,
+                        NgayThamGia = ngayUse,
+                        TrangThai = trangThaiUse
+                    };
+
+                    await _repo.AddParticipationAsync(entity);
+
+                    // Log người thực hiện (nếu có)
+                    if (!string.IsNullOrWhiteSpace(currentUserTenDangNhap))
+                    {
+                        var user = await _repo.GetUserByUsernameAsync(currentUserTenDangNhap!);
+                        if (user != null)
+                        {
+                            await _repo.AddActivityAsync(new LichSuHoatDong
+                            {
+                                MaNguoiDung = user.MaNguoiDung,
+                                HanhDong = $"Bulk thêm SV {maSv} vào lớp {maLhp}",
+                                ThoiGian = TimeHelper.UtcToVietnam(DateTime.UtcNow)
+                            });
+                            await _repo.SaveChangesAsync();
+                        }
+                    }
+
+                    success++;
+                }
+                catch
+                {
+                    failed++;
+                    failedRows.Add(r);
+                    // tiếp tục các dòng khác
+                }
+            }
+
+            return new BulkImportStudentsResponse
+            {
+                SuccessCount = success,
+                FailedCount = failed,
+                FailedRows = failedRows
+            };
+        }
+
     }
 }
-// File:

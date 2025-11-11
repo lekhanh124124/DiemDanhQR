@@ -1,4 +1,7 @@
 // File: Repositories/Implementations/CourseRepository.cs
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using api.Data;
 using api.Helpers;
 using api.Models;
@@ -281,6 +284,132 @@ namespace api.Repositories.Implementations
         {
             _db.HocKy.Update(hk);
             await _db.SaveChangesAsync();
+        }
+
+        public async Task<string> GenerateNextSubjectCodeAsync(string tenMonHoc)
+        {
+            // 1) Tạo acronym từ TenMonHoc (bỏ dấu, chỉ chữ cái), tối đa 8 ký tự, uppercase
+            string RemoveDiacritics(string s)
+            {
+                var formD = s.Normalize(NormalizationForm.FormD);
+                var sb = new StringBuilder(capacity: s.Length);
+                foreach (var ch in formD)
+                {
+                    var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+                    if (uc != UnicodeCategory.NonSpacingMark)
+                        sb.Append(ch);
+                }
+                return sb.ToString().Normalize(NormalizationForm.FormC);
+            }
+
+            string Acronym(string title)
+            {
+                var clean = RemoveDiacritics(title ?? string.Empty).ToUpperInvariant();
+                // Lấy chữ cái đầu của từng từ
+                var parts = Regex.Split(clean, @"\W+")
+                                 .Where(p => !string.IsNullOrWhiteSpace(p))
+                                 .ToList();
+                var initials = new StringBuilder();
+                foreach (var p in parts)
+                    initials.Append(p[0]);
+
+                var acro = initials.Length > 0 ? initials.ToString() : "SUBJ";
+                if (acro.Length > 8) acro = acro.Substring(0, 8);
+                return acro;
+            }
+
+            var prefix = Acronym(tenMonHoc);
+
+            // 2) Tìm STT lớn nhất theo prefix và tăng lên (D3)
+            const int sttWidth = 3; // đổi thành 4 nếu muốn D4
+            var rx = new Regex($"^{Regex.Escape(prefix)}(\\d+)$");
+
+            var existedCodes = await _db.MonHoc
+                .AsNoTracking()
+                .Where(m => EF.Functions.Like(m.MaMonHoc!, prefix + "%"))
+                .Select(m => m.MaMonHoc!)
+                .ToListAsync();
+
+            int maxStt = 0;
+            foreach (var code in existedCodes)
+            {
+                var m = rx.Match(code);
+                if (m.Success && int.TryParse(m.Groups[1].Value, out var n) && n > maxStt)
+                    maxStt = n;
+            }
+
+            // 3) Tạo mã mới, đảm bảo không trùng
+            string next;
+            int attempt = 0;
+            do
+            {
+                var stt = (maxStt + 1 + attempt).ToString($"D{sttWidth}");
+                next = prefix + stt;
+                attempt++;
+            }
+            while (await _db.MonHoc.AsNoTracking().AnyAsync(m => m.MaMonHoc == next));
+
+            return next;
+        }
+        public async Task<string> GenerateNextCourseCodeAsync(string tenMonHoc, short namHoc, byte ky)
+        {
+            // 1) Build PREFIX từ acronym tên môn (bỏ dấu, chỉ chữ cái), tối đa 8 ký tự
+            string RemoveDiacritics(string s)
+            {
+                var formD = s.Normalize(NormalizationForm.FormD);
+                var sb = new StringBuilder(s.Length);
+                foreach (var ch in formD)
+                {
+                    var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+                    if (cat != UnicodeCategory.NonSpacingMark) sb.Append(ch);
+                }
+                return sb.ToString().Normalize(NormalizationForm.FormC);
+            }
+
+            string Acronym(string name)
+            {
+                var clean = RemoveDiacritics(name ?? string.Empty).ToUpperInvariant();
+                var parts = Regex.Split(clean, @"\W+").Where(p => !string.IsNullOrWhiteSpace(p));
+                var sb = new StringBuilder();
+                foreach (var p in parts) sb.Append(p[0]);
+                var acro = sb.Length > 0 ? sb.ToString() : "LHP";
+                return acro.Length > 8 ? acro.Substring(0, 8) : acro;
+            }
+
+            var prefix = Acronym(tenMonHoc);
+            var middle = $"{namHoc}-K{ky}";
+            var basePrefix = $"{prefix}-{middle}-";
+
+            // 2) Quét các mã cùng prefix để tìm STT lớn nhất
+            const int sttWidth = 3; // đổi 4 nếu muốn D4
+            var regex = new Regex($"^{Regex.Escape(basePrefix)}(\\d+)$");
+
+            var existed = await _db.LopHocPhan
+                .AsNoTracking()
+                .Where(l => EF.Functions.Like(l.MaLopHocPhan!, basePrefix + "%"))
+                .Select(l => l.MaLopHocPhan!)
+                .ToListAsync();
+
+            int maxStt = 0;
+            foreach (var code in existed)
+            {
+                var m = regex.Match(code);
+                if (m.Success && int.TryParse(m.Groups[1].Value, out var n) && n > maxStt)
+                    maxStt = n;
+            }
+
+            // 3) Sinh mã mới, đảm bảo không trùng
+            string next;
+            int attempt = 0;
+            do
+            {
+                var stt = (maxStt + 1 + attempt).ToString($"D{sttWidth}");
+                next = basePrefix + stt;
+                attempt++;
+            }
+            while (await _db.LopHocPhan.AsNoTracking().AnyAsync(l => l.MaLopHocPhan == next));
+
+            return next;
         }
     }
 }

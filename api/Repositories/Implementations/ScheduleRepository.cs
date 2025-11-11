@@ -82,13 +82,16 @@ namespace api.Repositories.Implementations
             if (tuan.HasValue)
             {
                 var year = nam ?? DateTime.Now.Year;
-                var startOfYear = new DateTime(year, 1, 1);
+                var startOfYear = new DateOnly(year, 1, 1);
+                var startOfWeek = startOfYear.AddDays((tuan.Value - 1) * 7);
+                var endOfWeekExclusive = startOfWeek.AddDays(7);
+
                 q = q.Where(x =>
-                    EF.Functions.DateDiffWeek(
-                        startOfYear,
-                        x.b.NgayHoc.ToDateTime(TimeOnly.MinValue)) + 1 == tuan.Value
-                    && x.b.NgayHoc.Year == year);
+                    x.b.NgayHoc.Year == year &&
+                    x.b.NgayHoc >= startOfWeek &&
+                    x.b.NgayHoc < endOfWeekExclusive);
             }
+
 
             if (tietBatDau.HasValue) q = q.Where(x => x.b.TietBatDau == tietBatDau.Value);
             if (soTiet.HasValue) q = q.Where(x => x.b.SoTiet == soTiet.Value);
@@ -109,8 +112,6 @@ namespace api.Repositories.Implementations
             }
 
             var key = (sortBy ?? "MaBuoi").Trim().ToLowerInvariant();
-            var sortYear = nam ?? DateTime.Now.Year;
-            var sortStart = new DateTime(sortYear, 1, 1);
 
             q = key switch
             {
@@ -125,8 +126,8 @@ namespace api.Repositories.Implementations
                 "trangthai" => desc ? q.OrderByDescending(x => x.b.TrangThai) : q.OrderBy(x => x.b.TrangThai),
                 "thang" => desc ? q.OrderByDescending(x => x.b.NgayHoc.Month) : q.OrderBy(x => x.b.NgayHoc.Month),
                 "tuan" => desc
-                    ? q.OrderByDescending(x => EF.Functions.DateDiffWeek(sortStart, x.b.NgayHoc.ToDateTime(TimeOnly.MinValue)) + 1)
-                    : q.OrderBy(x => EF.Functions.DateDiffWeek(sortStart, x.b.NgayHoc.ToDateTime(TimeOnly.MinValue)) + 1),
+                    ? q.OrderByDescending(x => x.b.NgayHoc)
+                    : q.OrderBy(x => x.b.NgayHoc),
                 "nam" => desc
                     ? q.OrderByDescending(x => x.b.NgayHoc.Year)
                     : q.OrderBy(x => x.b.NgayHoc.Year),
@@ -290,6 +291,61 @@ namespace api.Repositories.Implementations
                                && b.NgayHoc == ngayHoc
                                && b.TietBatDau == tietBatDau
                                && b.MaBuoi != excludeMaBuoi);
+        }
+        public async Task<(LopHocPhan Lhp, MonHoc Mh, HocKy Hk, GiangVien? Gv)?> GetCourseBundleAsync(string maLopHocPhan)
+        {
+            var code = (maLopHocPhan ?? "").Trim();
+            var q =
+                from l in _db.LopHocPhan.AsNoTracking()
+                join m in _db.MonHoc.AsNoTracking() on l.MaMonHoc equals m.MaMonHoc
+                join hk in _db.HocKy.AsNoTracking() on l.MaHocKy equals hk.MaHocKy
+                join gv0 in _db.GiangVien.AsNoTracking() on l.MaGiangVien equals gv0.MaGiangVien into jgv
+                from gv in jgv.DefaultIfEmpty()
+                where (l.MaLopHocPhan ?? "") == code
+                select new { l, m, hk, gv };
+            var row = await q.FirstOrDefaultAsync();
+            if (row == null) return null;
+            return (row.l, row.m, row.hk, row.gv);
+        }
+
+        public Task<List<PhongHoc>> GetActiveRoomsAsync()
+            => _db.PhongHoc.AsNoTracking()
+               .Where(p => p.TrangThai == true)
+               .OrderBy(p => p.MaPhong)
+               .ToListAsync();
+
+        public Task<bool> AnyRoomConflictAsync(int maPhong, DateOnly ngayHoc, byte tietBatDau, byte soTiet)
+        {
+            var start = tietBatDau;
+            var end = (byte)(tietBatDau + soTiet - 1);
+            return _db.BuoiHoc.AsNoTracking().AnyAsync(b =>
+                b.MaPhong == maPhong
+                && b.NgayHoc == ngayHoc
+                && !((b.TietBatDau + b.SoTiet - 1) < start || b.TietBatDau > end)  // giao nhau
+            );
+        }
+
+        public Task<bool> AnyCourseConflictAsync(string maLopHocPhan, DateOnly ngayHoc, byte tietBatDau, byte soTiet)
+        {
+            var code = (maLopHocPhan ?? "").Trim();
+            var start = tietBatDau;
+            var end = (byte)(tietBatDau + soTiet - 1);
+            return _db.BuoiHoc.AsNoTracking().AnyAsync(b =>
+                (b.MaLopHocPhan ?? "") == code
+                && b.NgayHoc == ngayHoc
+                && !((b.TietBatDau + b.SoTiet - 1) < start || b.TietBatDau > end)
+            );
+        }
+
+        public async Task AddSchedulesAsync(IEnumerable<BuoiHoc> items)
+        {
+            _db.BuoiHoc.AddRange(items);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<NguoiDung?> GetUserByIdAsync(int maNguoiDung)
+        {
+            return await _db.NguoiDung.AsNoTracking().FirstOrDefaultAsync(p => p.MaNguoiDung == maNguoiDung);
         }
     }
 }

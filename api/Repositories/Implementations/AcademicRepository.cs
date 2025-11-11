@@ -130,5 +130,11 @@ namespace api.Repositories.Implementations
 
         public async Task<bool> KhoaExistsAsync(int maKhoa)
             => await _db.Khoa.AsNoTracking().AnyAsync(x => x.MaKhoa == maKhoa);
+
+        public Task<Nganh?> GetNganhByCodeAsync(string codeNganh)
+        {
+            var code = (codeNganh ?? "").Trim();
+            return _db.Nganh.FirstOrDefaultAsync(x => x.CodeNganh == code);
+        }
     }
 }

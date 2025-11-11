@@ -86,23 +86,29 @@ namespace api.Services.Implementations
                     TrangThai = inputResponse(x.m.TrangThai ? "1" : "0")
                 };
 
-                // Giảng viên (DTO hiện KHÔNG có HoTen — map MaGiangVien nếu có)
                 GiangVienDTO? gv = null;
+                NguoiDungDTO? gvInfo = null;
                 if (x.gv != null)
                 {
                     gv = new GiangVienDTO
                     {
                         MaGiangVien = inputResponse(x.gv.MaGiangVien ?? "null")
                     };
+                    var nd = _repo.GetUserByIdAsync(x.gv.MaNguoiDung).Result;
+                    gvInfo = new NguoiDungDTO
+                    {
+                        HoTen = inputResponse(nd?.HoTen ?? "null")
+                    };
                 }
-
+                
                 return new ScheduleListItem
                 {
                     BuoiHoc = buoi,
                     PhongHoc = phong,
                     LopHocPhan = lhp,
                     MonHoc = mon,
-                    GiangVien = gv
+                    GiangVien = gv,
+                    GiangVienInfo = gvInfo
                 };
             }).ToList();
 
@@ -370,6 +376,175 @@ namespace api.Services.Implementations
                     MaLopHocPhan = inputResponse(buoi.MaLopHocPhan ?? "null"),
                 }
             };
+        }
+        public async Task<List<ScheduleListItem>> AutoGenerateAsync(string maLopHocPhan, string? tenDangNhap)
+        {
+            // 1) Lấy bundle thông tin lớp, môn, học kỳ
+            var bundle = await _repo.GetCourseBundleAsync(maLopHocPhan);
+            if (bundle == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy lớp học phần.");
+
+            var (lhp, mon, hk, gv) = bundle.Value;
+
+            // 2) Tính số buổi theo SoTiet môn (SoTiet buổi = 3, buổi cuối có thể < 3 nếu dư)
+            if (mon.SoTiet <= 0)
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Môn học chưa thiết lập số tiết hợp lệ.");
+
+            var soTietMon = (byte)mon.SoTiet; // model MonHoc.SoTiet là byte
+            var soTietMoiBuoi = (byte)3;
+            var soBuoi = (int)Math.Ceiling(soTietMon / 3.0);
+
+            // 3) Xác định ngày bắt đầu kỳ học (Ky 1: 01/08, Ky 2: 01/01, Ky 3: 01/06)
+            var start = hk.Ky switch
+            {
+                1 => new DateOnly(hk.NamHoc, 8, 1),
+                2 => new DateOnly(hk.NamHoc, 1, 1),
+                3 => new DateOnly(hk.NamHoc, 6, 1),
+                _ => new DateOnly(hk.NamHoc, 8, 1)
+            };
+
+            // 4) Tập tiết bắt đầu hợp lệ và dải thứ (ưu tiên Thứ 2..Thứ 7)
+            var allowedStarts = new byte[] { 1, 4, 7, 10, 13, 16 };
+            var weekdays = new DayOfWeek[] {
+                DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday
+            };
+
+            // 5) Duyệt để tìm (phòng, thứ, tiết bắt đầu) khả dụng cho toàn chuỗi buổi
+            var rooms = await _repo.GetActiveRoomsAsync();
+            (int MaPhong, DayOfWeek Weekday, byte TietBatDau)? chosen = null;
+
+            foreach (var r in rooms)
+            {
+                foreach (var w in weekdays)
+                {
+                    // ngày đầu tiên cùng/bắt sau start có đúng thứ w
+                    var firstDate = ToNextOrSame(start, w);
+
+                    foreach (var tbd in allowedStarts)
+                    {
+                        var ok = true;
+                        for (var i = 0; i < soBuoi; i++)
+                        {
+                            var d = firstDate.AddDays(i * 7);
+                            // buổi cuối có thể < 3 nếu thừa
+                            var tiet = (i == soBuoi - 1 && (soTietMon % 3) != 0)
+                                        ? (byte)(soTietMon % 3)
+                                        : soTietMoiBuoi;
+
+                            // Kiểm tra trùng lịch phòng và lớp
+                            if (await _repo.AnyRoomConflictAsync(r.MaPhong, d, tbd, tiet)
+                                || await _repo.AnyCourseConflictAsync(lhp.MaLopHocPhan!, d, tbd, tiet))
+                            {
+                                ok = false; break;
+                            }
+                        }
+                        if (ok) { chosen = (r.MaPhong, w, tbd); break; }
+                    }
+                    if (chosen != null) break;
+                }
+                if (chosen != null) break;
+            }
+
+            if (chosen is null)
+                ApiExceptionHelper.Throw(ApiErrorCode.Conflict, "Không tìm được lịch/phòng phù hợp để xếp tự động.");
+
+            var (chosenRoom, chosenWeekday, chosenStartTiet) = chosen.Value;
+            var firstDay = ToNextOrSame(start, chosenWeekday);
+
+            // 6) Tạo danh sách buổi học
+            var buoiList = new List<BuoiHoc>();
+            for (var i = 0; i < soBuoi; i++)
+            {
+                var tiet = (i == soBuoi - 1 && (soTietMon % 3) != 0)
+                            ? (byte)(soTietMon % 3)
+                            : soTietMoiBuoi;
+
+                buoiList.Add(new BuoiHoc
+                {
+                    MaLopHocPhan = lhp.MaLopHocPhan,
+                    MaPhong = chosenRoom,
+                    NgayHoc = firstDay.AddDays(i * 7),
+                    TietBatDau = chosenStartTiet,
+                    SoTiet = tiet,
+                    GhiChu = null,
+                    TrangThai = true
+                });
+            }
+
+            // 7) Ghi DB
+            await _repo.AddSchedulesAsync(buoiList);
+
+            // 8) Log hoạt động
+            await _repo.LogActivityAsync(tenDangNhap,
+                $"Tự động sinh {buoiList.Count} buổi học cho lớp {lhp.MaLopHocPhan} (phòng {chosenRoom}, {chosenWeekday}, tiết {chosenStartTiet}).");
+
+            // 9) Map response: ScheduleListItem (đủ các khối DTO như đã thống nhất)
+            // Dùng thông tin đã có sẵn, hạn chế query lại
+            var phong = await _repo.GetRoomByIdAsync(chosenRoom);
+
+            var items = buoiList.Select(b =>
+            {
+                var buoi = new BuoiHocDTO
+                {
+                    MaBuoi = inputResponse(b.MaBuoi.ToString()),
+                    NgayHoc = inputResponse(b.NgayHoc.ToString("dd-MM-yyyy")),
+                    TietBatDau = inputResponse(b.TietBatDau.ToString()),
+                    SoTiet = inputResponse(b.SoTiet.ToString()),
+                    GhiChu = inputResponse(b.GhiChu ?? "null"),
+                    TrangThai = inputResponse(b.TrangThai ? "1" : "0")
+                };
+
+                var phongDto = phong == null ? null : new PhongHocDTO
+                {
+                    MaPhong = inputResponse(phong.MaPhong.ToString()),
+                    TenPhong = inputResponse(phong.TenPhong ?? "null"),
+                    TrangThai = inputResponse(phong.TrangThai ? "1" : "0")
+                };
+
+                var lhpDto = new LopHocPhanDTO
+                {
+                    MaLopHocPhan = inputResponse(lhp.MaLopHocPhan ?? "null"),
+                    TenLopHocPhan = inputResponse(lhp.TenLopHocPhan ?? "null"),
+                    TrangThai = inputResponse(lhp.TrangThai ? "1" : "0")
+                };
+
+                var monDto = new MonHocDTO
+                {
+                    MaMonHoc = inputResponse(mon.MaMonHoc ?? "null"),
+                    TenMonHoc = inputResponse(mon.TenMonHoc ?? "null"),
+                    TrangThai = inputResponse(mon.TrangThai ? "1" : "0")
+                };
+
+                GiangVienDTO? gvDto = null;
+                if (gv != null)
+                {
+                    gvDto = new GiangVienDTO
+                    {
+                        MaGiangVien = inputResponse(gv.MaGiangVien ?? "null")
+                    };
+                }
+
+                return new ScheduleListItem
+                {
+                    BuoiHoc = buoi,
+                    PhongHoc = phongDto,
+                    LopHocPhan = lhpDto,
+                    MonHoc = monDto,
+                    GiangVien = gvDto
+                };
+            }).ToList();
+
+            return items;
+
+            // local
+            static DateOnly ToNextOrSame(DateOnly d, DayOfWeek wd)
+            {
+                var cur = (int)d.DayOfWeek;
+                var target = (int)wd;
+                var add = (target - cur + 7) % 7;
+                return d.AddDays(add);
+            }
         }
     }
 }

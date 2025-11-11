@@ -28,7 +28,7 @@ namespace api.Repositories.Interfaces
         Task UpdateNganhAsync(Nganh entity);
         Task DeleteNganhAsync(Nganh entity);
 
-        // Khoa tồn tại?
         Task<bool> KhoaExistsAsync(int maKhoa);
+        Task<Nganh?> GetNganhByCodeAsync(string codeNganh);
     }
 }

@@ -5,7 +5,7 @@ namespace api.Repositories.Interfaces
 {
     public interface ILecturerRepository
     {
-        // Lecturer
+                // Lecturer
         Task<bool> ExistsLecturerAsync(string maGiangVien);
         Task AddLecturerAsync(GiangVien entity);
         Task<GiangVien?> GetLecturerByMaNguoiDungAsync(int maNguoiDung);
@@ -37,5 +37,8 @@ namespace api.Repositories.Interfaces
             int page,
             int pageSize
         );
+
+        // >>> SINH MÃ GIẢNG VIÊN <<<
+        Task<string> GenerateNextMaGiangVienAsync(string codeKhoa, int year);
     }
 }

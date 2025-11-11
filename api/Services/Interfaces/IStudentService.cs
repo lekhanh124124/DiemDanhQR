@@ -11,5 +11,8 @@ namespace api.Services.Interfaces
 
         Task<AddStudentToCourseResponse> AddStudentToCourseAsync(AddStudentToCourseRequest req, string? currentUserTenDangNhap);
         Task<RemoveStudentFromCourseResponse> RemoveStudentFromCourseAsync(RemoveStudentFromCourseRequest req, string? currentUserTenDangNhap);
+        Task<BulkImportStudentsResponse> BulkImportAsync(BulkImportStudentsRequest req);
+        Task<BulkImportStudentsResponse> BulkAddStudentsToCourseAsync(BulkAddStudentsToCourseRequest req, string? currentUserTenDangNhap);
+
     }
 }

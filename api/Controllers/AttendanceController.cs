@@ -22,7 +22,7 @@ namespace api.Controllers
 
         // POST: /api/attendance/qr
         [HttpPost("qr")]
-        [Authorize(Roles = "GV")]
+        [Authorize(Roles = "GV,ADMIN")]
         public async Task<ActionResult<ApiResponse<CreateQrResponse>>> CreateQr([FromQuery] CreateQrRequest req)
         {
             var username = GetUsernameFromClaims();

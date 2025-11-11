@@ -30,7 +30,7 @@ namespace api.Controllers
         }
 
         [HttpGet("list")]
-        [Authorize]
+        [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<ApiResponse<PagedResult<LecturerListItemResponse>>>> List([FromQuery] GetLecturersRequest req)
         {
             var data = await _svc.GetListAsync(req);

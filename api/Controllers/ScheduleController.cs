@@ -132,5 +132,25 @@ namespace api.Controllers
                 Data = data
             });
         }
+        // POST: /api/schedule/auto-generate
+        [HttpPost("auto-generate")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<List<ScheduleListItem>>>> AutoGenerate([FromForm] AutoGenerateScheduleRequest req)
+        {
+            if (string.IsNullOrWhiteSpace(req.MaLopHocPhan))
+                ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã lớp học phần là bắt buộc.");
+
+            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
+                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
+
+            var items = await _svc.AutoGenerateAsync(req.MaLopHocPhan!.Trim(), tenDangNhap);
+
+            return Ok(new ApiResponse<List<ScheduleListItem>>
+            {
+                Status = inputResponse("200"),
+                Message = inputResponse("Sinh buổi học tự động thành công."),
+                Data = items
+            });
+        }
     }
 }

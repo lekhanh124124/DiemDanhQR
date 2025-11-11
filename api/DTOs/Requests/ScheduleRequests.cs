@@ -13,7 +13,7 @@ namespace api.DTOs
         public string? TenLop { get; set; }
         public string? TenMonHoc { get; set; }
         public DateOnly? NgayHoc { get; set; }
-        public int? Nam { get; set; }   
+        public int? Nam { get; set; }
         public int? Tuan { get; set; }
         public int? Thang { get; set; }
         public byte? TietBatDau { get; set; }
@@ -24,7 +24,7 @@ namespace api.DTOs
         public string? MaGiangVien { get; set; }
 
         // Sắp xếp & phân trang
-        public string? SortBy { get; set; }  
+        public string? SortBy { get; set; }
         public string? SortDir { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
@@ -65,7 +65,7 @@ namespace api.DTOs
         [Required(ErrorMessage = "Mã phòng là bắt buộc.")]
         public int? MaPhong { get; set; }
         [Required(ErrorMessage = "Ngày học là bắt buộc.")]
-        public DateOnly? NgayHoc { get; set; }  
+        public DateOnly? NgayHoc { get; set; }
         [Required(ErrorMessage = "Tiết bắt đầu là bắt buộc.")]
         public byte? TietBatDau { get; set; }
         [Required(ErrorMessage = "Số tiết là bắt buộc.")]
@@ -89,10 +89,15 @@ namespace api.DTOs
         [Required(ErrorMessage = "Mã buổi học là bắt buộc.")]
         public int? MaBuoi { get; set; }
         public int? MaPhong { get; set; }
-        public DateOnly? NgayHoc { get; set; }  
+        public DateOnly? NgayHoc { get; set; }
         public byte? TietBatDau { get; set; }
         public byte? SoTiet { get; set; }
         public string? GhiChu { get; set; }
         public bool? TrangThai { get; set; }
+    }
+    public class AutoGenerateScheduleRequest
+    {
+        [Required(ErrorMessage = "Mã lớp học phần là bắt buộc.")]
+        public string? MaLopHocPhan { get; set; }
     }
 }
