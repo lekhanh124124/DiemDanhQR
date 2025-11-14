@@ -5,7 +5,7 @@ namespace api.Repositories.Interfaces
 {
     public interface ICourseRepository
     {
-        Task<(List<(LopHocPhan Lhp, MonHoc Mh, GiangVien Gv, HocKy Hk, DateOnly? NgayThamGia, bool? TrangThaiThamGia)> Items, int Total)>
+        Task<(List<(LopHocPhan Lhp, MonHoc Mh, GiangVien Gv, HocKy Hk, NguoiDung? Nd, DateOnly? NgayThamGia, bool? TrangThaiThamGia)> Items, int Total)>
             SearchCoursesAsync(
                 string? maLopHocPhan,
                 string? tenLopHocPhan,
@@ -57,5 +57,6 @@ namespace api.Repositories.Interfaces
 
         Task<string> GenerateNextSubjectCodeAsync(string tenMonHoc);
         Task<string> GenerateNextCourseCodeAsync(string tenMonHoc, short namHoc, byte ky);
+        
     }
 }

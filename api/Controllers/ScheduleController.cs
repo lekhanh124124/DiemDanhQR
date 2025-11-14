@@ -2,10 +2,10 @@
 // Bảng: BuoiHoc + PhongHoc
 using api.DTOs;
 using api.ErrorHandling;
+using api.Helpers;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace api.Controllers
 {
@@ -24,7 +24,6 @@ namespace api.Controllers
         {
             var data = await _svc.GetListAsync(req);
 
-            // PagedResult trong dự án dùng string -> đảm bảo đổ string
             var shaped = new PagedResult<ScheduleListItem>
             {
                 Page = inputResponse(data.Page),
@@ -69,9 +68,7 @@ namespace api.Controllers
         [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<ApiResponse<CreateRoomResponse>>> CreateRoom([FromForm] CreateRoomRequest req)
         {
-            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
-
+            var tenDangNhap = JwtHelper.GetUsername(User);
             var data = await _svc.CreateRoomAsync(req, tenDangNhap);
 
             return Ok(new ApiResponse<CreateRoomResponse>
@@ -86,9 +83,7 @@ namespace api.Controllers
         [Authorize(Roles = "ADMIN,GV")]
         public async Task<ActionResult<ApiResponse<CreateScheduleResponse>>> CreateSchedule([FromForm] CreateScheduleRequest req)
         {
-            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
-
+            var tenDangNhap = JwtHelper.GetUsername(User);
             var data = await _svc.CreateScheduleAsync(req, tenDangNhap);
 
             return Ok(new ApiResponse<CreateScheduleResponse>
@@ -103,9 +98,7 @@ namespace api.Controllers
         [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<ApiResponse<UpdateRoomResponse>>> UpdateRoom([FromForm] UpdateRoomRequest req)
         {
-            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
-
+            var tenDangNhap = JwtHelper.GetUsername(User);
             var data = await _svc.UpdateRoomAsync(req, tenDangNhap);
 
             return Ok(new ApiResponse<UpdateRoomResponse>
@@ -120,9 +113,7 @@ namespace api.Controllers
         [Authorize(Roles = "ADMIN,GV")]
         public async Task<ActionResult<ApiResponse<UpdateScheduleResponse>>> UpdateSchedule([FromForm] UpdateScheduleRequest req)
         {
-            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
-
+            var tenDangNhap = JwtHelper.GetUsername(User);
             var data = await _svc.UpdateScheduleAsync(req, tenDangNhap);
 
             return Ok(new ApiResponse<UpdateScheduleResponse>
@@ -132,6 +123,7 @@ namespace api.Controllers
                 Data = data
             });
         }
+
         // POST: /api/schedule/auto-generate
         [HttpPost("auto-generate")]
         [Authorize(Roles = "ADMIN")]
@@ -140,9 +132,7 @@ namespace api.Controllers
             if (string.IsNullOrWhiteSpace(req.MaLopHocPhan))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã lớp học phần là bắt buộc.");
 
-            var tenDangNhap = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value;
-
+            var tenDangNhap = JwtHelper.GetUsername(User);
             var items = await _svc.AutoGenerateAsync(req.MaLopHocPhan!.Trim(), tenDangNhap);
 
             return Ok(new ApiResponse<List<ScheduleListItem>>

@@ -157,7 +157,8 @@ namespace api.Services.Implementations
                 sortBy: sortBy,
                 desc: desc,
                 page: page,
-                pageSize: pageSize
+                pageSize: pageSize,
+                maSinhVien: request.MaSinhVien
             );
 
             string F(DateOnly? d) => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : null!;
@@ -462,7 +463,7 @@ namespace api.Services.Implementations
             ms.Position = 0;
 
             int success = 0, failed = 0;
-            var failedRows = new List<int>();
+            var failedDetails = new List<RowError>();
 
             // ====== Caches để giảm query ======
             var nganhById = new Dictionary<int, Nganh>();
@@ -583,8 +584,8 @@ namespace api.Services.Implementations
 
                     if (!string.IsNullOrEmpty(email) && await _repo.ExistsUserByEmailAsync(email))
                         throw new Exception($"Email đã tồn tại: {email}");
-                    if (!string.IsNullOrEmpty(sdt) && await _repo.ExistsUserByPhoneAsync(sdt))
-                        throw new Exception($"Số điện thoại đã tồn tại: {sdt}");
+                    // if (!string.IsNullOrEmpty(sdt) && await _repo.ExistsUserByPhoneAsync(sdt))
+                    //     throw new Exception($"Số điện thoại đã tồn tại: {sdt}");
 
                     // ======= Tạo User =======
                     var user = new NguoiDung
@@ -624,10 +625,10 @@ namespace api.Services.Implementations
                     await _repo.SaveChangesAsync();
                     success++;
                 }
-                catch
+                catch (Exception ex)
                 {
                     failed++;
-                    failedRows.Add(r);
+                    failedDetails.Add(new RowError { Row = r, Error = ex.Message });
                 }
             }
 
@@ -635,7 +636,7 @@ namespace api.Services.Implementations
             {
                 SuccessCount = success,
                 FailedCount = failed,
-                FailedRows = failedRows
+                FailedDetails = failedDetails
             };
         }
         public async Task<BulkImportStudentsResponse> BulkAddStudentsToCourseAsync(BulkAddStudentsToCourseRequest req, string? currentUserTenDangNhap)
@@ -678,7 +679,7 @@ namespace api.Services.Implementations
             var rowMax = ws.Dimension.End.Row;
 
             int success = 0, failed = 0;
-            var failedRows = new List<int>();
+            var failedDetails = new List<RowError>();
 
             // Lấy default
             DateOnly defaultNgayTG = req.DefaultNgayThamGia ?? DateOnly.FromDateTime(TimeHelper.UtcToVietnam(DateTime.UtcNow));
@@ -742,11 +743,10 @@ namespace api.Services.Implementations
 
                     success++;
                 }
-                catch
+                catch (Exception ex)
                 {
                     failed++;
-                    failedRows.Add(r);
-                    // tiếp tục các dòng khác
+                    failedDetails.Add(new RowError { Row = r, Error = ex.Message });
                 }
             }
 
@@ -754,7 +754,7 @@ namespace api.Services.Implementations
             {
                 SuccessCount = success,
                 FailedCount = failed,
-                FailedRows = failedRows
+                FailedDetails = failedDetails
             };
         }
 

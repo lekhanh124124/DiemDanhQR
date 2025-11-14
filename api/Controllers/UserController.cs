@@ -1,7 +1,7 @@
 // File: Controllers/UserController.cs
-using System.Security.Claims;
 using api.DTOs;
 using api.ErrorHandling;
+using api.Helpers;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,18 +23,12 @@ namespace api.Controllers
         [HttpGet("info")]
         public async Task<ActionResult<ApiResponse<object>>> GetInfo([FromQuery] string? tenDangNhap)
         {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
-            var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
+            var isAdmin = JwtHelper.IsAdmin(User);
 
             object result;
-
             if (string.IsNullOrWhiteSpace(tenDangNhap))
             {
-                var usernameFromToken =
-                        User.FindFirst("TenDangNhap")?.Value
-                        ?? User.FindFirst(ClaimTypes.Name)?.Value
-                        ?? User.Identity?.Name;
-
+                var usernameFromToken = JwtHelper.GetUsername(User);
                 if (string.IsNullOrWhiteSpace(usernameFromToken))
                     ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
 
@@ -47,12 +41,7 @@ namespace api.Controllers
                 result = await _svc.GetInfoAsync(tenDangNhap!);
             }
 
-            return Ok(new ApiResponse<object>
-            {
-                Status = "200",
-                Message = "Lấy thông tin người dùng thành công.",
-                Data = result,
-            });
+            return Ok(new ApiResponse<object> { Status = "200", Message = "Lấy thông tin người dùng thành công.", Data = result });
         }
 
         [Authorize(Roles = "ADMIN")]
@@ -61,12 +50,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<CreateUserResponse>>> Create([FromForm] CreateUserRequest req)
         {
             var result = await _svc.CreateAsync(req);
-            return Ok(new ApiResponse<CreateUserResponse>
-            {
-                Status = "200",
-                Message = "Tạo người dùng thành công.",
-                Data = result,
-            });
+            return Ok(new ApiResponse<CreateUserResponse> { Status = "200", Message = "Tạo người dùng thành công.", Data = result });
         }
 
         [Authorize]
@@ -74,13 +58,8 @@ namespace api.Controllers
         [RequestSizeLimit(5_000_000)]
         public async Task<ActionResult<ApiResponse<UpdateUserProfileResponse>>> UpdateProfile([FromForm] UpdateUserProfileRequest req)
         {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
-            var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
-
-            var usernameFromToken =
-                    User.FindFirst("TenDangNhap")?.Value
-                    ?? User.FindFirst(ClaimTypes.Name)?.Value
-                    ?? User.Identity?.Name;
+            var isAdmin = JwtHelper.IsAdmin(User);
+            var usernameFromToken = JwtHelper.GetUsername(User);
 
             if (string.IsNullOrWhiteSpace(usernameFromToken))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
@@ -89,12 +68,7 @@ namespace api.Controllers
                 ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Bạn không thể cập nhật hồ sơ của người khác.");
 
             var data = await _svc.UpdateProfileAsync(req, usernameFromToken);
-            return Ok(new ApiResponse<UpdateUserProfileResponse>
-            {
-                Status = "200",
-                Message = "Cập nhật người dùng thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<UpdateUserProfileResponse> { Status = "200", Message = "Cập nhật người dùng thành công.", Data = data });
         }
 
         [Authorize(Roles = "ADMIN")]
@@ -102,25 +76,15 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<PagedResult<UserItem>>>> List([FromQuery] UserListRequest req)
         {
             var data = await _svc.GetListAsync(req);
-            return Ok(new ApiResponse<PagedResult<UserItem>>
-            {
-                Status = "200",
-                Message = "Lấy danh sách người dùng thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<PagedResult<UserItem>> { Status = "200", Message = "Lấy danh sách người dùng thành công.", Data = data });
         }
 
         [Authorize]
         [HttpGet("activity")]
         public async Task<ActionResult<ApiResponse<PagedResult<UserActivityItem>>>> GetActivity([FromQuery] UserActivityListRequest req)
         {
-            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
-            var isAdmin = string.Equals(role, "ADMIN", StringComparison.OrdinalIgnoreCase);
-
-            var usernameFromToken =
-                    User.FindFirst("TenDangNhap")?.Value
-                    ?? User.FindFirst(ClaimTypes.Name)?.Value
-                    ?? User.Identity?.Name;
+            var isAdmin = JwtHelper.IsAdmin(User);
+            var usernameFromToken = JwtHelper.GetUsername(User);
 
             if (string.IsNullOrWhiteSpace(usernameFromToken))
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Phiên không hợp lệ.");
@@ -131,12 +95,7 @@ namespace api.Controllers
             }
 
             var data = await _svc.GetActivityAsync(req);
-            return Ok(new ApiResponse<PagedResult<UserActivityItem>>
-            {
-                Status = "200",
-                Message = "Lấy danh sách lịch sử hoạt động thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<PagedResult<UserActivityItem>> { Status = "200", Message = "Lấy danh sách lịch sử hoạt động thành công.", Data = data });
         }
     }
 }

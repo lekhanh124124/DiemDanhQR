@@ -7,7 +7,8 @@ namespace api.DTOs
     {
         public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLopHocPhan, TrangThai
         public MonHocDTO? MonHoc { get; set; } // MaMonHoc, TenMonHoc, SoTinChi, SoTiet
-        public GiangVienDTO? GiangVien { get; set; } // MaGiangVien, TenGiangVien
+        public GiangVienDTO? GiangVien { get; set; } // MaGiangVien
+        public NguoiDungDTO? GiangVienInfo { get; set; } // HoTen
         public HocKyDTO? HocKy { get; set; } // MaHocKy, NamHoc, Ky
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ThamGiaLopDTO? ThamGiaLop { get; set; } // NgayThamGia, TrangThai

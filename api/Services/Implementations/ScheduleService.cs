@@ -100,7 +100,7 @@ namespace api.Services.Implementations
                         HoTen = inputResponse(nd?.HoTen ?? "null")
                     };
                 }
-                
+
                 return new ScheduleListItem
                 {
                     BuoiHoc = buoi,
@@ -379,22 +379,38 @@ namespace api.Services.Implementations
         }
         public async Task<List<ScheduleListItem>> AutoGenerateAsync(string maLopHocPhan, string? tenDangNhap)
         {
-            // 1) Lấy bundle thông tin lớp, môn, học kỳ
+            // 1) Lấy bundle thông tin lớp, môn, học kỳ, giảng viên
             var bundle = await _repo.GetCourseBundleAsync(maLopHocPhan);
             if (bundle == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy lớp học phần.");
 
             var (lhp, mon, hk, gv) = bundle.Value;
 
-            // 2) Tính số buổi theo SoTiet môn (SoTiet buổi = 3, buổi cuối có thể < 3 nếu dư)
+            // 2) Xác thực số tiết & thiết lập tham số theo LoaiMon
             if (mon.SoTiet <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Môn học chưa thiết lập số tiết hợp lệ.");
 
-            var soTietMon = (byte)mon.SoTiet; // model MonHoc.SoTiet là byte
-            var soTietMoiBuoi = (byte)3;
-            var soBuoi = (int)Math.Ceiling(soTietMon / 3.0);
+            var soTietMon = (int)mon.SoTiet;
+            byte[] allowedStarts;
+            byte soTietMoiBuoi;
 
-            // 3) Xác định ngày bắt đầu kỳ học (Ky 1: 01/08, Ky 2: 01/01, Ky 3: 01/06)
+            if (mon.LoaiMon is 2 or 3)
+            {
+                // Môn thực hành
+                allowedStarts = new byte[] { 1, 7, 13 };  // Ca sáng/chiều/tối
+                soTietMoiBuoi = 5;                        // 5 tiết mỗi buổi
+            }
+            else
+            {
+                // Môn lý thuyết
+                allowedStarts = new byte[] { 1, 4, 7, 10, 13, 16 };
+                soTietMoiBuoi = 3;                        // 3 tiết mỗi buổi
+            }
+
+            // Số buổi = ceil(SoTietMon / soTietMoiBuoi)
+            var soBuoi = (int)Math.Ceiling(soTietMon / (double)soTietMoiBuoi);
+
+            // 3) Xác định ngày bắt đầu kỳ học (Kỳ 1: 01/08, Kỳ 2: 01/01, Kỳ 3: 01/06)
             var start = hk.Ky switch
             {
                 1 => new DateOnly(hk.NamHoc, 8, 1),
@@ -403,14 +419,13 @@ namespace api.Services.Implementations
                 _ => new DateOnly(hk.NamHoc, 8, 1)
             };
 
-            // 4) Tập tiết bắt đầu hợp lệ và dải thứ (ưu tiên Thứ 2..Thứ 7)
-            var allowedStarts = new byte[] { 1, 4, 7, 10, 13, 16 };
+            // 4) Dải thứ ưu tiên (Thứ 2..Thứ 7)
             var weekdays = new DayOfWeek[] {
-                DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday
-            };
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+        DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday
+    };
 
-            // 5) Duyệt để tìm (phòng, thứ, tiết bắt đầu) khả dụng cho toàn chuỗi buổi
+            // 5) Chọn (phòng, thứ, tiết bắt đầu) phù hợp cho toàn chuỗi buổi
             var rooms = await _repo.GetActiveRoomsAsync();
             (int MaPhong, DayOfWeek Weekday, byte TietBatDau)? chosen = null;
 
@@ -418,7 +433,6 @@ namespace api.Services.Implementations
             {
                 foreach (var w in weekdays)
                 {
-                    // ngày đầu tiên cùng/bắt sau start có đúng thứ w
                     var firstDate = ToNextOrSame(start, w);
 
                     foreach (var tbd in allowedStarts)
@@ -427,18 +441,19 @@ namespace api.Services.Implementations
                         for (var i = 0; i < soBuoi; i++)
                         {
                             var d = firstDate.AddDays(i * 7);
-                            // buổi cuối có thể < 3 nếu thừa
-                            var tiet = (i == soBuoi - 1 && (soTietMon % 3) != 0)
-                                        ? (byte)(soTietMon % 3)
-                                        : soTietMoiBuoi;
 
-                            // Kiểm tra trùng lịch phòng và lớp
+                            // Tiết của buổi i (buổi cuối có thể ngắn hơn nếu còn dư)
+                            var du = soTietMon % soTietMoiBuoi;
+                            byte tiet = (i == soBuoi - 1 && du != 0) ? (byte)du : soTietMoiBuoi;
+
+                            // Kiểm tra trùng lịch phòng và trùng lịch lớp
                             if (await _repo.AnyRoomConflictAsync(r.MaPhong, d, tbd, tiet)
                                 || await _repo.AnyCourseConflictAsync(lhp.MaLopHocPhan!, d, tbd, tiet))
                             {
                                 ok = false; break;
                             }
                         }
+
                         if (ok) { chosen = (r.MaPhong, w, tbd); break; }
                     }
                     if (chosen != null) break;
@@ -456,13 +471,12 @@ namespace api.Services.Implementations
             var buoiList = new List<BuoiHoc>();
             for (var i = 0; i < soBuoi; i++)
             {
-                var tiet = (i == soBuoi - 1 && (soTietMon % 3) != 0)
-                            ? (byte)(soTietMon % 3)
-                            : soTietMoiBuoi;
+                var du = soTietMon % soTietMoiBuoi;
+                byte tiet = (i == soBuoi - 1 && du != 0) ? (byte)du : soTietMoiBuoi;
 
                 buoiList.Add(new BuoiHoc
                 {
-                    MaLopHocPhan = lhp.MaLopHocPhan,
+                    MaLopHocPhan = lhp.MaLopHocPhan!,
                     MaPhong = chosenRoom,
                     NgayHoc = firstDay.AddDays(i * 7),
                     TietBatDau = chosenStartTiet,
@@ -475,13 +489,18 @@ namespace api.Services.Implementations
             // 7) Ghi DB
             await _repo.AddSchedulesAsync(buoiList);
 
-            // 8) Log hoạt động
+            // 8) Log
             await _repo.LogActivityAsync(tenDangNhap,
-                $"Tự động sinh {buoiList.Count} buổi học cho lớp {lhp.MaLopHocPhan} (phòng {chosenRoom}, {chosenWeekday}, tiết {chosenStartTiet}).");
+                $"Tự động sinh {buoiList.Count} buổi cho {lhp.MaLopHocPhan} (phòng {chosenRoom}, {chosenWeekday}, tiết {chosenStartTiet}, LoaiMon={mon.LoaiMon}).");
 
-            // 9) Map response: ScheduleListItem (đủ các khối DTO như đã thống nhất)
-            // Dùng thông tin đã có sẵn, hạn chế query lại
+            // 9) Map response: ScheduleListItem (có cả GiangVienInfo nếu có)
             var phong = await _repo.GetRoomByIdAsync(chosenRoom);
+            NguoiDungDTO? gvInfo = null;
+            if (gv != null)
+            {
+                var nd = await _repo.GetUserByIdAsync(gv.MaNguoiDung);
+                gvInfo = new NguoiDungDTO { HoTen = inputResponse(nd?.HoTen ?? "null") };
+            }
 
             var items = buoiList.Select(b =>
             {
@@ -519,10 +538,7 @@ namespace api.Services.Implementations
                 GiangVienDTO? gvDto = null;
                 if (gv != null)
                 {
-                    gvDto = new GiangVienDTO
-                    {
-                        MaGiangVien = inputResponse(gv.MaGiangVien ?? "null")
-                    };
+                    gvDto = new GiangVienDTO { MaGiangVien = inputResponse(gv.MaGiangVien ?? "null") };
                 }
 
                 return new ScheduleListItem
@@ -531,13 +547,14 @@ namespace api.Services.Implementations
                     PhongHoc = phongDto,
                     LopHocPhan = lhpDto,
                     MonHoc = monDto,
-                    GiangVien = gvDto
+                    GiangVien = gvDto,
+                    GiangVienInfo = gvInfo
                 };
             }).ToList();
 
             return items;
 
-            // local
+            // local helper
             static DateOnly ToNextOrSame(DateOnly d, DayOfWeek wd)
             {
                 var cur = (int)d.DayOfWeek;

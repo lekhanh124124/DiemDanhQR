@@ -21,5 +21,7 @@ namespace api.Services.Interfaces
         Task<RoleFunctionDetailResponse> CreateRoleFunctionByCodeAsync(CreateRoleFunctionByCodeRequest req, string? currentUsername);
         Task<RoleFunctionDetailResponse> UpdateRoleFunctionByCodeAsync(UpdateRoleFunctionByCodeRequest req, string? currentUsername);
         Task<bool> DeleteRoleFunctionByCodeAsync(int maQuyen, int maChucNang, string? currentUsername);
+        Task<PagedResult<RoleFunctionListItem>> GetRoleFunctionListAsync(RoleFunctionListRequest request);
+
     }
 }

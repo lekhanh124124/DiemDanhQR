@@ -59,7 +59,12 @@ namespace api.DTOs
     {
         public int SuccessCount { get; set; }
         public int FailedCount { get; set; }
-        public List<int> FailedRows { get; set; } = new();
+        public List<RowError> FailedDetails { get; set; } = new(); // thêm
+    }
+    public class RowError
+    {
+        public int Row { get; set; }
+        public string Error { get; set; } = string.Empty;
     }
 
 }

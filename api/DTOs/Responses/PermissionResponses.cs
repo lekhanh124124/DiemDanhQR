@@ -32,4 +32,11 @@ namespace api.DTOs
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public NhomChucNangDTO? NhomChucNang { get; set; }
     }
+
+    public class RoleFunctionListItem
+    {
+        public PhanQuyenDTO? PhanQuyen { get; set; }
+        public ChucNangDTO? ChucNang { get; set; }
+        public NhomChucNangDTO? NhomChucNang { get; set; }
+    }
 }

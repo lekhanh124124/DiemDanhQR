@@ -21,17 +21,20 @@ namespace api.Repositories.Interfaces
         Task SaveChangesAsync();
 
         // Tìm kiếm danh sách SV (join NguoiDung + Nganh (+Khoa qua Nganh))
-        Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh, DateOnly? NgayTG, bool? TrangThaiTG)> Items, int Total)> SearchStudentsAsync(
-            int? maKhoa,
-            int? maNganh,
-            int? namNhapHoc,
-            bool? trangThaiUser,
-            string? maLopHocPhan,
-            string? sortBy,
-            bool desc,
-            int page,
-            int pageSize
-        );
+        Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh, DateOnly? NgayTG, bool? TrangThaiTG)> Items, int Total)>
+            SearchStudentsAsync(
+                int? maKhoa,
+                int? maNganh,
+                int? namNhapHoc,
+                bool? trangThaiUser,
+                string? maLopHocPhan,
+                string? sortBy,
+                bool desc,
+                int page,
+                int pageSize,
+                string? maSinhVien     
+            );
+
 
         // Tham gia lớp
         Task<bool> CourseExistsAsync(string maLopHocPhan);

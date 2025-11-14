@@ -30,6 +30,8 @@ namespace api.DTOs
 
         // Lọc theo mã phân quyền (lấy danh sách chức năng theo mã phân quyền)
         public int? MaQuyen { get; set; }
+        public int? ParentChucNangId { get; set; }   // null = chỉ lấy root nếu bạn muốn, hoặc bỏ lọc nếu không truyền
+
 
         // Sắp xếp
         public string? SortBy { get; set; }   // MaChucNang | CodeChucNang | TenChucNang | MoTa
@@ -48,8 +50,8 @@ namespace api.DTOs
 
         [Required(ErrorMessage = "Tên quyền không được để trống.")]
         public string? TenQuyen { get; set; }
-
         public string? MoTa { get; set; }
+
     }
 
     public class UpdateRoleRequest
@@ -60,6 +62,7 @@ namespace api.DTOs
         public string? CodeQuyen { get; set; }
         public string? TenQuyen { get; set; }
         public string? MoTa { get; set; }
+
     }
 
     // ===== Function (ChucNang) =====
@@ -72,7 +75,7 @@ namespace api.DTOs
         public string? TenChucNang { get; set; }
 
         public string? MoTa { get; set; }
-        // lưu ý: lớp ChucNang đã bỏ trường trạng thái => không có TrangThai ở đây
+        public int? ParentChucNangId { get; set; }
     }
 
     public class UpdateFunctionRequest
@@ -83,10 +86,9 @@ namespace api.DTOs
         public string? CodeChucNang { get; set; }
         public string? TenChucNang { get; set; }
         public string? MoTa { get; set; }
-        // không có TrangThai
+        public int? ParentChucNangId { get; set; }
     }
 
-    // ===== Role-Function mapping by Codes (NhomChucNang có thêm TrangThai) =====
     public class CreateRoleFunctionByCodeRequest
     {
         [Required(ErrorMessage = "Mã quyền không được để trống.")]
@@ -108,5 +110,19 @@ namespace api.DTOs
 
         // Optional: trạng thái mới cho mapping đích
         public bool? TrangThai { get; set; }
+    }
+
+    public class RoleFunctionListRequest
+    {
+        public int? MaQuyen { get; set; }
+        public int? MaChucNang { get; set; }
+
+        // Sắp xếp: MaQuyen | CodeQuyen | TenQuyen | MaChucNang | CodeChucNang | TenChucNang | TrangThai
+        public string? SortBy { get; set; }
+        public string? SortDir { get; set; } // ASC | DESC
+
+        // Phân trang
+        public int? Page { get; set; } = 1;
+        public int? PageSize { get; set; } = 20;
     }
 }

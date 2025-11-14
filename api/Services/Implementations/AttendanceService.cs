@@ -116,8 +116,12 @@ namespace api.Services.Implementations
                 ?? throw new ApiException(ApiErrorCode.Forbidden, "Tài khoản hiện tại không phải sinh viên.");
 
             var maSinhVien = sv.MaSinhVien;
-            if (!await _repo.IsSinhVienInActiveLopAsync(maLhp, maSinhVien))
+            var thamGia = await _repo.GetThamGiaLopAsync(maLhp, maSinhVien);
+            if (thamGia == null)
                 throw new ApiException(ApiErrorCode.Forbidden, "Sinh viên không thuộc lớp học phần này.");
+
+            if (thamGia.TrangThai == false)
+                throw new ApiException(ApiErrorCode.Forbidden, "Sinh viên đã ngừng tham gia lớp học phần này.");
 
             if (await _repo.AttendanceExistsAsync(maBuoi, maSinhVien))
                 throw new ApiException(ApiErrorCode.Conflict, "Bạn đã điểm danh buổi này rồi.");
@@ -361,8 +365,11 @@ namespace api.Services.Implementations
             if (string.IsNullOrWhiteSpace(buoi.MaLopHocPhan))
                 throw new ApiException(ApiErrorCode.BadRequest, "Buổi học chưa có mã lớp học phần.");
 
-            if (!await _repo.IsSinhVienInActiveLopAsync(buoi.MaLopHocPhan, req.MaSinhVien))
+            var thamGia = await _repo.GetThamGiaLopAsync(buoi.MaLopHocPhan, req.MaSinhVien!);
+            if (thamGia == null)
                 throw new ApiException(ApiErrorCode.Forbidden, "Sinh viên không thuộc lớp học phần này.");
+            if (thamGia.TrangThai == false)
+                throw new ApiException(ApiErrorCode.Forbidden, "Sinh viên đã ngừng tham gia lớp học phần này.");
 
             if (await _repo.AttendanceExistsAsync(req.MaBuoi, req.MaSinhVien))
                 throw new ApiException(ApiErrorCode.Conflict, "Sinh viên đã điểm danh buổi này.");
@@ -388,13 +395,16 @@ namespace api.Services.Implementations
             if (!string.IsNullOrWhiteSpace(currentUsername))
             {
                 var nd = await _repo.GetNguoiDungByUsernameAsync(currentUsername);
-                await _repo.LogHistoryAsync(nd?.MaNguoiDung, $"CREATE_ATTENDANCE|MaDiemDanh:{saved.MaDiemDanh}|Buoi:{req.MaBuoi}|SV:{req.MaSinhVien}|Status:{statusId}");
+                await _repo.LogHistoryAsync(nd?.MaNguoiDung,
+                    $"CREATE_ATTENDANCE|MaDiemDanh:{saved.MaDiemDanh}|Buoi:{req.MaBuoi}|SV:{req.MaSinhVien}|Status:{statusId}");
             }
 
             var t = await _repo.GetStatusByIdAsync(saved.MaTrangThai);
+
+            // (tuỳ chọn) lấy vài thông tin SV để trả về, nếu không có vẫn map từ req
             var sv = await _repo.GetSinhVienByMaNguoiDungAsync(
                 (await _repo.GetNguoiDungByUsernameAsync(currentUsername ?? ""))?.MaNguoiDung ?? 0
-            ); // chỉ để phòng trường hợp muốn đính kèm thêm; nếu null thì map theo req
+            );
 
             return new CreateAttendanceResponse
             {

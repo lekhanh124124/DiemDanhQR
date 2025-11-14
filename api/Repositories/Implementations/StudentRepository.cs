@@ -36,8 +36,9 @@ namespace api.Repositories.Implementations
         public Task SaveChangesAsync() => _db.SaveChangesAsync();
 
         public async Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh, DateOnly? NgayTG, bool? TrangThaiTG)> Items, int Total)>
-    SearchStudentsAsync(int? maKhoa, int? maNganh, int? namNhapHoc, bool? trangThaiUser,
-                        string? maLopHocPhan, string? sortBy, bool desc, int page, int pageSize)
+            SearchStudentsAsync(int? maKhoa, int? maNganh, int? namNhapHoc, bool? trangThaiUser,
+                                string? maLopHocPhan, string? sortBy, bool desc, int page, int pageSize,
+                                string? maSinhVien) // <-- NEW
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
@@ -57,6 +58,11 @@ namespace api.Repositories.Implementations
             if (maNganh.HasValue) q = q.Where(x => x.Ng != null && x.Ng.MaNganh == maNganh.Value);
             if (namNhapHoc.HasValue) q = q.Where(x => x.Sv.NamNhapHoc == namNhapHoc.Value);
             if (trangThaiUser.HasValue) q = q.Where(x => x.Nd.TrangThai == trangThaiUser.Value);
+            if (!string.IsNullOrWhiteSpace(maSinhVien))
+            {
+                var id = maSinhVien.Trim();
+                q = q.Where(x => x.Sv.MaSinhVien == id);
+            }
 
             // 3) Sort (không dùng dynamic)
             var key = (sortBy ?? "HoTen").Trim().ToLowerInvariant();
@@ -68,7 +74,7 @@ namespace api.Repositories.Implementations
                 "manganh" => (desc ? q.OrderByDescending(x => x.Ng!.MaNganh) : q.OrderBy(x => x.Ng!.MaNganh)),
                 _ => (desc ? q.OrderByDescending(x => x.Nd.HoTen) : q.OrderBy(x => x.Nd.HoTen)),
             };
-
+            
             if (string.IsNullOrWhiteSpace(maLopHocPhan))
             {
                 // 4A) KHÔNG lọc theo lớp → không join ThamGiaLop → không phát sinh duplicate

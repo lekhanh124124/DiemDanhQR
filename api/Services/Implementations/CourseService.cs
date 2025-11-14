@@ -64,7 +64,11 @@ namespace api.Services.Implementations
                     GiangVien = new GiangVienDTO
                     {
                         MaGiangVien = inputResponse(x.Gv?.MaGiangVien ?? "null")
-                        // TenGiangVien KHÔNG có trong DTO & Model → bỏ
+                    },
+                    // >>> MỚI: map HoTen giảng viên từ NguoiDung
+                    GiangVienInfo = new NguoiDungDTO
+                    {
+                        HoTen = inputResponse(x.Nd?.HoTen ?? "null")
                     },
                     HocKy = new HocKyDTO
                     {

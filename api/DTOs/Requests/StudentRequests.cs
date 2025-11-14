@@ -29,6 +29,7 @@ namespace api.DTOs
         public int? NamNhapHoc { get; set; }
         public bool? TrangThaiUser { get; set; }
         public string? MaLopHocPhan { get; set; }
+        public string? MaSinhVien { get; set; }
         public string? SortBy { get; set; } = "HoTen";
         public string? SortDir { get; set; } = "ASC";
     }
@@ -91,7 +92,7 @@ namespace api.DTOs
         public string? MaLopHocPhan { get; set; }
 
         [Required(ErrorMessage = "File Excel là bắt buộc.")]
-        public IFormFile? File { get; set; } 
+        public IFormFile? File { get; set; }
         public DateOnly? DefaultNgayThamGia { get; set; }
         public bool? DefaultTrangThai { get; set; } = true;
     }

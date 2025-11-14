@@ -1,3 +1,4 @@
+// File: Services/Implementations/AuthService.cs
 using System.Security.Claims;
 using api.DTOs;
 using api.ErrorHandling;
@@ -94,6 +95,7 @@ namespace api.Services.Implementations
                     tenChucNang: null,
                     moTa: null,
                     maQuyen: mk,
+                    parentChucNangId: null,
                     sortBy: "MaChucNang",
                     desc: false,
                     page: 1,
@@ -111,6 +113,7 @@ namespace api.Services.Implementations
                             MaChucNang = inputResponse(fn.MaChucNang.ToString()),
                             CodeChucNang = inputResponse(fn.CodeChucNang),
                             TenChucNang = inputResponse(fn.TenChucNang),
+                            ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null")
                         },
                         NhomChucNang = map == null ? null : new NhomChucNangDTO
                         {

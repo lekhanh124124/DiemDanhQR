@@ -67,9 +67,8 @@ namespace api.Helpers
                 13 => new TimeSpan(18, 0, 0),
                 14 => new TimeSpan(18,45, 0),
                 15 => new TimeSpan(19,30, 0),
-                16 => new TimeSpan(20,40, 0),
-                17 => new TimeSpan(21,25, 0),
-                18 => new TimeSpan(22,10, 0),
+                16 => new TimeSpan(20,15, 0),
+                17 => new TimeSpan(21, 0, 0),
                 _  => new TimeSpan(7,  0, 0)
             };
 
@@ -79,7 +78,7 @@ namespace api.Helpers
             var tietStart = buoi.TietBatDau;
             var cutoffLocal = ngayHocLocal.Add(MapTietToStart(tietStart)).AddMinutes(15);
             var nowLocal = TimeHelper.UtcToVietnam(nowUtc);
-            return nowLocal <= cutoffLocal ? "ONTIME" : "LATE";
+            return nowLocal <= cutoffLocal ? "PRESENT" : "LATE";
         }
     }
 }

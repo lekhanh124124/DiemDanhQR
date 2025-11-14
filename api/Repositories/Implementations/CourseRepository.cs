@@ -15,33 +15,38 @@ namespace api.Repositories.Implementations
         private readonly AppDbContext _db;
         public CourseRepository(AppDbContext db) => _db = db;
 
-        public async Task<(List<(LopHocPhan Lhp, MonHoc Mh, GiangVien Gv, HocKy Hk, DateOnly? NgayThamGia, bool? TrangThaiThamGia)> Items, int Total)>
-            SearchCoursesAsync(
-                string? maLopHocPhan,
-                string? tenLopHocPhan,
-                bool? trangThai,
-                string? maMonHoc,
-                byte? soTinChi,
-                string? maGiangVien,
-                int? maHocKy,
-                short? namHoc,
-                byte? ky,
-                string? maSinhVien,
-                string? sortBy,
-                bool desc,
-                int page,
-                int pageSize)
+        public async Task<(List<(LopHocPhan Lhp, MonHoc Mh, GiangVien Gv, HocKy Hk, NguoiDung? Nd, DateOnly? NgayThamGia, bool? TrangThaiThamGia)> Items, int Total)>
+        SearchCoursesAsync(
+            string? maLopHocPhan,
+            string? tenLopHocPhan,
+            bool? trangThai,
+            string? maMonHoc,
+            byte? soTinChi,
+            string? maGiangVien,
+            int? maHocKy,
+            short? namHoc,
+            byte? ky,
+            string? maSinhVien,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
+            // JOIN thêm NguoiDung (nd) qua GiangVien.MaNguoiDung
             var baseQ =
                 from l in _db.LopHocPhan.AsNoTracking()
                 join m in _db.MonHoc.AsNoTracking() on l.MaMonHoc equals m.MaMonHoc
                 join gv in _db.GiangVien.AsNoTracking() on l.MaGiangVien equals gv.MaGiangVien into gj
                 from gv in gj.DefaultIfEmpty()
+                join nd in _db.NguoiDung.AsNoTracking() on gv.MaNguoiDung equals nd.MaNguoiDung into ndj
+                from nd in ndj.DefaultIfEmpty()
                 join hk in _db.HocKy.AsNoTracking() on l.MaHocKy equals hk.MaHocKy
-                select new { l, m, gv, hk };
+                select new { l, m, gv, hk, nd };
+
+            // ... các filter giữ nguyên nhưng thay x.gv/x.hk/x.m theo baseQ mới
 
             if (!string.IsNullOrWhiteSpace(maLopHocPhan))
             {
@@ -51,7 +56,7 @@ namespace api.Repositories.Implementations
             if (!string.IsNullOrWhiteSpace(tenLopHocPhan))
                 baseQ = baseQ.Where(x => (x.l.TenLopHocPhan ?? "").ToLower().Contains(tenLopHocPhan.Trim().ToLower()));
 
-            if (trangThai.HasValue) baseQ = baseQ.Where(x => (x.l.TrangThai) == trangThai.Value);
+            if (trangThai.HasValue) baseQ = baseQ.Where(x => x.l.TrangThai == trangThai.Value);
 
             if (!string.IsNullOrWhiteSpace(maMonHoc))
             {
@@ -89,11 +94,11 @@ namespace api.Repositories.Implementations
                     join t in _db.ThamGiaLop.AsNoTracking()
                         on x.l.MaLopHocPhan equals t.MaLopHocPhan
                     where (t.MaSinhVien ?? "").Replace(" ", "") == (maSinhVien!.Trim().Replace(" ", ""))
-                    select new { x.l, x.m, x.gv, x.hk, Ngay = (DateOnly?)t.NgayThamGia, TrangThai = (bool?)t.TrangThai }
+                    select new { x.l, x.m, x.gv, x.hk, x.nd, Ngay = (DateOnly?)t.NgayThamGia, TrangThai = (bool?)t.TrangThai }
                   )
                 : (
                     from x in baseQ
-                    select new { x.l, x.m, x.gv, x.hk, Ngay = (DateOnly?)null, TrangThai = (bool?)null }
+                    select new { x.l, x.m, x.gv, x.hk, x.nd, Ngay = (DateOnly?)null, TrangThai = (bool?)null }
                   );
 
             var total = await qFinal.CountAsync();
@@ -103,7 +108,8 @@ namespace api.Repositories.Implementations
                 .Take(pageSize)
                 .ToListAsync();
 
-            var items = list.Select(x => (x.l, x.m, x.gv, x.hk, x.Ngay, x.TrangThai)).ToList();
+            // Trả về tuple có Nd để service map HoTen
+            var items = list.Select(x => (x.l, x.m, x.gv, x.hk, x.nd, x.Ngay, x.TrangThai)).ToList();
             return (items, total);
         }
 

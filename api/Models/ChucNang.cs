@@ -7,6 +7,8 @@ namespace api.Models
         public string CodeChucNang { get; set; } = null!;
         public string TenChucNang { get; set; } = null!;
         public string? MoTa { get; set; }
+        public int? ParentChucNangId { get; set; }
+
     }
 }
 

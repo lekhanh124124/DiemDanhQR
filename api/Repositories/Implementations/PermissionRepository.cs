@@ -59,6 +59,7 @@ namespace api.Repositories.Implementations
             string? tenChucNang,
             string? moTa,
             int? maQuyen,
+            int? parentChucNangId,       // ⭐ NEW
             string? sortBy,
             bool desc,
             int page,
@@ -73,6 +74,13 @@ namespace api.Repositories.Implementations
             if (!string.IsNullOrWhiteSpace(codeChucNang)) q = q.Where(x => x.CodeChucNang == codeChucNang);
             if (!string.IsNullOrWhiteSpace(tenChucNang)) q = q.Where(x => x.TenChucNang!.Contains(tenChucNang));
             if (!string.IsNullOrWhiteSpace(moTa)) q = q.Where(x => (x.MoTa ?? "").Contains(moTa));
+
+            // ⭐ Lọc theo Parent (null = root; nếu không truyền thì bỏ qua)
+            if (parentChucNangId.HasValue)
+            {
+                var pid = parentChucNangId.Value;
+                q = q.Where(x => x.ParentChucNangId == pid);
+            }
 
             if (maQuyen.HasValue)
             {
@@ -208,6 +216,8 @@ namespace api.Repositories.Implementations
 
         public async Task<bool> AnyFunctionRoleMappingsAsync(int maChucNang)
             => await _db.NhomChucNang.AsNoTracking().AnyAsync(x => x.MaChucNang == maChucNang);
+        public async Task<bool> AnyFunctionChildrenAsync(int maChucNang)
+            => await _db.ChucNang.AsNoTracking().AnyAsync(x => x.ParentChucNangId == maChucNang);
 
         public async Task LogActivityAsync(string? tenDangNhap, string hanhDong)
         {
@@ -223,6 +233,54 @@ namespace api.Repositories.Implementations
                 ThoiGian = TimeHelper.UtcToVietnam(DateTime.UtcNow) // ghi DB: VN time, không format
             });
             await _db.SaveChangesAsync();
+        }
+
+        public async Task<List<PhanQuyen>> GetAllRolesAsync()
+           => await _db.PhanQuyen.AsNoTracking().ToListAsync();
+
+        public async Task<List<ChucNang>> GetAllFunctionsAsync()
+            => await _db.ChucNang.AsNoTracking().ToListAsync();
+
+        public async Task AddRoleFunctionsBulkAsync(IEnumerable<NhomChucNang> mappings)
+        {
+            if (mappings == null) return;
+            _db.NhomChucNang.AddRange(mappings);
+            await _db.SaveChangesAsync();
+        }
+
+        public async Task<(List<(PhanQuyen Role, ChucNang Func, NhomChucNang Map)> Items, int Total)> SearchRoleFunctionsAsync(
+            int? maQuyen, int? maChucNang,
+            string? sortBy, bool desc, int page, int pageSize)
+        {
+            page = page <= 0 ? 1 : page;
+            pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
+
+            var q =
+                from map in _db.NhomChucNang.AsNoTracking()
+                join r in _db.PhanQuyen.AsNoTracking() on map.MaQuyen equals r.MaQuyen
+                join f in _db.ChucNang.AsNoTracking() on map.MaChucNang equals f.MaChucNang
+                select new { r, f, map };
+
+            if (maQuyen.HasValue) q = q.Where(x => x.r.MaQuyen == maQuyen.Value);
+            if (maChucNang.HasValue) q = q.Where(x => x.f.MaChucNang == maChucNang.Value);
+
+            var key = (sortBy ?? "MaQuyen").Trim().ToLowerInvariant();
+            q = key switch
+            {
+                "codequyen" => (desc ? q.OrderByDescending(x => x.r.CodeQuyen) : q.OrderBy(x => x.r.CodeQuyen)),
+                "tenquyen" => (desc ? q.OrderByDescending(x => x.r.TenQuyen) : q.OrderBy(x => x.r.TenQuyen)),
+                "machucnang" => (desc ? q.OrderByDescending(x => x.f.MaChucNang) : q.OrderBy(x => x.f.MaChucNang)),
+                "codechucnang" => (desc ? q.OrderByDescending(x => x.f.CodeChucNang) : q.OrderBy(x => x.f.CodeChucNang)),
+                "tenchucnang" => (desc ? q.OrderByDescending(x => x.f.TenChucNang) : q.OrderBy(x => x.f.TenChucNang)),
+                "trangthai" => (desc ? q.OrderByDescending(x => x.map.TrangThai) : q.OrderBy(x => x.map.TrangThai)),
+                _ => (desc ? q.OrderByDescending(x => x.r.MaQuyen) : q.OrderBy(x => x.r.MaQuyen)),
+            };
+
+            var total = await q.CountAsync();
+            var rows = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            var items = rows.Select(x => (x.r, x.f, x.map)).ToList();
+            return (items, total);
         }
     }
 }

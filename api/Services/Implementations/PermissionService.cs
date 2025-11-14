@@ -75,10 +75,8 @@ namespace api.Services.Implementations
         {
             var page = request.Page <= 0 ? 1 : request.Page!.Value;
             var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize!.Value, 200);
-
             var sortBy = request.SortBy ?? "MaChucNang";
-            var sortDir = (request.SortDir ?? "ASC").Trim().ToUpperInvariant();
-            var desc = sortDir == "DESC";
+            var desc = string.Equals((request.SortDir ?? "ASC").Trim(), "DESC", StringComparison.OrdinalIgnoreCase);
 
             var (items, total) = await _repo.SearchFunctionsAsync(
                 request.MaChucNang,
@@ -86,6 +84,7 @@ namespace api.Services.Implementations
                 request.TenChucNang,
                 request.MoTa,
                 request.MaQuyen,
+                request.ParentChucNangId,   
                 sortBy,
                 desc,
                 page,
@@ -115,7 +114,9 @@ namespace api.Services.Implementations
                         MaChucNang = inputResponse(x.MaChucNang.ToString()),
                         CodeChucNang = inputResponse(x.CodeChucNang),
                         TenChucNang = inputResponse(x.TenChucNang),
-                        MoTa = inputResponse(x.MoTa)
+                        MoTa = inputResponse(x.MoTa),
+                        // ⭐ NEW
+                        ParentChucNangId = inputResponse(x.ParentChucNangId?.ToString() ?? "null")
                     },
                     NhomChucNang = nhom
                 });
@@ -131,6 +132,48 @@ namespace api.Services.Implementations
             };
         }
 
+        public async Task<PagedResult<RoleFunctionListItem>> GetRoleFunctionListAsync(RoleFunctionListRequest request)
+        {
+            var page = request.Page <= 0 ? 1 : request.Page!.Value;
+            var pageSize = request.PageSize <= 0 ? 20 : Math.Min(request.PageSize!.Value, 200);
+            var sortBy = request.SortBy ?? "MaQuyen";
+            var desc = string.Equals((request.SortDir ?? "ASC").Trim(), "DESC", StringComparison.OrdinalIgnoreCase);
+
+            var (items, total) = await _repo.SearchRoleFunctionsAsync(
+                request.MaQuyen, request.MaChucNang, sortBy, desc, page, pageSize);
+
+            var list = items.Select(x => new RoleFunctionListItem
+            {
+                PhanQuyen = new PhanQuyenDTO
+                {
+                    MaQuyen = inputResponse(x.Role.MaQuyen.ToString()),
+                    CodeQuyen = inputResponse(x.Role.CodeQuyen),
+                    TenQuyen = inputResponse(x.Role.TenQuyen),
+                    MoTa = inputResponse(x.Role.MoTa)
+                },
+                ChucNang = new ChucNangDTO
+                {
+                    MaChucNang = inputResponse(x.Func.MaChucNang.ToString()),
+                    CodeChucNang = inputResponse(x.Func.CodeChucNang),
+                    TenChucNang = inputResponse(x.Func.TenChucNang),
+                    MoTa = inputResponse(x.Func.MoTa),
+                    ParentChucNangId = inputResponse(x.Func.ParentChucNangId?.ToString() ?? "null")
+                },
+                NhomChucNang = new NhomChucNangDTO
+                {
+                    TrangThai = inputResponse(x.Map.TrangThai.ToString().ToLowerInvariant())
+                }
+            }).ToList();
+
+            return new PagedResult<RoleFunctionListItem>
+            {
+                Page = inputResponse(page.ToString()),
+                PageSize = inputResponse(pageSize.ToString()),
+                TotalRecords = inputResponse(total.ToString()),
+                TotalPages = inputResponse(((int)Math.Ceiling(total / (double)pageSize)).ToString()),
+                Items = list
+            };
+        }
         public async Task<RoleDetailResponse> CreateRoleAsync(CreateRoleRequest req, string? currentUsername)
         {
             var code = (req.CodeQuyen ?? "").Trim();
@@ -148,7 +191,22 @@ namespace api.Services.Implementations
                 TenQuyen = name,
                 MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim()
             };
+
             await _repo.AddRoleAsync(entity);
+
+            // Lấy tất cả chức năng và tạo mapping TrangThai=false
+            var allFuncs = await _repo.GetAllFunctionsAsync();
+            if (allFuncs.Count > 0)
+            {
+                var mappings = allFuncs.Select(f => new NhomChucNang
+                {
+                    MaQuyen = entity.MaQuyen,
+                    MaChucNang = f.MaChucNang,
+                    TrangThai = false
+                });
+                await _repo.AddRoleFunctionsBulkAsync(mappings);
+            }
+
             await _repo.LogActivityAsync(currentUsername, $"Tạo quyền: {entity.CodeQuyen} - {entity.TenQuyen}");
 
             return new RoleDetailResponse
@@ -207,9 +265,9 @@ namespace api.Services.Implementations
             if (users > 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Quyền đang được gán cho người dùng, không thể xóa.");
 
-            var hasMappings = await _repo.AnyRoleFunctionMappingsAsync(maQuyen);
-            if (hasMappings)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Quyền đang được gán chức năng, không thể xóa.");
+            // var hasMappings = await _repo.AnyRoleFunctionMappingsAsync(maQuyen);
+            // if (hasMappings)
+            //     ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Quyền đang được gán chức năng, không thể xóa.");
 
             await _repo.DeleteRoleAsync(role!);
             await _repo.LogActivityAsync(currentUsername, $"Xóa quyền: {role!.CodeQuyen}");
@@ -227,14 +285,37 @@ namespace api.Services.Implementations
             if (await _repo.FunctionCodeExistsAsync(code))
                 ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "CodeChucNang đã tồn tại.");
 
+            int? parentId = req.ParentChucNangId;
+            if (parentId.HasValue)
+            {
+                var parent = await _repo.GetFunctionByIdAsync(parentId.Value);
+                if (parent == null)
+                    ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "ParentChucNangId không tồn tại.");
+            }
+
             var entity = new ChucNang
             {
                 CodeChucNang = code,
                 TenChucNang = name,
-                MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim()
-                // Không có TrangThai
+                MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim(),
+                ParentChucNangId = parentId
             };
+
             await _repo.AddFunctionAsync(entity);
+
+            // Tự thêm mapping TrangThai=false cho tất cả quyền (giữ nguyên logic cũ)
+            var allRoles = await _repo.GetAllRolesAsync();
+            if (allRoles.Count > 0)
+            {
+                var mappings = allRoles.Select(r => new NhomChucNang
+                {
+                    MaQuyen = r.MaQuyen,
+                    MaChucNang = entity.MaChucNang,
+                    TrangThai = false
+                });
+                await _repo.AddRoleFunctionsBulkAsync(mappings);
+            }
+
             await _repo.LogActivityAsync(currentUsername, $"Tạo chức năng: {entity.CodeChucNang} - {entity.TenChucNang}");
 
             return new FunctionDetailResponse
@@ -244,7 +325,8 @@ namespace api.Services.Implementations
                     MaChucNang = inputResponse(entity.MaChucNang.ToString()),
                     CodeChucNang = inputResponse(entity.CodeChucNang),
                     TenChucNang = inputResponse(entity.TenChucNang),
-                    MoTa = inputResponse(entity.MoTa)
+                    MoTa = inputResponse(entity.MoTa),
+                    ParentChucNangId = inputResponse(entity.ParentChucNangId?.ToString() ?? "null")
                 }
             };
         }
@@ -254,21 +336,50 @@ namespace api.Services.Implementations
             var id = req.MaChucNang ?? 0;
             if (id <= 0) ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "MaChucNang không hợp lệ.");
 
-            var fn = await _repo.GetFunctionByIdAsync(id);
-            if (fn == null) ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy chức năng.");
+            var fn = await _repo.GetFunctionByIdAsync(id)
+                     ?? throw ApiExceptionHelper.New(ApiErrorCode.NotFound, "Không tìm thấy chức năng.");
 
             if (!string.IsNullOrWhiteSpace(req.CodeChucNang))
             {
                 var code = req.CodeChucNang!.Trim();
                 if (await _repo.FunctionCodeExistsAsync(code, excludeId: id))
                     ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "CodeChucNang đã tồn tại.");
-                fn!.CodeChucNang = code;
+                fn.CodeChucNang = code;
             }
-            if (!string.IsNullOrWhiteSpace(req.TenChucNang)) fn!.TenChucNang = req.TenChucNang!.Trim();
-            if (req.MoTa != null) fn!.MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim();
 
-            await _repo.UpdateFunctionAsync(fn!);
-            await _repo.LogActivityAsync(currentUsername, $"Cập nhật chức năng: {fn!.MaChucNang} - {fn.CodeChucNang}");
+            if (!string.IsNullOrWhiteSpace(req.TenChucNang)) fn.TenChucNang = req.TenChucNang!.Trim();
+            if (req.MoTa != null) fn.MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim();
+
+            // ⭐ Update parent
+            if (req.ParentChucNangId.HasValue)
+            {
+                var newParentId = req.ParentChucNangId.Value;
+
+                if (newParentId == 0)
+                {
+                    fn.ParentChucNangId = null; // đưa về root
+                }
+                else
+                {
+                    if (newParentId == id)
+                        ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "ParentChucNangId không được trùng chính nó.");
+
+                    var parent = await _repo.GetFunctionByIdAsync(newParentId);
+                    if (parent == null)
+                        ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "ParentChucNangId không tồn tại.");
+
+                    // (Đơn giản) Không cho phép set parent là chính nó; để tránh vòng, có thể cấm set parent là con trực tiếp của nó
+                    // Nếu muốn chặt chẽ hơn, cần hàm duyệt cây để phát hiện chu kỳ.
+                    fn.ParentChucNangId = newParentId;
+                }
+            }
+            else if (req.ParentChucNangId != null && !req.ParentChucNangId.HasValue)
+            {
+                // no-op
+            }
+
+            await _repo.UpdateFunctionAsync(fn);
+            await _repo.LogActivityAsync(currentUsername, $"Cập nhật chức năng: {fn.MaChucNang} - {fn.CodeChucNang}");
 
             return new FunctionDetailResponse
             {
@@ -277,7 +388,8 @@ namespace api.Services.Implementations
                     MaChucNang = inputResponse(fn.MaChucNang.ToString()),
                     CodeChucNang = inputResponse(fn.CodeChucNang),
                     TenChucNang = inputResponse(fn.TenChucNang),
-                    MoTa = inputResponse(fn.MoTa)
+                    MoTa = inputResponse(fn.MoTa),
+                    ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null")
                 }
             };
         }
@@ -286,15 +398,19 @@ namespace api.Services.Implementations
         {
             if (maChucNang <= 0) ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "MaChucNang không hợp lệ.");
 
-            var fn = await _repo.GetFunctionByIdAsync(maChucNang);
-            if (fn == null) ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy chức năng.");
+            var fn = await _repo.GetFunctionByIdAsync(maChucNang)
+                     ?? throw ApiExceptionHelper.New(ApiErrorCode.NotFound, "Không tìm thấy chức năng.");
 
-            var mapped = await _repo.AnyFunctionRoleMappingsAsync(maChucNang);
-            if (mapped)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Chức năng đang được gán cho quyền, không thể xóa.");
+            // ⭐ NEW: chặn nếu có con
+            if (await _repo.AnyFunctionChildrenAsync(maChucNang))
+                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Chức năng đang có chức năng con, không thể xóa.");
 
-            await _repo.DeleteFunctionAsync(fn!);
-            await _repo.LogActivityAsync(currentUsername, $"Xóa chức năng: {fn!.CodeChucNang}");
+            // // Giữ nguyên: chặn nếu đang map với quyền
+            // if (await _repo.AnyFunctionRoleMappingsAsync(maChucNang))
+            //     ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Chức năng đang được gán cho quyền, không thể xóa.");
+
+            await _repo.DeleteFunctionAsync(fn);
+            await _repo.LogActivityAsync(currentUsername, $"Xóa chức năng: {fn.CodeChucNang}");
 
             return true;
         }
@@ -347,7 +463,7 @@ namespace api.Services.Implementations
         public async Task<RoleFunctionDetailResponse> UpdateRoleFunctionByCodeAsync(UpdateRoleFunctionByCodeRequest req, string? currentUsername)
         {
             var fromRoleId = req.FromMaQuyen ?? 0;
-            var fromFnId   = req.FromMaChucNang ?? 0;
+            var fromFnId = req.FromMaChucNang ?? 0;
             if (fromRoleId <= 0 || fromFnId <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "FromMaQuyen và FromMaChucNang là bắt buộc.");
 
@@ -358,13 +474,13 @@ namespace api.Services.Implementations
             var srcMap = await _repo.GetRoleFunctionAsync(srcRole.MaQuyen, srcFn.MaChucNang)
                 ?? throw ApiExceptionHelper.New(ApiErrorCode.NotFound, "Mapping nguồn không tồn tại.");
 
-            var newRoleId = req.ToMaQuyen   ?? fromRoleId;
-            var newFnId   = req.ToMaChucNang ?? fromFnId;
-            var newStatus = req.TrangThai    ?? srcMap.TrangThai;
+            var newRoleId = req.ToMaQuyen ?? fromRoleId;
+            var newFnId = req.ToMaChucNang ?? fromFnId;
+            var newStatus = req.TrangThai ?? srcMap.TrangThai;
 
             PhanQuyen finalRole = srcRole;
-            ChucNang  finalFn   = srcFn;
-            bool finalStatus    = srcMap.TrangThai;
+            ChucNang finalFn = srcFn;
+            bool finalStatus = srcMap.TrangThai;
 
             var pairChanged = newRoleId != fromRoleId || newFnId != fromFnId;
             var statusChanged = newStatus != srcMap.TrangThai;

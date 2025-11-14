@@ -39,9 +39,14 @@ namespace api.Repositories.Implementations
             => await _db.ThamGiaLop.AsNoTracking()
                 .AnyAsync(x => x.MaLopHocPhan == maLopHocPhan && x.MaSinhVien == maSinhVien && x.TrangThai == true);
 
+        public async Task<ThamGiaLop?> GetThamGiaLopAsync(string maLopHocPhan, string maSinhVien)
+            => await _db.ThamGiaLop.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaLopHocPhan == maLopHocPhan && x.MaSinhVien == maSinhVien);
+
+
         public async Task<bool> AttendanceExistsAsync(int maBuoi, string maSinhVien)
             => await _db.DiemDanh.AsNoTracking()
-                .AnyAsync(x => x.MaBuoi == maBuoi && x.MaSinhVien == maSinhVien && x.TrangThai == true);
+                .AnyAsync(x => x.MaBuoi == maBuoi && x.MaSinhVien == maSinhVien);
 
         public async Task<DiemDanh> CreateAttendanceAsync(DiemDanh entity)
         {

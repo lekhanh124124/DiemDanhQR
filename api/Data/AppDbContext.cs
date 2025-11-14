@@ -5,7 +5,7 @@ namespace api.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {}
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<PhanQuyen> PhanQuyen { get; set; } = null!;
     public DbSet<ChucNang> ChucNang { get; set; } = null!;
@@ -47,6 +47,13 @@ public class AppDbContext : DbContext
             e.Property(x => x.CodeChucNang).HasMaxLength(50).IsRequired();
             e.Property(x => x.TenChucNang).HasMaxLength(100).IsRequired();
             e.Property(x => x.MoTa).HasMaxLength(200);
+
+            // Self reference: ParentChucNangId -> ChucNang.MaChucNang
+            e.Property(x => x.ParentChucNangId);
+            e.HasOne<ChucNang>()                   // parent
+             .WithMany()                           // (không khai báo Children trong model)
+             .HasForeignKey(x => x.ParentChucNangId)
+             .OnDelete(DeleteBehavior.Restrict);   // tránh xóa cha kéo theo con
         });
 
         // NHOMCHUCNANG

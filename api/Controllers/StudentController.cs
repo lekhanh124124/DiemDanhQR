@@ -1,7 +1,7 @@
 // File: Controllers/StudentController.cs
 // Bảng: SinhVien
-using System.Security.Claims;
 using api.DTOs;
+using api.Helpers;
 using api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,12 +27,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<CreateStudentResponse>>> Create([FromForm] CreateStudentRequest req)
         {
             var data = await _svc.CreateAsync(req);
-            return Ok(new ApiResponse<CreateStudentResponse>
-            {
-                Status = "200",
-                Message = "Tạo sinh viên thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<CreateStudentResponse> { Status = "200", Message = "Tạo sinh viên thành công.", Data = data });
         }
 
         [HttpGet("list")]
@@ -40,12 +35,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<PagedResult<StudentListItemResponse>>>> List([FromQuery] GetStudentsRequest req)
         {
             var result = await _svc.GetListAsync(req);
-            return Ok(new ApiResponse<PagedResult<StudentListItemResponse>>
-            {
-                Status = "200",
-                Message = "Lấy danh sách sinh viên thành công.",
-                Data = result
-            });
+            return Ok(new ApiResponse<PagedResult<StudentListItemResponse>> { Status = "200", Message = "Lấy danh sách sinh viên thành công.", Data = result });
         }
 
         [HttpPut("update")]
@@ -54,12 +44,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<UpdateStudentResponse>>> Update([FromForm] UpdateStudentRequest req)
         {
             var data = await _svc.UpdateAsync(req);
-            return Ok(new ApiResponse<UpdateStudentResponse>
-            {
-                Status = "200",
-                Message = "Cập nhật sinh viên thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<UpdateStudentResponse> { Status = "200", Message = "Cập nhật sinh viên thành công.", Data = data });
         }
 
         // POST: /api/student/add-to-course
@@ -67,18 +52,9 @@ namespace api.Controllers
         [Authorize(Roles = "ADMIN,GV")]
         public async Task<ActionResult<ApiResponse<AddStudentToCourseResponse>>> AddToCourse([FromForm] AddStudentToCourseRequest req)
         {
-            var currentUser = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value
-                              ?? string.Empty;
-
+            var currentUser = JwtHelper.GetUsername(User) ?? string.Empty;
             var data = await _svc.AddStudentToCourseAsync(req, currentUser);
-
-            return Ok(new ApiResponse<AddStudentToCourseResponse>
-            {
-                Status = "200",
-                Message = "Thêm sinh viên vào lớp học phần thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<AddStudentToCourseResponse> { Status = "200", Message = "Thêm sinh viên vào lớp học phần thành công.", Data = data });
         }
 
         // PUT: /api/student/remove-from-course
@@ -86,18 +62,9 @@ namespace api.Controllers
         [Authorize(Roles = "ADMIN,GV")]
         public async Task<ActionResult<ApiResponse<RemoveStudentFromCourseResponse>>> RemoveFromCourse([FromForm] RemoveStudentFromCourseRequest req)
         {
-            var currentUser = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value
-                              ?? string.Empty;
-
+            var currentUser = JwtHelper.GetUsername(User) ?? string.Empty;
             var data = await _svc.RemoveStudentFromCourseAsync(req, currentUser);
-
-            return Ok(new ApiResponse<RemoveStudentFromCourseResponse>
-            {
-                Status = "200",
-                Message = "Gỡ sinh viên khỏi lớp học phần thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<RemoveStudentFromCourseResponse> { Status = "200", Message = "Gỡ sinh viên khỏi lớp học phần thành công.", Data = data });
         }
 
         // POST: /api/student/bulk-import
@@ -108,12 +75,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<BulkImportStudentsResponse>>> BulkImport([FromForm] BulkImportStudentsRequest req)
         {
             var result = await _svc.BulkImportAsync(req);
-            return Ok(new ApiResponse<BulkImportStudentsResponse>
-            {
-                Status = "200",
-                Message = "Import sinh viên hoàn tất.",
-                Data = result
-            });
+            return Ok(new ApiResponse<BulkImportStudentsResponse> { Status = "200", Message = "Import sinh viên hoàn tất.", Data = result });
         }
         
         // POST: /api/student/add-to-course-bulk
@@ -123,20 +85,9 @@ namespace api.Controllers
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ApiResponse<BulkImportStudentsResponse>>> AddToCourseBulk([FromForm] BulkAddStudentsToCourseRequest req)
         {
-            var currentUser = User.FindFirst("TenDangNhap")?.Value
-                              ?? User.FindFirst(ClaimTypes.Name)?.Value
-                              ?? string.Empty;
-
+            var currentUser = JwtHelper.GetUsername(User) ?? string.Empty;
             var result = await _svc.BulkAddStudentsToCourseAsync(req, currentUser);
-
-            return Ok(new ApiResponse<BulkImportStudentsResponse>
-            {
-                Status = "200",
-                Message = "Import tham gia lớp hoàn tất.",
-                Data = result
-            });
+            return Ok(new ApiResponse<BulkImportStudentsResponse> { Status = "200", Message = "Import tham gia lớp hoàn tất.", Data = result });
         }
     }
-
 }
-

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using api.DTOs;
 using api.Helpers;
 using api.Services.Interfaces;
-using System.Security.Claims;
 
 namespace api.Controllers
 {
@@ -15,24 +14,14 @@ namespace api.Controllers
         private readonly IAttendanceService _svc;
         public AttendanceController(IAttendanceService svc) => _svc = svc;
 
-        private string? GetUsernameFromClaims()
-            => User.FindFirst("TenDangNhap")?.Value
-               ?? User.FindFirst(ClaimTypes.Name)?.Value
-               ?? User.Identity?.Name;
-
         // POST: /api/attendance/qr
         [HttpPost("qr")]
         [Authorize(Roles = "GV,ADMIN")]
         public async Task<ActionResult<ApiResponse<CreateQrResponse>>> CreateQr([FromQuery] CreateQrRequest req)
         {
-            var username = GetUsernameFromClaims();
+            var username = JwtHelper.GetUsername(User);
             var data = await _svc.CreateQrAsync(req, username);
-            return Ok(new ApiResponse<CreateQrResponse>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<CreateQrResponse> { Status = "200", Message = "OK", Data = data });
         }
 
         // POST: /api/attendance/checkin
@@ -40,14 +29,9 @@ namespace api.Controllers
         [Authorize(Roles = "SV")]
         public async Task<ActionResult<ApiResponse<CreateAttendanceResponse>>> CheckInByQr([FromQuery] CheckInRequest req)
         {
-            var username = GetUsernameFromClaims();
+            var username = JwtHelper.GetUsername(User);
             var data = await _svc.CheckInByQrAsync(req, username);
-            return Ok(new ApiResponse<CreateAttendanceResponse>
-            {
-                Status = "200",
-                Message = "Điểm danh thành công.",
-                Data = data
-            });
+            return Ok(new ApiResponse<CreateAttendanceResponse> { Status = "200", Message = "Điểm danh thành công.", Data = data });
         }
 
         // GET: /api/attendance/statuses
@@ -56,12 +40,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<PagedResult<AttendanceStatusListItem>>>> GetStatuses([FromQuery] AttendanceStatusListRequest req)
         {
             var data = await _svc.GetStatusListAsync(req);
-            return Ok(new ApiResponse<PagedResult<AttendanceStatusListItem>>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<PagedResult<AttendanceStatusListItem>> { Status = "200", Message = "OK", Data = data });
         }
 
         // GET: /api/attendance/records
@@ -70,12 +49,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<PagedResult<AttendanceListItem>>>> GetAttendances([FromQuery] AttendanceListRequest req)
         {
             var data = await _svc.GetAttendanceListAsync(req);
-            return Ok(new ApiResponse<PagedResult<AttendanceListItem>>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<PagedResult<AttendanceListItem>> { Status = "200", Message = "OK", Data = data });
         }
 
         // POST: /api/attendance/create-record
@@ -83,14 +57,9 @@ namespace api.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<CreateAttendanceResponse>>> CreateAttendance([FromBody] CreateAttendanceRequest req)
         {
-            var username = GetUsernameFromClaims();
+            var username = JwtHelper.GetUsername(User);
             var data = await _svc.CreateAttendanceAsync(req, username);
-            return Ok(new ApiResponse<CreateAttendanceResponse>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<CreateAttendanceResponse> { Status = "200", Message = "OK", Data = data });
         }
 
         // PUT: /api/attendance/update-record 
@@ -98,14 +67,9 @@ namespace api.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<UpdateAttendanceResponse>>> UpdateAttendance([FromBody] UpdateAttendanceRequest req)
         {
-            var username = GetUsernameFromClaims();
+            var username = JwtHelper.GetUsername(User);
             var data = await _svc.UpdateAttendanceAsync(req, username);
-            return Ok(new ApiResponse<UpdateAttendanceResponse>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<UpdateAttendanceResponse> { Status = "200", Message = "OK", Data = data });
         }
 
         // POST: /api/attendance/create-status
@@ -114,12 +78,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<AttendanceStatusListItem>>> CreateStatus([FromForm] CreateAttendanceStatusRequest req)
         {
             var data = await _svc.CreateStatusAsync(req);
-            return Ok(new ApiResponse<AttendanceStatusListItem>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<AttendanceStatusListItem> { Status = "200", Message = "OK", Data = data });
         }
 
         // PUT: /api/attendance/update-status
@@ -128,12 +87,7 @@ namespace api.Controllers
         public async Task<ActionResult<ApiResponse<AttendanceStatusListItem>>> UpdateStatus([FromForm] UpdateAttendanceStatusRequest req)
         {
             var data = await _svc.UpdateStatusAsync(req);
-            return Ok(new ApiResponse<AttendanceStatusListItem>
-            {
-                Status = "200",
-                Message = "OK",
-                Data = data
-            });
+            return Ok(new ApiResponse<AttendanceStatusListItem> { Status = "200", Message = "OK", Data = data });
         }
 
         // DELETE: /api/attendance/delete-status

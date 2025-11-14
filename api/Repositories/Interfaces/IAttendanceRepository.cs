@@ -17,6 +17,8 @@ namespace api.Repositories.Interfaces
         Task<SinhVien?> GetSinhVienByMaNguoiDungAsync(int maNguoiDung);
 
         Task<bool> IsSinhVienInActiveLopAsync(string maLopHocPhan, string maSinhVien);
+        Task<ThamGiaLop?> GetThamGiaLopAsync(string maLopHocPhan, string maSinhVien);
+
 
         Task<bool> AttendanceExistsAsync(int maBuoi, string maSinhVien);
         Task<DiemDanh> CreateAttendanceAsync(DiemDanh entity);
