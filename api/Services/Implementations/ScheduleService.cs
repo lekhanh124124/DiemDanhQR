@@ -28,7 +28,7 @@ namespace api.Services.Implementations
                 req.MaPhong,
                 req.TenPhong,
                 req.MaLopHocPhan,
-                req.TenLop,
+                req.TenLopHocPhan,
                 req.TenMonHoc,
                 req.NgayHoc,
                 req.Nam,
@@ -55,7 +55,7 @@ namespace api.Services.Implementations
                     TietBatDau = inputResponse(x.b.TietBatDau.ToString()),
                     SoTiet = inputResponse(x.b.SoTiet.ToString()),
                     GhiChu = inputResponse(x.b.GhiChu ?? "null"),
-                    TrangThai = inputResponse(x.b.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(x.b.TrangThai.ToString())
                 };
 
                 // Phòng học (list yêu cầu: MaPhong, TenPhong, TrangThai)
@@ -66,7 +66,7 @@ namespace api.Services.Implementations
                     {
                         MaPhong = inputResponse(x.p.MaPhong.ToString()),
                         TenPhong = inputResponse(x.p.TenPhong ?? "null"),
-                        TrangThai = inputResponse(x.p.TrangThai ? "1" : "0")
+                        TrangThai = inputResponse(x.p.TrangThai.ToString())
                     };
                 }
 
@@ -75,7 +75,7 @@ namespace api.Services.Implementations
                 {
                     MaLopHocPhan = inputResponse(x.l.MaLopHocPhan ?? "null"),
                     TenLopHocPhan = inputResponse(x.l.TenLopHocPhan ?? "null"),
-                    TrangThai = inputResponse(x.l.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(x.l.TrangThai.ToString())
                 };
 
                 // Môn học (MaMonHoc, TenMonHoc, TrangThai) — chỉ map các trường hiện có trong DTO
@@ -83,7 +83,7 @@ namespace api.Services.Implementations
                 {
                     MaMonHoc = inputResponse(x.m.MaMonHoc ?? "null"),
                     TenMonHoc = inputResponse(x.m.TenMonHoc ?? "null"),
-                    TrangThai = inputResponse(x.m.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(x.m.TrangThai.ToString())
                 };
 
                 GiangVienDTO? gv = null;
@@ -152,7 +152,7 @@ namespace api.Services.Implementations
                     ToaNha = inputResponse(r.ToaNha ?? "null"),
                     Tang = inputResponse((r.Tang?.ToString() ?? "null")),
                     SucChua = inputResponse(r.SucChua.ToString()),
-                    TrangThai = inputResponse(r.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(r.TrangThai.ToString())
                 };
                 return new RoomListItem { PhongHoc = phong };
             }).ToList();
@@ -204,7 +204,7 @@ namespace api.Services.Implementations
                     ToaNha = inputResponse(entity.ToaNha ?? "null"),
                     Tang = inputResponse(entity.Tang?.ToString() ?? "null"),
                     SucChua = inputResponse(entity.SucChua.ToString()),
-                    TrangThai = inputResponse(entity.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(entity.TrangThai.ToString())
                 }
             };
         }
@@ -263,7 +263,7 @@ namespace api.Services.Implementations
                     TietBatDau = inputResponse(entity.TietBatDau.ToString()),
                     SoTiet = inputResponse(entity.SoTiet.ToString()),
                     GhiChu = inputResponse(entity.GhiChu ?? "null"),
-                    TrangThai = inputResponse(entity.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(entity.TrangThai.ToString())
                 },
                 PhongHoc = phong == null ? null : new PhongHocDTO
                 {
@@ -316,7 +316,7 @@ namespace api.Services.Implementations
                     ToaNha = inputResponse(room.ToaNha ?? "null"),
                     Tang = inputResponse(room.Tang?.ToString() ?? "null"),
                     SucChua = inputResponse(room.SucChua.ToString()),
-                    TrangThai = inputResponse(room.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(room.TrangThai.ToString())
                 }
             };
         }
@@ -364,7 +364,7 @@ namespace api.Services.Implementations
                     TietBatDau = inputResponse(buoi.TietBatDau.ToString()),
                     SoTiet = inputResponse(buoi.SoTiet.ToString()),
                     GhiChu = inputResponse(buoi.GhiChu ?? "null"),
-                    TrangThai = inputResponse(buoi.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(buoi.TrangThai.ToString())
                 },
                 PhongHoc = phong == null ? null : new PhongHocDTO
                 {
@@ -511,28 +511,28 @@ namespace api.Services.Implementations
                     TietBatDau = inputResponse(b.TietBatDau.ToString()),
                     SoTiet = inputResponse(b.SoTiet.ToString()),
                     GhiChu = inputResponse(b.GhiChu ?? "null"),
-                    TrangThai = inputResponse(b.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(b.TrangThai.ToString())
                 };
 
                 var phongDto = phong == null ? null : new PhongHocDTO
                 {
                     MaPhong = inputResponse(phong.MaPhong.ToString()),
                     TenPhong = inputResponse(phong.TenPhong ?? "null"),
-                    TrangThai = inputResponse(phong.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(phong.TrangThai.ToString())
                 };
 
                 var lhpDto = new LopHocPhanDTO
                 {
                     MaLopHocPhan = inputResponse(lhp.MaLopHocPhan ?? "null"),
                     TenLopHocPhan = inputResponse(lhp.TenLopHocPhan ?? "null"),
-                    TrangThai = inputResponse(lhp.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(lhp.TrangThai.ToString())
                 };
 
                 var monDto = new MonHocDTO
                 {
                     MaMonHoc = inputResponse(mon.MaMonHoc ?? "null"),
                     TenMonHoc = inputResponse(mon.TenMonHoc ?? "null"),
-                    TrangThai = inputResponse(mon.TrangThai ? "1" : "0")
+                    TrangThai = inputResponse(mon.TrangThai.ToString())
                 };
 
                 GiangVienDTO? gvDto = null;

@@ -10,7 +10,7 @@ namespace api.DTOs
         public int? MaPhong { get; set; }
         public string? TenPhong { get; set; }
         public string? MaLopHocPhan { get; set; }
-        public string? TenLop { get; set; }
+        public string? TenLopHocPhan { get; set; }
         public string? TenMonHoc { get; set; }
         public DateOnly? NgayHoc { get; set; }
         public int? Nam { get; set; }

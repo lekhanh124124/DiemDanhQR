@@ -11,7 +11,7 @@ namespace api.Repositories.Interfaces
                 int? maPhong,
                 string? tenPhong,
                 string? maLopHocPhan,
-                string? tenLop,
+                string? tenLopHocPhan,
                 string? tenMonHoc,
                 DateOnly? ngayHoc,
                 int? nam,

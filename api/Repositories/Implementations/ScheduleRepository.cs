@@ -18,7 +18,7 @@ namespace api.Repositories.Implementations
                 int? maPhong,
                 string? tenPhong,
                 string? maLopHocPhan,
-                string? tenLop,
+                string? tenLopHocPhan,
                 string? tenMonHoc,
                 DateOnly? ngayHoc,
                 int? nam,
@@ -62,9 +62,9 @@ namespace api.Repositories.Implementations
                 q = q.Where(x => ((x.l.MaLopHocPhan ?? "").Replace(" ", "")) == code);
             }
 
-            if (!string.IsNullOrWhiteSpace(tenLop))
+            if (!string.IsNullOrWhiteSpace(tenLopHocPhan))
             {
-                var s = tenLop.Trim().ToLower();
+                var s = tenLopHocPhan.Trim().ToLower();
                 q = q.Where(x => (x.l.TenLopHocPhan ?? "").ToLower().Contains(s));
             }
 
