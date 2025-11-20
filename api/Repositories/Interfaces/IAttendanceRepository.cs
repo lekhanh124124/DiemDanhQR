@@ -57,5 +57,14 @@ namespace api.Repositories.Interfaces
             bool desc,
             int page,
             int pageSize);
+
+        Task<GiangVien?> GetGiangVienByMaNguoiDungAsync(int maNguoiDung);
+
+        Task<List<(Khoa k, int Total, int Present, int Absent)>> GetFacultyAttendanceSummaryAsync(int? maHocKy);
+
+        Task<List<(LopHocPhan lhp, MonHoc mh, int Total, int Present, int Absent)>> GetLopAttendanceSummaryForGiangVienAsync(string maGiangVien, int? maHocKy);
+
+        Task<List<(LopHocPhan lhp, MonHoc mh, int Total, int Present, int Absent)>> GetLopAttendanceSummaryForSinhVienAsync(string maSinhVien, int? maHocKy);
+
     }
 }

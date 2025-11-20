@@ -1,3 +1,4 @@
+// File: Repositories/Interfaces/IAuthRepository.cs
 using api.Models;
 
 namespace api.Repositories.Interfaces

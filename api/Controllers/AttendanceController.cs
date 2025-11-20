@@ -55,7 +55,7 @@ namespace api.Controllers
         // POST: /api/attendance/create-record
         [HttpPost("create-record")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<CreateAttendanceResponse>>> CreateAttendance([FromBody] CreateAttendanceRequest req)
+        public async Task<ActionResult<ApiResponse<CreateAttendanceResponse>>> CreateAttendance([FromForm] CreateAttendanceRequest req)
         {
             var username = JwtHelper.GetUsername(User);
             var data = await _svc.CreateAttendanceAsync(req, username);
@@ -65,7 +65,7 @@ namespace api.Controllers
         // PUT: /api/attendance/update-record 
         [HttpPut("update-record")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<UpdateAttendanceResponse>>> UpdateAttendance([FromBody] UpdateAttendanceRequest req)
+        public async Task<ActionResult<ApiResponse<UpdateAttendanceResponse>>> UpdateAttendance([FromForm] UpdateAttendanceRequest req)
         {
             var username = JwtHelper.GetUsername(User);
             var data = await _svc.UpdateAttendanceAsync(req, username);
@@ -98,5 +98,53 @@ namespace api.Controllers
             var ok = await _svc.DeleteStatusAsync(MaTrangThai);
             return Ok(new ApiResponse<object> { Status = "200", Message = ok ? "Deleted" : "NotFound", Data = new { MaTrangThai } });
         }
+
+        // 1. Tỉ lệ vắng/có mặt của sinh viên theo Khoa
+        // GET: /api/attendance/ratio-by-khoa?MaHocKy=1
+        [HttpGet("ratio-by-khoa")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceFacultyRatioItem>>>> GetRatioByKhoa([FromQuery] int? MaHocKy)
+        {
+            var data = await _svc.GetFacultyAttendanceRatioAsync(MaHocKy);
+            return Ok(new ApiResponse<IEnumerable<AttendanceFacultyRatioItem>>
+            {
+                Status = "200",
+                Message = "OK",
+                Data = data
+            });
+        }
+
+        // 2. Tỉ lệ vắng/có mặt theo LHP mà GIẢNG VIÊN đang dạy
+        // GET: /api/attendance/ratio-by-lophocphan/gv?MaHocKy=1
+        [HttpGet("ratio-by-lophocphan/gv")]
+        [Authorize(Roles = "GV")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceLopHocPhanRatioItem>>>> GetRatioByLopHocPhanForGiangVien([FromQuery] int? MaHocKy)
+        {
+            var username = JwtHelper.GetUsername(User);
+            var data = await _svc.GetTeacherAttendanceRatioAsync(username, MaHocKy);
+            return Ok(new ApiResponse<IEnumerable<AttendanceLopHocPhanRatioItem>>
+            {
+                Status = "200",
+                Message = "OK",
+                Data = data
+            });
+        }
+
+        // 3. Tỉ lệ vắng/có mặt theo LHP mà SINH VIÊN đang học
+        // GET: /api/attendance/ratio-by-lophocphan/sv?MaHocKy=1
+        [HttpGet("ratio-by-lophocphan/sv")]
+        [Authorize(Roles = "SV")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceLopHocPhanRatioItem>>>> GetRatioByLopHocPhanForSinhVien([FromQuery] int? MaHocKy)
+        {
+            var username = JwtHelper.GetUsername(User);
+            var data = await _svc.GetStudentAttendanceRatioAsync(username, MaHocKy);
+            return Ok(new ApiResponse<IEnumerable<AttendanceLopHocPhanRatioItem>>
+            {
+                Status = "200",
+                Message = "OK",
+                Data = data
+            });
+        }
+
     }
 }

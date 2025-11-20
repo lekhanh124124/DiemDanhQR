@@ -62,5 +62,23 @@ namespace api.Controllers
             var res = await _authService.RefreshPasswordToUserIdAsync(req);
             return Ok(new ApiResponse<RefreshPasswordResponse> { Status = "200", Message = "Làm mới mật khẩu thành công.", Data = res });
         }
+
+        // GET: /api/auth/role-functions
+        [HttpGet("role-functions")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<UserRoleFunctionsResponse>>> GetRoleFunctions()
+        {
+            var tenDangNhap = JwtHelper.GetUsername(User);
+            if (string.IsNullOrWhiteSpace(tenDangNhap))
+                ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng hiện tại.");
+
+            var res = await _authService.GetCurrentUserRoleFunctionsAsync(tenDangNhap!);
+            return Ok(new ApiResponse<UserRoleFunctionsResponse>
+            {
+                Status = "200",
+                Message = "Lấy nhóm chức năng thành công.",
+                Data = res
+            });
+        }
     }
 }

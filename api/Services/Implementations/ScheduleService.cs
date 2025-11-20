@@ -30,6 +30,7 @@ namespace api.Services.Implementations
                 req.MaLopHocPhan,
                 req.TenLopHocPhan,
                 req.TenMonHoc,
+                req.MaHocKy,      
                 req.NgayHoc,
                 req.Nam,
                 req.Tuan,
@@ -44,6 +45,7 @@ namespace api.Services.Implementations
                 page,
                 pageSize
             );
+
 
             var items = rows.Select(x =>
             {

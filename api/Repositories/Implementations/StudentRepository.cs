@@ -36,14 +36,13 @@ namespace api.Repositories.Implementations
         public Task SaveChangesAsync() => _db.SaveChangesAsync();
 
         public async Task<(List<(SinhVien Sv, NguoiDung Nd, Nganh? Ng, Khoa? Kh, DateOnly? NgayTG, bool? TrangThaiTG)> Items, int Total)>
-            SearchStudentsAsync(int? maKhoa, int? maNganh, int? namNhapHoc, bool? trangThaiUser,
-                                string? maLopHocPhan, string? sortBy, bool desc, int page, int pageSize,
-                                string? maSinhVien) // <-- NEW
+    SearchStudentsAsync(int? maKhoa, int? maNganh, int? namNhapHoc, bool? trangThaiUser,
+                        string? maLopHocPhan, string? sortBy, bool desc, int page, int pageSize,
+                        string? maSinhVien, string? hoTen) // NEW
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
-            // 1) Base query: KHÔNG join ThamGiaLop
             var q =
                 from sv in _db.SinhVien.AsNoTracking()
                 join nd in _db.NguoiDung.AsNoTracking() on sv.MaNguoiDung equals nd.MaNguoiDung
@@ -53,18 +52,26 @@ namespace api.Repositories.Implementations
                 from kh in khLeft.DefaultIfEmpty()
                 select new { Sv = sv, Nd = nd, Ng = ng, Kh = kh };
 
-            // 2) Filters chung
+            // Filters
             if (maKhoa.HasValue) q = q.Where(x => x.Kh != null && x.Kh.MaKhoa == maKhoa.Value);
             if (maNganh.HasValue) q = q.Where(x => x.Ng != null && x.Ng.MaNganh == maNganh.Value);
             if (namNhapHoc.HasValue) q = q.Where(x => x.Sv.NamNhapHoc == namNhapHoc.Value);
             if (trangThaiUser.HasValue) q = q.Where(x => x.Nd.TrangThai == trangThaiUser.Value);
+
             if (!string.IsNullOrWhiteSpace(maSinhVien))
             {
                 var id = maSinhVien.Trim();
                 q = q.Where(x => x.Sv.MaSinhVien == id);
             }
 
-            // 3) Sort (không dùng dynamic)
+            // NEW: filter HoTen (case-insensitive)
+            if (!string.IsNullOrWhiteSpace(hoTen))
+            {
+                var kw = hoTen.Trim().ToLower();
+                q = q.Where(x => (x.Nd.HoTen ?? "").ToLower().Contains(kw));
+            }
+
+            // Sort giữ nguyên
             var key = (sortBy ?? "HoTen").Trim().ToLowerInvariant();
             q = key switch
             {
@@ -74,7 +81,7 @@ namespace api.Repositories.Implementations
                 "manganh" => (desc ? q.OrderByDescending(x => x.Ng!.MaNganh) : q.OrderBy(x => x.Ng!.MaNganh)),
                 _ => (desc ? q.OrderByDescending(x => x.Nd.HoTen) : q.OrderBy(x => x.Nd.HoTen)),
             };
-            
+
             if (string.IsNullOrWhiteSpace(maLopHocPhan))
             {
                 // 4A) KHÔNG lọc theo lớp → không join ThamGiaLop → không phát sinh duplicate

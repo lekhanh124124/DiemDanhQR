@@ -220,25 +220,19 @@ namespace api.Services.Implementations
             if (user == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
 
-            GiangVien gv = await _repo.GetLecturerByMaNguoiDungAsync(user.MaNguoiDung);
-            PhanQuyen pq = await _permRepo.GetRoleByIdAsync(user.MaQuyen);
-            SinhVien sv = null!;
-            Khoa kh = null!;
-            Nganh ng = null!;
+            // Lấy quyền
+            var pqEntity = await _permRepo.GetRoleByIdAsync(user.MaQuyen);
+            if (pqEntity == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.InternalError, "Không tìm thấy quyền của người dùng.");
 
-
-            if (gv == null)
+            var phanQuyenDto = new PhanQuyenDTO
             {
-                sv = await _repo.GetStudentByMaNguoiDungAsync(user.MaNguoiDung);
-                ng = await _academicRepo.GetNganhByIdAsync((int)sv.MaNganh);
-                kh = await _academicRepo.GetKhoaByIdAsync(ng.MaKhoa);
-            }
-            else
-            {
-                kh = await _academicRepo.GetKhoaByIdAsync((int)gv.MaKhoa);
-            }
+                MaQuyen = inputResponse(pqEntity.MaQuyen.ToString()),
+                CodeQuyen = inputResponse(pqEntity.CodeQuyen),
+                TenQuyen = inputResponse(pqEntity.TenQuyen)
+            };
 
-
+            // DTO người dùng chung
             var nguoiDungDto = new NguoiDungDTO
             {
                 MaNguoiDung = inputResponse(user.MaNguoiDung.ToString()),
@@ -248,68 +242,95 @@ namespace api.Services.Implementations
                 Email = inputResponse(user.Email),
                 SoDienThoai = inputResponse(user.SoDienThoai),
                 NgaySinh = inputResponse(FDateOnly(user.NgaySinh)),
-                DiaChi = inputResponse(user.DiaChi)
+                DiaChi = inputResponse(user.DiaChi),
+                TenDangNhap = inputResponse(user.TenDangNhap),
+                TrangThai = inputResponse(user.TrangThai.ToString())
             };
 
+            // Thử load giảng viên & sinh viên
+            var gv = await _repo.GetLecturerByMaNguoiDungAsync(user.MaNguoiDung);
+            var sv = await _repo.GetStudentByMaNguoiDungAsync(user.MaNguoiDung);
+
+            // ====== CASE 1: Giảng viên ======
             if (gv != null)
             {
+                Khoa? kh = null;
+                if (gv.MaKhoa.HasValue)
+                {
+                    kh = await _academicRepo.GetKhoaByIdAsync(gv.MaKhoa.Value);
+                }
+
                 return new LecturerInfoResponse
                 {
                     NguoiDung = nguoiDungDto,
                     GiangVien = new GiangVienDTO
                     {
-                        MaGiangVien = inputResponse(gv.MaGiangVien.ToString()),
+                        MaGiangVien = inputResponse(gv.MaGiangVien),
                         HocHam = inputResponse(gv.HocHam),
                         HocVi = inputResponse(gv.HocVi),
                         NgayTuyenDung = inputResponse(FDateOnly(gv.NgayTuyenDung))
                     },
-                    Khoa = new KhoaDTO
-                    {
-                        MaKhoa = inputResponse(kh.MaKhoa.ToString()),
-                        CodeKhoa = inputResponse(kh.CodeKhoa),
-                        TenKhoa = inputResponse(kh.TenKhoa)
-                    },
-                    PhanQuyen = new PhanQuyenDTO
-                    {
-                        MaQuyen = inputResponse(pq.MaQuyen.ToString()),
-                        CodeQuyen = inputResponse(pq.CodeQuyen),
-                        TenQuyen = inputResponse(pq.TenQuyen)
-                    }
+                    Khoa = kh == null
+                        ? new KhoaDTO()
+                        : new KhoaDTO
+                        {
+                            MaKhoa = inputResponse(kh.MaKhoa.ToString()),
+                            CodeKhoa = inputResponse(kh.CodeKhoa),
+                            TenKhoa = inputResponse(kh.TenKhoa)
+                        },
+                    PhanQuyen = phanQuyenDto
                 };
             }
 
+            // ====== CASE 2: Sinh viên ======
             if (sv != null)
             {
+                Nganh? ng = null;
+                Khoa? kh = null;
+
+                if (sv.MaNganh.HasValue)
+                {
+                    ng = await _academicRepo.GetNganhByIdAsync(sv.MaNganh.Value);
+                    if (ng != null)
+                    {
+                        kh = await _academicRepo.GetKhoaByIdAsync(ng.MaKhoa);
+                    }
+                }
+
                 return new StudentInfoResponse
                 {
                     NguoiDung = nguoiDungDto,
                     SinhVien = new SinhVienDTO
                     {
-                        MaSinhVien = inputResponse(sv.MaSinhVien.ToString()),
-                        NamNhapHoc = inputResponse(sv.NamNhapHoc.ToString()),
+                        MaSinhVien = inputResponse(sv.MaSinhVien),
+                        NamNhapHoc = inputResponse(sv.NamNhapHoc.ToString())
                     },
-                    Nganh = new NganhDTO
-                    {
-                        MaNganh = inputResponse(ng.MaNganh.ToString()),
-                        CodeNganh = inputResponse(ng.CodeNganh),
-                        TenNganh = inputResponse(ng.TenNganh)
-                    },
-                    Khoa = new KhoaDTO
-                    {
-                        MaKhoa = inputResponse(kh.MaKhoa.ToString()),
-                        CodeKhoa = inputResponse(kh.CodeKhoa),
-                        TenKhoa = inputResponse(kh.TenKhoa)
-                    },
-                    PhanQuyen = new PhanQuyenDTO
-                    {
-                        MaQuyen = inputResponse(pq.MaQuyen.ToString()),
-                        CodeQuyen = inputResponse(pq.CodeQuyen),
-                        TenQuyen = inputResponse(pq.TenQuyen)
-                    }
+                    Nganh = ng == null
+                        ? new NganhDTO()
+                        : new NganhDTO
+                        {
+                            MaNganh = inputResponse(ng.MaNganh.ToString()),
+                            CodeNganh = inputResponse(ng.CodeNganh),
+                            TenNganh = inputResponse(ng.TenNganh)
+                        },
+                    Khoa = kh == null
+                        ? new KhoaDTO()
+                        : new KhoaDTO
+                        {
+                            MaKhoa = kh == null ? null : inputResponse(kh.MaKhoa.ToString()),
+                            CodeKhoa = kh == null ? null : inputResponse(kh.CodeKhoa),
+                            TenKhoa = kh == null ? null : inputResponse(kh.TenKhoa)
+                        },
+                    PhanQuyen = phanQuyenDto
                 };
             }
 
-            return new { NguoiDung = nguoiDungDto };
+            // ====== CASE 3: User không phải GV cũng không phải SV (ví dụ ADMIN hệ thống) ======
+            return new
+            {
+                NguoiDung = nguoiDungDto,
+                PhanQuyen = phanQuyenDto
+            };
         }
 
         public async Task<PagedResult<UserActivityItem>> GetActivityAsync(UserActivityListRequest req)

@@ -1,4 +1,5 @@
 // File: Services/Implementations/AttendanceService.cs
+using System.Globalization;
 using System.Text;
 using api.DTOs;
 using api.ErrorHandling;
@@ -128,7 +129,7 @@ namespace api.Services.Implementations
 
             var statusCode = AttendanceQrHelper.ResolveStatusCode(buoi, DateTime.UtcNow);
             var statusId = await _repo.TryGetTrangThaiIdByCodeAsync(statusCode)
-                ?? throw new ApiException(ApiErrorCode.InternalError, "Không tìm thấy mã trạng thái mặc định.");
+                ?? throw new ApiException(ApiErrorCode.InternalError, "Không tìm thấy mã trạng thái.");
 
             // Ghi DB = giờ Việt Nam (không format)
             var nowLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
@@ -386,7 +387,7 @@ namespace api.Services.Implementations
                 MaSinhVien = req.MaSinhVien!,
                 MaTrangThai = statusId,
                 LyDo = req.LyDo,
-                TrangThai = req.TrangThai ?? true,
+                TrangThai = req.TrangThai ?? false,
                 ThoiGianQuet = nowLocal
             };
 
@@ -507,7 +508,125 @@ namespace api.Services.Implementations
                 }
             };
         }
+        public async Task<List<AttendanceFacultyRatioItem>> GetFacultyAttendanceRatioAsync(int? maHocKy)
+        {
+            var rows = await _repo.GetFacultyAttendanceSummaryAsync(maHocKy);
 
+            var result = new List<AttendanceFacultyRatioItem>();
+            foreach (var (khoa, total, present, absent) in rows)
+            {
+                var totalDouble = (double)total;
+                var tyLeVang = total == 0 ? 0.0 : (absent * 100.0 / totalDouble);
+                var tyLeCoMat = total == 0 ? 0.0 : (present * 100.0 / totalDouble);
+
+                result.Add(new AttendanceFacultyRatioItem
+                {
+                    Khoa = new KhoaDTO
+                    {
+                        MaKhoa = inputResponse(khoa.MaKhoa.ToString()),
+                        CodeKhoa = inputResponse(khoa.CodeKhoa),
+                        TenKhoa = inputResponse(khoa.TenKhoa)
+                    },
+                    TongBuoi = inputResponse(total.ToString()),
+                    TongVang = inputResponse(absent.ToString()),
+                    TyLeVang = inputResponse(tyLeVang.ToString("0.##", CultureInfo.InvariantCulture)),
+                    TongCoMat = inputResponse(present.ToString()),
+                    TyLeCoMat = inputResponse(tyLeCoMat.ToString("0.##", CultureInfo.InvariantCulture))
+                });
+            }
+
+            return result;
+        }
+        public async Task<List<AttendanceLopHocPhanRatioItem>> GetTeacherAttendanceRatioAsync(string? currentUsername, int? maHocKy)
+        {
+            if (string.IsNullOrWhiteSpace(currentUsername))
+                throw new ApiException(ApiErrorCode.Unauthorized, "Không xác định người dùng.");
+
+            var nd = await _repo.GetNguoiDungByUsernameAsync(currentUsername)
+                     ?? throw new ApiException(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
+
+            var gv = await _repo.GetGiangVienByMaNguoiDungAsync(nd.MaNguoiDung)
+                     ?? throw new ApiException(ApiErrorCode.Forbidden, "Tài khoản hiện tại không phải giảng viên.");
+
+            var rows = await _repo.GetLopAttendanceSummaryForGiangVienAsync(gv.MaGiangVien, maHocKy);
+
+            var result = new List<AttendanceLopHocPhanRatioItem>();
+            foreach (var (lhp, mh, total, present, absent) in rows)
+            {
+                var totalDouble = (double)total;
+                var tyLeVang = total == 0 ? 0.0 : (absent * 100.0 / totalDouble);
+                var tyLeCoMat = total == 0 ? 0.0 : (present * 100.0 / totalDouble);
+
+                result.Add(new AttendanceLopHocPhanRatioItem
+                {
+                    LopHocPhan = new LopHocPhanDTO
+                    {
+                        MaLopHocPhan = inputResponse(lhp.MaLopHocPhan),
+                        TenLopHocPhan = inputResponse(lhp.TenLopHocPhan),
+                        TrangThai = inputResponse(lhp.TrangThai.ToString().ToLowerInvariant())
+                    },
+                    MonHoc = new MonHocDTO
+                    {
+                        MaMonHoc = inputResponse(mh.MaMonHoc),
+                        TenMonHoc = inputResponse(mh.TenMonHoc),
+                        SoTinChi = inputResponse(mh.SoTinChi.ToString()),
+                        SoTiet = inputResponse(mh.SoTiet.ToString())
+                    },
+                    TongBuoi = inputResponse(total.ToString()),
+                    TongVang = inputResponse(absent.ToString()),
+                    TyLeVang = inputResponse(tyLeVang.ToString("0.##", CultureInfo.InvariantCulture)),
+                    TongCoMat = inputResponse(present.ToString()),
+                    TyLeCoMat = inputResponse(tyLeCoMat.ToString("0.##", CultureInfo.InvariantCulture))
+                });
+            }
+
+            return result;
+        }
+        public async Task<List<AttendanceLopHocPhanRatioItem>> GetStudentAttendanceRatioAsync(string? currentUsername, int? maHocKy)
+        {
+            if (string.IsNullOrWhiteSpace(currentUsername))
+                throw new ApiException(ApiErrorCode.Unauthorized, "Không xác định người dùng.");
+
+            var nd = await _repo.GetNguoiDungByUsernameAsync(currentUsername)
+                     ?? throw new ApiException(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
+
+            var sv = await _repo.GetSinhVienByMaNguoiDungAsync(nd.MaNguoiDung)
+                     ?? throw new ApiException(ApiErrorCode.Forbidden, "Tài khoản hiện tại không phải sinh viên.");
+
+            var rows = await _repo.GetLopAttendanceSummaryForSinhVienAsync(sv.MaSinhVien, maHocKy);
+
+            var result = new List<AttendanceLopHocPhanRatioItem>();
+            foreach (var (lhp, mh, total, present, absent) in rows)
+            {
+                var totalDouble = (double)total;
+                var tyLeVang = total == 0 ? 0.0 : (absent * 100.0 / totalDouble);
+                var tyLeCoMat = total == 0 ? 0.0 : (present * 100.0 / totalDouble);
+
+                result.Add(new AttendanceLopHocPhanRatioItem
+                {
+                    LopHocPhan = new LopHocPhanDTO
+                    {
+                        MaLopHocPhan = inputResponse(lhp.MaLopHocPhan),
+                        TenLopHocPhan = inputResponse(lhp.TenLopHocPhan),
+                        TrangThai = inputResponse(lhp.TrangThai.ToString().ToLowerInvariant())
+                    },
+                    MonHoc = new MonHocDTO
+                    {
+                        MaMonHoc = inputResponse(mh.MaMonHoc),
+                        TenMonHoc = inputResponse(mh.TenMonHoc),
+                        SoTinChi = inputResponse(mh.SoTinChi.ToString()),
+                        SoTiet = inputResponse(mh.SoTiet.ToString())
+                    },
+                    TongBuoi = inputResponse(total.ToString()),
+                    TongVang = inputResponse(absent.ToString()),
+                    TyLeVang = inputResponse(tyLeVang.ToString("0.##", CultureInfo.InvariantCulture)),
+                    TongCoMat = inputResponse(present.ToString()),
+                    TyLeCoMat = inputResponse(tyLeCoMat.ToString("0.##", CultureInfo.InvariantCulture))
+                });
+            }
+
+            return result;
+        }
         private string GetQrSecret()
         {
             var secret = _cfg["QRSettings:QrSecretKey"];

@@ -13,26 +13,27 @@ namespace api.Repositories.Implementations
         public ScheduleRepository(AppDbContext db) => _db = db;
 
         public async Task<(List<(BuoiHoc b, PhongHoc? p, LopHocPhan l, MonHoc m, GiangVien? gv)> Items, int Total)>
-            SearchSchedulesAsync(
-                int? maBuoi,
-                int? maPhong,
-                string? tenPhong,
-                string? maLopHocPhan,
-                string? tenLopHocPhan,
-                string? tenMonHoc,
-                DateOnly? ngayHoc,
-                int? nam,
-                int? tuan,
-                int? thang,
-                byte? tietBatDau,
-                byte? soTiet,
-                bool? trangThai,
-                string? maSinhVien,
-                string? maGiangVien,
-                string? sortBy,
-                bool desc,
-                int page,
-                int pageSize)
+    SearchSchedulesAsync(
+        int? maBuoi,
+        int? maPhong,
+        string? tenPhong,
+        string? maLopHocPhan,
+        string? tenLopHocPhan,
+        string? tenMonHoc,
+        int? maHocKy,           // ⬅️ mới thêm
+        DateOnly? ngayHoc,
+        int? nam,
+        int? tuan,
+        int? thang,
+        byte? tietBatDau,
+        byte? soTiet,
+        bool? trangThai,
+        string? maSinhVien,
+        string? maGiangVien,
+        string? sortBy,
+        bool desc,
+        int page,
+        int pageSize)
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
@@ -74,6 +75,12 @@ namespace api.Repositories.Implementations
                 q = q.Where(x => (x.m.TenMonHoc ?? "").ToLower().Contains(s));
             }
 
+            // ⬇️ Filter theo Mã học kỳ
+            if (maHocKy.HasValue)
+            {
+                q = q.Where(x => x.l.MaHocKy == maHocKy.Value);
+            }
+
             if (ngayHoc.HasValue) q = q.Where(x => x.b.NgayHoc == ngayHoc.Value);
 
             if (nam.HasValue) q = q.Where(x => x.b.NgayHoc.Year == nam.Value);
@@ -91,7 +98,6 @@ namespace api.Repositories.Implementations
                     x.b.NgayHoc >= startOfWeek &&
                     x.b.NgayHoc < endOfWeekExclusive);
             }
-
 
             if (tietBatDau.HasValue) q = q.Where(x => x.b.TietBatDau == tietBatDau.Value);
             if (soTiet.HasValue) q = q.Where(x => x.b.SoTiet == soTiet.Value);
@@ -125,12 +131,8 @@ namespace api.Repositories.Implementations
                 "sotiet" => desc ? q.OrderByDescending(x => x.b.SoTiet) : q.OrderBy(x => x.b.SoTiet),
                 "trangthai" => desc ? q.OrderByDescending(x => x.b.TrangThai) : q.OrderBy(x => x.b.TrangThai),
                 "thang" => desc ? q.OrderByDescending(x => x.b.NgayHoc.Month) : q.OrderBy(x => x.b.NgayHoc.Month),
-                "tuan" => desc
-                    ? q.OrderByDescending(x => x.b.NgayHoc)
-                    : q.OrderBy(x => x.b.NgayHoc),
-                "nam" => desc
-                    ? q.OrderByDescending(x => x.b.NgayHoc.Year)
-                    : q.OrderBy(x => x.b.NgayHoc.Year),
+                "tuan" => desc ? q.OrderByDescending(x => x.b.NgayHoc) : q.OrderBy(x => x.b.NgayHoc),
+                "nam" => desc ? q.OrderByDescending(x => x.b.NgayHoc.Year) : q.OrderBy(x => x.b.NgayHoc.Year),
                 "mabuoi" or _ => desc ? q.OrderByDescending(x => x.b.MaBuoi) : q.OrderBy(x => x.b.MaBuoi)
             };
 

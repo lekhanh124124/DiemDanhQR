@@ -31,7 +31,9 @@ namespace api.Repositories.Interfaces
             string? sortBy,
             bool desc,
             int page,
-            int pageSize);
+            int pageSize,
+            byte? loaiMon // NEW
+        );
 
         Task<bool> SubjectExistsAsync(string maMonHoc);
         Task AddSubjectAsync(MonHoc subject);
@@ -57,6 +59,6 @@ namespace api.Repositories.Interfaces
 
         Task<string> GenerateNextSubjectCodeAsync(string tenMonHoc);
         Task<string> GenerateNextCourseCodeAsync(string tenMonHoc, short namHoc, byte ky);
-        
+
     }
 }

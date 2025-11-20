@@ -17,5 +17,10 @@ namespace api.Services.Interfaces
 
         Task<CreateAttendanceResponse> CreateAttendanceAsync(CreateAttendanceRequest req, string? currentUsername);
         Task<UpdateAttendanceResponse> UpdateAttendanceAsync(UpdateAttendanceRequest req, string? currentUsername);
+
+        Task<List<AttendanceFacultyRatioItem>> GetFacultyAttendanceRatioAsync(int? maHocKy);
+        Task<List<AttendanceLopHocPhanRatioItem>> GetTeacherAttendanceRatioAsync(string? currentUsername, int? maHocKy);
+        Task<List<AttendanceLopHocPhanRatioItem>> GetStudentAttendanceRatioAsync(string? currentUsername, int? maHocKy);
+
     }
 }

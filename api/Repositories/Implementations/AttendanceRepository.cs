@@ -219,5 +219,141 @@ namespace api.Repositories.Implementations
 
             return (items, total);
         }
+
+        public async Task<GiangVien?> GetGiangVienByMaNguoiDungAsync(int maNguoiDung)
+            => await _db.GiangVien.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.MaNguoiDung == maNguoiDung);
+
+        public async Task<List<(Khoa k, int Total, int Present, int Absent)>> GetFacultyAttendanceSummaryAsync(int? maHocKy)
+        {
+            var query =
+                from d in _db.DiemDanh.AsNoTracking()
+                join b in _db.BuoiHoc.AsNoTracking() on d.MaBuoi equals b.MaBuoi
+                join lhp in _db.LopHocPhan.AsNoTracking() on b.MaLopHocPhan equals lhp.MaLopHocPhan
+                join s in _db.SinhVien.AsNoTracking() on d.MaSinhVien equals s.MaSinhVien
+                join ng in _db.Nganh.AsNoTracking() on s.MaNganh equals ng.MaNganh into ngJoin
+                from ng in ngJoin.DefaultIfEmpty()
+                join k in _db.Khoa.AsNoTracking() on ng.MaKhoa equals k.MaKhoa into kJoin
+                from k in kJoin.DefaultIfEmpty()
+                where ng != null && k != null
+                      && (!maHocKy.HasValue || lhp.MaHocKy == maHocKy.Value)
+                group d by new
+                {
+                    k.MaKhoa,
+                    k.CodeKhoa,
+                    k.TenKhoa
+                }
+                into g
+                select new
+                {
+                    Khoa = new Khoa
+                    {
+                        MaKhoa = g.Key.MaKhoa,
+                        CodeKhoa = g.Key.CodeKhoa,
+                        TenKhoa = g.Key.TenKhoa
+                    },
+                    Total = g.Count(),
+                    Present = g.Count(x => x.TrangThai == true),
+                    Absent = g.Count(x => x.TrangThai == false)
+                };
+
+            var data = await query.ToListAsync();
+
+            return data
+                .Select(x => (x.Khoa, x.Total, x.Present, x.Absent))
+                .ToList();
+        }
+        public async Task<List<(LopHocPhan lhp, MonHoc mh, int Total, int Present, int Absent)>> GetLopAttendanceSummaryForGiangVienAsync(string maGiangVien, int? maHocKy)
+        {
+            var query =
+                from d in _db.DiemDanh.AsNoTracking()
+                join b in _db.BuoiHoc.AsNoTracking() on d.MaBuoi equals b.MaBuoi
+                join lhp in _db.LopHocPhan.AsNoTracking() on b.MaLopHocPhan equals lhp.MaLopHocPhan
+                join mh in _db.MonHoc.AsNoTracking() on lhp.MaMonHoc equals mh.MaMonHoc
+                where lhp.MaGiangVien == maGiangVien
+                      && (!maHocKy.HasValue || lhp.MaHocKy == maHocKy.Value)
+                group d by new
+                {
+                    lhp.MaLopHocPhan,
+                    lhp.TenLopHocPhan,
+                    lhp.TrangThai,
+                    mh.MaMonHoc,
+                    mh.TenMonHoc,
+                    mh.SoTinChi,
+                    mh.SoTiet
+                }
+                into g
+                select new
+                {
+                    LopHocPhan = new LopHocPhan
+                    {
+                        MaLopHocPhan = g.Key.MaLopHocPhan,
+                        TenLopHocPhan = g.Key.TenLopHocPhan,
+                        TrangThai = g.Key.TrangThai
+                    },
+                    MonHoc = new MonHoc
+                    {
+                        MaMonHoc = g.Key.MaMonHoc,
+                        TenMonHoc = g.Key.TenMonHoc,
+                        SoTinChi = g.Key.SoTinChi,
+                        SoTiet = g.Key.SoTiet
+                    },
+                    Total = g.Count(),
+                    Present = g.Count(x => x.TrangThai == true),
+                    Absent = g.Count(x => x.TrangThai == false)
+                };
+
+            var data = await query.ToListAsync();
+
+            return data
+                .Select(x => (x.LopHocPhan, x.MonHoc, x.Total, x.Present, x.Absent))
+                .ToList();
+        }
+        public async Task<List<(LopHocPhan lhp, MonHoc mh, int Total, int Present, int Absent)>> GetLopAttendanceSummaryForSinhVienAsync(string maSinhVien, int? maHocKy)
+        {
+            var query =
+                from d in _db.DiemDanh.AsNoTracking()
+                join b in _db.BuoiHoc.AsNoTracking() on d.MaBuoi equals b.MaBuoi
+                join lhp in _db.LopHocPhan.AsNoTracking() on b.MaLopHocPhan equals lhp.MaLopHocPhan
+                join mh in _db.MonHoc.AsNoTracking() on lhp.MaMonHoc equals mh.MaMonHoc
+                where d.MaSinhVien == maSinhVien
+                      && (!maHocKy.HasValue || lhp.MaHocKy == maHocKy.Value)
+                group d by new
+                {
+                    lhp.MaLopHocPhan,
+                    lhp.TenLopHocPhan,
+                    lhp.TrangThai,
+                    mh.MaMonHoc,
+                    mh.TenMonHoc,
+                    mh.SoTinChi,
+                    mh.SoTiet
+                }
+                into g
+                select new
+                {
+                    LopHocPhan = new LopHocPhan
+                    {
+                        MaLopHocPhan = g.Key.MaLopHocPhan,
+                        TenLopHocPhan = g.Key.TenLopHocPhan,
+                        TrangThai = g.Key.TrangThai
+                    },
+                    MonHoc = new MonHoc
+                    {
+                        MaMonHoc = g.Key.MaMonHoc,
+                        TenMonHoc = g.Key.TenMonHoc,
+                        SoTinChi = g.Key.SoTinChi,
+                        SoTiet = g.Key.SoTiet
+                    },
+                    Total = g.Count(),
+                    Present = g.Count(x => x.TrangThai == true),
+                    Absent = g.Count(x => x.TrangThai == false)
+                };
+
+            var data = await query.ToListAsync();
+
+            return data
+                .Select(x => (x.LopHocPhan, x.MonHoc, x.Total, x.Present, x.Absent))
+                .ToList();
+        }
     }
 }

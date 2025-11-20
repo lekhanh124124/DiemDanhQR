@@ -122,7 +122,8 @@ namespace api.Repositories.Implementations
             string? sortBy,
             bool desc,
             int page,
-            int pageSize)
+            int pageSize,
+            byte? loaiMon) // NEW
         {
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
@@ -142,6 +143,9 @@ namespace api.Repositories.Implementations
             if (soTiet.HasValue) q = q.Where(m => m.SoTiet == soTiet.Value);
             if (trangThai.HasValue) q = q.Where(m => m.TrangThai == trangThai.Value);
 
+            // NEW: filter LoaiMon
+            if (loaiMon.HasValue) q = q.Where(m => m.LoaiMon == loaiMon.Value);
+
             var key = (sortBy ?? "MaMonHoc").Trim().ToLowerInvariant();
             q = key switch
             {
@@ -149,6 +153,8 @@ namespace api.Repositories.Implementations
                 "sotinchi" => desc ? q.OrderByDescending(m => m.SoTinChi) : q.OrderBy(m => m.SoTinChi),
                 "sotiet" => desc ? q.OrderByDescending(m => m.SoTiet) : q.OrderBy(m => m.SoTiet),
                 "trangthai" => desc ? q.OrderByDescending(m => m.TrangThai) : q.OrderBy(m => m.TrangThai),
+                // NEW: sort theo LoaiMon nếu cần
+                "loaimon" => desc ? q.OrderByDescending(m => m.LoaiMon) : q.OrderBy(m => m.LoaiMon),
                 "mamonhoc" or _ => desc ? q.OrderByDescending(m => m.MaMonHoc) : q.OrderBy(m => m.MaMonHoc),
             };
 
@@ -159,6 +165,7 @@ namespace api.Repositories.Implementations
 
             return (items, total);
         }
+
 
         public async Task<bool> SubjectExistsAsync(string maMonHoc)
         {

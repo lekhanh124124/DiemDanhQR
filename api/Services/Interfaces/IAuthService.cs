@@ -1,3 +1,4 @@
+// File: Services/Interfaces/IAuthService.cs
 using api.DTOs;
 
 namespace api.Services.Interfaces
@@ -9,5 +10,7 @@ namespace api.Services.Interfaces
         Task<RefreshAccessTokenResponse> RefreshAccessTokenAsync(RefreshTokenRequest request);
         Task<ChangePasswordResponse> ChangePasswordAsync(string tenDangNhapFromClaims, ChangePasswordRequest request);
         Task<RefreshPasswordResponse> RefreshPasswordToUserIdAsync(RefreshPasswordRequest request);
+        Task<UserRoleFunctionsResponse> GetCurrentUserRoleFunctionsAsync(string tenDangNhapFromClaims);
+
     }
 }

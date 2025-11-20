@@ -55,7 +55,7 @@ namespace api.Controllers
 
         // GET: /api/course/semesters
         [HttpGet("semesters")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<PagedResult<SemesterListItem>>>> GetSemesters([FromQuery] SemesterListRequest req)
         {
             var data = await _svc.GetSemestersAsync(req);

@@ -51,7 +51,7 @@ namespace api.DTOs
         [Required(ErrorMessage = "Mã trạng thái không được để trống.")]
         public int? MaTrangThai { get; set; }
         public string? LyDo { get; set; }
-        public bool? TrangThai { get; set; }
+        public bool? TrangThai { get; set; } = false;
     }
 
     public class UpdateAttendanceRequest

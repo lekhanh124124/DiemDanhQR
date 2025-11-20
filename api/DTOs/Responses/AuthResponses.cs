@@ -7,9 +7,13 @@ namespace api.DTOs
         public required string AccessToken { get; set; }
         public required string RefreshToken { get; set; }
         public required NguoiDungDTO NguoiDung { get; set; }
-        public required PhanQuyenDTO PhanQuyen { get; set; }      
-        public required IEnumerable<RoleFunctionDetailResponse> NhomChucNang { get; set; }
+        public required PhanQuyenDTO PhanQuyen { get; set; }
+    }
 
+    public class UserRoleFunctionsResponse
+    {
+        public required PhanQuyenDTO PhanQuyen { get; set; }
+        public required IEnumerable<RoleFunctionDetailResponse> NhomChucNang { get; set; }
     }
 
     public class LogoutResponse

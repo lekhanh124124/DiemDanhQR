@@ -12,6 +12,10 @@ namespace api.DTOs
         public string? MaLopHocPhan { get; set; }
         public string? TenLopHocPhan { get; set; }
         public string? TenMonHoc { get; set; }
+
+        // mới thêm
+        public int? MaHocKy { get; set; }
+
         public DateOnly? NgayHoc { get; set; }
         public int? Nam { get; set; }
         public int? Tuan { get; set; }
@@ -29,6 +33,7 @@ namespace api.DTOs
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
     }
+
 
     public class RoomListRequest
     {

@@ -6,7 +6,7 @@ namespace api.DTOs
     {
         [Required(ErrorMessage = "Tên đăng nhập không được để trống.")]
         public string? TenDangNhap { get; set; }
-        [Required(ErrorMessage = "Mật khẩu không được để trống.")]
+        [Required(ErrorMessage = "Mã quyền không được để trống.")]
         public int? MaQuyen { get; set; }
         public string? HoTen { get; set; }
         public byte? GioiTinh { get; set; }

@@ -158,8 +158,10 @@ namespace api.Services.Implementations
                 desc: desc,
                 page: page,
                 pageSize: pageSize,
-                maSinhVien: request.MaSinhVien
+                maSinhVien: request.MaSinhVien,
+                hoTen: request.HoTen // NEW
             );
+
 
             string F(DateOnly? d) => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : null!;
             var list = items.Select(x => new StudentListItemResponse

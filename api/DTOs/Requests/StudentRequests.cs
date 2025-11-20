@@ -30,6 +30,7 @@ namespace api.DTOs
         public bool? TrangThaiUser { get; set; }
         public string? MaLopHocPhan { get; set; }
         public string? MaSinhVien { get; set; }
+        public string? HoTen { get; set; }
         public string? SortBy { get; set; } = "HoTen";
         public string? SortDir { get; set; } = "ASC";
     }

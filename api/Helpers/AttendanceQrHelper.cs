@@ -76,7 +76,7 @@ namespace api.Helpers
                 ? buoi.NgayHoc.ToDateTime(TimeOnly.MinValue)
                 : TimeHelper.UtcToVietnam(nowUtc).Date;
             var tietStart = buoi.TietBatDau;
-            var cutoffLocal = ngayHocLocal.Add(MapTietToStart(tietStart)).AddMinutes(15);
+            var cutoffLocal = ngayHocLocal.Add(MapTietToStart(tietStart)).AddMinutes(600);
             var nowLocal = TimeHelper.UtcToVietnam(nowUtc);
             return nowLocal <= cutoffLocal ? "PRESENT" : "LATE";
         }

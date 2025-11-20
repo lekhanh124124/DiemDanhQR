@@ -112,7 +112,8 @@ namespace api.Services.Implementations
                 sortBy: sortBy,
                 desc: desc,
                 page: page,
-                pageSize: pageSize
+                pageSize: pageSize,
+                loaiMon: req.LoaiMon // NEW
             );
 
             var items = rows.Select(m => new SubjectListItem
@@ -124,7 +125,8 @@ namespace api.Services.Implementations
                     SoTinChi = inputResponse(m.SoTinChi.ToString()),
                     SoTiet = inputResponse(m.SoTiet.ToString()),
                     MoTa = inputResponse(m.MoTa ?? "null"),
-                    TrangThai = inputResponse(m.TrangThai.ToString())
+                    TrangThai = inputResponse(m.TrangThai.ToString()),
+                    LoaiMon = inputResponse(m.LoaiMon.ToString()) // NEW: trả về LoaiMon
                 }
             }).ToList();
 
@@ -137,6 +139,7 @@ namespace api.Services.Implementations
                 Items = items
             };
         }
+
 
         public async Task<CreateSubjectResponse> CreateSubjectAsync(CreateSubjectRequest req, string? currentUserLogin)
         {

@@ -16,7 +16,7 @@ namespace api.DTOs
 
     public class SubjectListItem
     {
-        public MonHocDTO? MonHoc { get; set; } // MaMonHoc, TenMonHoc, SoTinChi, SoTiet, MoTa, TrangThai
+        public MonHocDTO? MonHoc { get; set; } // MaMonHoc, TenMonHoc, SoTinChi, SoTiet, LoaiMon, MoTa, TrangThai
     }
 
     public class CreateSubjectResponse

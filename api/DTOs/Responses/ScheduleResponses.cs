@@ -5,7 +5,7 @@ namespace api.DTOs
     {
         public BuoiHocDTO? BuoiHoc { get; set; } // MaBuoi, NgayHoc, TietBatDau, SoTiet, GhiChu, TrangThai
         public PhongHocDTO? PhongHoc { get; set; } // MaPhong, TenPhong, TrangThai
-        public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLop, TrangThai
+        public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLopHocPhan, TrangThai
         public MonHocDTO? MonHoc { get; set; } // MaMonHoc, TenMonHoc, TrangThai
         public GiangVienDTO? GiangVien { get; set; } // MaGiangVien
         public NguoiDungDTO? GiangVienInfo { get; set; } // HoTen
@@ -14,13 +14,13 @@ namespace api.DTOs
     {
         public BuoiHocDTO? BuoiHoc { get; set; } // MaBuoi, NgayHoc, TietBatDau, SoTiet, GhiChu, TrangThai
         public PhongHocDTO? PhongHoc { get; set; } // MaPhong, TenPhong
-        public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLop
+        public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLopHocPhan
     }
     public class UpdateScheduleResponse
     {
         public BuoiHocDTO? BuoiHoc { get; set; } // MaBuoi, NgayHoc, TietBatDau, SoTiet, GhiChu, TrangThai
         public PhongHocDTO? PhongHoc { get; set; } // MaPhong, TenPhong
-        public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLop
+        public LopHocPhanDTO? LopHocPhan { get; set; } // MaLopHocPhan, TenLopHocPhan
     }
     public class RoomListItem
     {

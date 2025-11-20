@@ -11,7 +11,7 @@ namespace api.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IAuthRepository _repo;
-        private readonly IPermissionRepository _permRepo; // NEW: để lấy danh sách chức năng theo role
+        private readonly IPermissionRepository _permRepo; // để lấy danh sách chức năng theo role
         private readonly IConfiguration _cfg;
 
         public AuthService(IAuthRepository repo, IPermissionRepository permRepo, IConfiguration cfg)
@@ -20,7 +20,9 @@ namespace api.Services.Implementations
             _permRepo = permRepo;
             _cfg = cfg;
         }
+
         private string inputResponse(string input) => input ?? "null";
+
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             var username = request.TenDangNhap?.Trim();
@@ -83,53 +85,13 @@ namespace api.Services.Implementations
                 TenQuyen = inputResponse(role?.TenQuyen),
             };
 
-            // === NEW: Danh sách chức năng theo phân quyền (Role -> Functions) ===
-            // Lấy tất cả chức năng thuộc quyền hiện tại bằng repo permission (filter theo MaQuyen)
-            var roleFunctions = new List<RoleFunctionDetailResponse>();
-            if (role?.MaQuyen is int mk && mk > 0)
-            {
-                // Lấy danh sách chức năng theo quyền
-                var (funcItems, _) = await _permRepo.SearchFunctionsAsync(
-                    maChucNang: null,
-                    codeChucNang: null,
-                    tenChucNang: null,
-                    moTa: null,
-                    maQuyen: mk,
-                    parentChucNangId: null,
-                    sortBy: "MaChucNang",
-                    desc: false,
-                    page: 1,
-                    pageSize: 10_000 // đủ lớn để gom hết
-                );
-
-                foreach (var fn in funcItems)
-                {
-                    var map = await _permRepo.GetRoleFunctionAsync(mk, fn.MaChucNang);
-
-                    roleFunctions.Add(new RoleFunctionDetailResponse
-                    {
-                        ChucNang = new ChucNangDTO
-                        {
-                            MaChucNang = inputResponse(fn.MaChucNang.ToString()),
-                            CodeChucNang = inputResponse(fn.CodeChucNang),
-                            TenChucNang = inputResponse(fn.TenChucNang),
-                            ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null")
-                        },
-                        NhomChucNang = map == null ? null : new NhomChucNangDTO
-                        {
-                            TrangThai = inputResponse(map.TrangThai.ToString().ToLowerInvariant())
-                        }
-                    });
-                }
-            }
-
+            // Login giờ CHỈ trả token + user + quyền
             return new LoginResponse
             {
                 AccessToken = inputResponse(accessToken),
                 RefreshToken = inputResponse(refreshPlain),
                 NguoiDung = nguoiDungDto,
-                PhanQuyen = phanQuyenDto,
-                NhomChucNang = roleFunctions
+                PhanQuyen = phanQuyenDto
             };
         }
 
@@ -283,6 +245,73 @@ namespace api.Services.Implementations
                     TenDangNhap = inputResponse(user.TenDangNhap)
                 },
                 RefreshAt = inputResponse(refreshAtLocal.ToString("dd-MM-yyyy HH:mm:ss"))
+            };
+        }
+
+        // NEW: lấy nhóm chức năng theo user hiện tại
+        public async Task<UserRoleFunctionsResponse> GetCurrentUserRoleFunctionsAsync(string tenDangNhapFromClaims)
+        {
+            var username = tenDangNhapFromClaims?.Trim();
+            if (string.IsNullOrWhiteSpace(username))
+                ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Không xác định được người dùng.");
+
+            var user = await _repo.GetByUserNameAsync(username!);
+            if (user == null || user.TrangThai == false)
+                ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
+
+            var maQuyen = user.MaQuyen;
+            var role = maQuyen > 0 ? await _repo.GetRoleAsync(maQuyen) : null;
+            if (role == null)
+                ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Tài khoản chưa được gán phân quyền.");
+
+            var phanQuyenDto = new PhanQuyenDTO
+            {
+                MaQuyen = inputResponse(role.MaQuyen.ToString()),
+                CodeQuyen = inputResponse(role.CodeQuyen),
+                TenQuyen = inputResponse(role.TenQuyen),
+                MoTa = inputResponse(role.MoTa)
+            };
+
+            var roleFunctions = new List<RoleFunctionDetailResponse>();
+
+            var (funcItems, _) = await _permRepo.SearchFunctionsAsync(
+                maChucNang: null,
+                codeChucNang: null,
+                tenChucNang: null,
+                moTa: null,
+                maQuyen: maQuyen,
+                parentChucNangId: null,
+                sortBy: "MaChucNang",
+                desc: false,
+                page: 1,
+                pageSize: 10_000
+            );
+
+            foreach (var fn in funcItems)
+            {
+                var map = await _permRepo.GetRoleFunctionAsync(maQuyen, fn.MaChucNang);
+
+                roleFunctions.Add(new RoleFunctionDetailResponse
+                {
+                    ChucNang = new ChucNangDTO
+                    {
+                        MaChucNang = inputResponse(fn.MaChucNang.ToString()),
+                        CodeChucNang = inputResponse(fn.CodeChucNang),
+                        TenChucNang = inputResponse(fn.TenChucNang),
+                        MoTa = inputResponse(fn.MoTa),
+                        ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null")
+                    },
+                    NhomChucNang = map == null ? null : new NhomChucNangDTO
+                    {
+                        TrangThai = inputResponse(map.TrangThai.ToString().ToLowerInvariant())
+                    }
+                });
+            }
+
+            return new UserRoleFunctionsResponse
+            {
+                PhanQuyen = phanQuyenDto,
+                NhomChucNang = roleFunctions
             };
         }
     }

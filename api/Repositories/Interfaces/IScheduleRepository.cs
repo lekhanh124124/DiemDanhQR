@@ -6,26 +6,28 @@ namespace api.Repositories.Interfaces
     public interface IScheduleRepository
     {
         Task<(List<(BuoiHoc b, PhongHoc? p, LopHocPhan l, MonHoc m, GiangVien? gv)> Items, int Total)>
-            SearchSchedulesAsync(
-                int? maBuoi,
-                int? maPhong,
-                string? tenPhong,
-                string? maLopHocPhan,
-                string? tenLopHocPhan,
-                string? tenMonHoc,
-                DateOnly? ngayHoc,
-                int? nam,
-                int? tuan,
-                int? thang,
-                byte? tietBatDau,
-                byte? soTiet,
-                bool? trangThai,
-                string? maSinhVien,
-                string? maGiangVien,
-                string? sortBy,
-                bool desc,
-                int page,
-                int pageSize);
+        SearchSchedulesAsync(
+            int? maBuoi,
+            int? maPhong,
+            string? tenPhong,
+            string? maLopHocPhan,
+            string? tenLopHocPhan,
+            string? tenMonHoc,
+            int? maHocKy,       
+            DateOnly? ngayHoc,
+            int? nam,
+            int? tuan,
+            int? thang,
+            byte? tietBatDau,
+            byte? soTiet,
+            bool? trangThai,
+            string? maSinhVien,
+            string? maGiangVien,
+            string? sortBy,
+            bool desc,
+            int page,
+            int pageSize);
+
 
         Task<(List<PhongHoc> Items, int Total)> SearchRoomsAsync(
             int? maPhong,

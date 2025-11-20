@@ -31,6 +31,7 @@ namespace api.DTOs
         public string? MaSinhVien { get; set; }
     }
 
+    // File: CourseRequests.cs
     public class SubjectListRequest
     {
         // Paging
@@ -47,7 +48,11 @@ namespace api.DTOs
         public byte? SoTinChi { get; set; }
         public byte? SoTiet { get; set; }
         public bool? TrangThai { get; set; }
+
+        // NEW: 1=Lý thuyết, 2=Thực hành, 3=Tổng hợp
+        public byte? LoaiMon { get; set; }
     }
+
 
     public class CreateSubjectRequest
     {
