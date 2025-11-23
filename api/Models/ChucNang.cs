@@ -8,7 +8,8 @@ namespace api.Models
         public string TenChucNang { get; set; } = null!;
         public string? MoTa { get; set; }
         public int? ParentChucNangId { get; set; }
-
+        public string? Url { get; set; }
+        public int? Stt { get; set; }
     }
 }
 

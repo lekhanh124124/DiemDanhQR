@@ -59,7 +59,7 @@ namespace api.Repositories.Implementations
             string? tenChucNang,
             string? moTa,
             int? maQuyen,
-            int? parentChucNangId,       // ⭐ NEW
+            int? parentChucNangId,       
             string? sortBy,
             bool desc,
             int page,

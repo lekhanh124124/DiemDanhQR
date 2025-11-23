@@ -99,8 +99,6 @@ namespace api.Controllers
             return Ok(new ApiResponse<object> { Status = "200", Message = ok ? "Deleted" : "NotFound", Data = new { MaTrangThai } });
         }
 
-        // 1. Tỉ lệ vắng/có mặt của sinh viên theo Khoa
-        // GET: /api/attendance/ratio-by-khoa?MaHocKy=1
         [HttpGet("ratio-by-khoa")]
         [Authorize(Roles = "ADMIN")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceFacultyRatioItem>>>> GetRatioByKhoa([FromQuery] int? MaHocKy)
@@ -114,8 +112,6 @@ namespace api.Controllers
             });
         }
 
-        // 2. Tỉ lệ vắng/có mặt theo LHP mà GIẢNG VIÊN đang dạy
-        // GET: /api/attendance/ratio-by-lophocphan/gv?MaHocKy=1
         [HttpGet("ratio-by-lophocphan/gv")]
         [Authorize(Roles = "GV")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceLopHocPhanRatioItem>>>> GetRatioByLopHocPhanForGiangVien([FromQuery] int? MaHocKy)
@@ -130,8 +126,6 @@ namespace api.Controllers
             });
         }
 
-        // 3. Tỉ lệ vắng/có mặt theo LHP mà SINH VIÊN đang học
-        // GET: /api/attendance/ratio-by-lophocphan/sv?MaHocKy=1
         [HttpGet("ratio-by-lophocphan/sv")]
         [Authorize(Roles = "SV")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceLopHocPhanRatioItem>>>> GetRatioByLopHocPhanForSinhVien([FromQuery] int? MaHocKy)

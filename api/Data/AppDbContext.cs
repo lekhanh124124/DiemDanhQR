@@ -1,3 +1,4 @@
+// File: Data/AppDbContext.cs
 using api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,6 +48,8 @@ public class AppDbContext : DbContext
             e.Property(x => x.CodeChucNang).HasMaxLength(50).IsRequired();
             e.Property(x => x.TenChucNang).HasMaxLength(100).IsRequired();
             e.Property(x => x.MoTa).HasMaxLength(200);
+            e.Property(x => x.Url).HasMaxLength(255);
+            e.Property(x => x.Stt);
 
             // Self reference: ParentChucNangId -> ChucNang.MaChucNang
             e.Property(x => x.ParentChucNangId);

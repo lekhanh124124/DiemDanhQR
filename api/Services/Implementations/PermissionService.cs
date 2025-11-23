@@ -84,7 +84,7 @@ namespace api.Services.Implementations
                 request.TenChucNang,
                 request.MoTa,
                 request.MaQuyen,
-                request.ParentChucNangId,   
+                request.ParentChucNangId,
                 sortBy,
                 desc,
                 page,
@@ -115,8 +115,9 @@ namespace api.Services.Implementations
                         CodeChucNang = inputResponse(x.CodeChucNang),
                         TenChucNang = inputResponse(x.TenChucNang),
                         MoTa = inputResponse(x.MoTa),
-                        // ⭐ NEW
-                        ParentChucNangId = inputResponse(x.ParentChucNangId?.ToString() ?? "null")
+                        ParentChucNangId = inputResponse(x.ParentChucNangId?.ToString() ?? "null"),
+                        Url = inputResponse(x.Url),
+                        Stt = inputResponse(x.Stt?.ToString() ?? "null"),
                     },
                     NhomChucNang = nhom
                 });
@@ -157,7 +158,9 @@ namespace api.Services.Implementations
                     CodeChucNang = inputResponse(x.Func.CodeChucNang),
                     TenChucNang = inputResponse(x.Func.TenChucNang),
                     MoTa = inputResponse(x.Func.MoTa),
-                    ParentChucNangId = inputResponse(x.Func.ParentChucNangId?.ToString() ?? "null")
+                    ParentChucNangId = inputResponse(x.Func.ParentChucNangId?.ToString() ?? "null"),
+                    Url = inputResponse(x.Func.Url),
+                    Stt = inputResponse(x.Func.Stt?.ToString() ?? "null"),
                 },
                 NhomChucNang = new NhomChucNangDTO
                 {
@@ -298,8 +301,11 @@ namespace api.Services.Implementations
                 CodeChucNang = code,
                 TenChucNang = name,
                 MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim(),
-                ParentChucNangId = parentId
+                ParentChucNangId = parentId,
+                Url = string.IsNullOrWhiteSpace(req.Url) ? null : req.Url.Trim(),
+                Stt = req.Stt
             };
+
 
             await _repo.AddFunctionAsync(entity);
 
@@ -326,7 +332,9 @@ namespace api.Services.Implementations
                     CodeChucNang = inputResponse(entity.CodeChucNang),
                     TenChucNang = inputResponse(entity.TenChucNang),
                     MoTa = inputResponse(entity.MoTa),
-                    ParentChucNangId = inputResponse(entity.ParentChucNangId?.ToString() ?? "null")
+                    ParentChucNangId = inputResponse(entity.ParentChucNangId?.ToString() ?? "null"),
+                    Url = inputResponse(entity.Url),
+                    Stt = inputResponse(entity.Stt?.ToString() ?? "null"),
                 }
             };
         }
@@ -346,6 +354,11 @@ namespace api.Services.Implementations
                     ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "CodeChucNang đã tồn tại.");
                 fn.CodeChucNang = code;
             }
+            if (req.Url != null)
+                fn.Url = string.IsNullOrWhiteSpace(req.Url) ? null : req.Url.Trim();
+
+            if (req.Stt.HasValue)
+                fn.Stt = req.Stt;
 
             if (!string.IsNullOrWhiteSpace(req.TenChucNang)) fn.TenChucNang = req.TenChucNang!.Trim();
             if (req.MoTa != null) fn.MoTa = string.IsNullOrWhiteSpace(req.MoTa) ? null : req.MoTa!.Trim();
@@ -389,7 +402,9 @@ namespace api.Services.Implementations
                     CodeChucNang = inputResponse(fn.CodeChucNang),
                     TenChucNang = inputResponse(fn.TenChucNang),
                     MoTa = inputResponse(fn.MoTa),
-                    ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null")
+                    ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null"),
+                    Url = inputResponse(fn.Url),
+                    Stt = inputResponse(fn.Stt?.ToString() ?? "null"),
                 }
             };
         }
@@ -452,6 +467,8 @@ namespace api.Services.Implementations
                     MaChucNang = inputResponse(fn.MaChucNang.ToString()),
                     CodeChucNang = inputResponse(fn.CodeChucNang),
                     TenChucNang = inputResponse(fn.TenChucNang),
+                    Url = inputResponse(fn.Url),
+                    Stt = inputResponse(fn.Stt?.ToString() ?? "null"),
                 },
                 NhomChucNang = new NhomChucNangDTO
                 {
@@ -526,7 +543,9 @@ namespace api.Services.Implementations
                 {
                     MaChucNang = inputResponse(finalFn.MaChucNang.ToString()),
                     CodeChucNang = inputResponse(finalFn.CodeChucNang),
-                    TenChucNang = inputResponse(finalFn.TenChucNang)
+                    TenChucNang = inputResponse(finalFn.TenChucNang),
+                    Url = inputResponse(finalFn.Url),
+                    Stt = inputResponse(finalFn.Stt?.ToString() ?? "null"),
                 },
                 NhomChucNang = new NhomChucNangDTO
                 {

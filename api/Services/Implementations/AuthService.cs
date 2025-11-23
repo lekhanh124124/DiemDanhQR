@@ -299,7 +299,9 @@ namespace api.Services.Implementations
                         CodeChucNang = inputResponse(fn.CodeChucNang),
                         TenChucNang = inputResponse(fn.TenChucNang),
                         MoTa = inputResponse(fn.MoTa),
-                        ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null")
+                        ParentChucNangId = inputResponse(fn.ParentChucNangId?.ToString() ?? "null"),
+                        Url = inputResponse(fn.Url),
+                        Stt = inputResponse(fn.Stt?.ToString() ?? "null"),
                     },
                     NhomChucNang = map == null ? null : new NhomChucNangDTO
                     {

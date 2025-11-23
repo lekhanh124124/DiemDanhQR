@@ -20,7 +20,8 @@ namespace api.DTOs
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? TenChucNang { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? MoTa { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? ParentChucNangId { get; set; }
-
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Url { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? Stt { get; set; }
     }
 
     public class DiemDanhDTO

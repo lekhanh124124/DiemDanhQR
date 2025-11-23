@@ -78,9 +78,6 @@ namespace api.Services.Implementations
 
         public async Task<CreateAttendanceResponse> CheckInByQrAsync(CheckInRequest req, string? currentUsername)
         {
-            if (string.IsNullOrWhiteSpace(req.Token))
-                throw new ApiException(ApiErrorCode.BadRequest, "Thiếu token.");
-
             var tokenRaw = Encoding.UTF8.GetString(AttendanceQrHelper.Base64UrlDecode(req.Token));
             var parts = tokenRaw.Split('|');
             if (parts.Length != 5)
@@ -127,11 +124,30 @@ namespace api.Services.Implementations
             if (await _repo.AttendanceExistsAsync(maBuoi, maSinhVien))
                 throw new ApiException(ApiErrorCode.Conflict, "Bạn đã điểm danh buổi này rồi.");
 
-            var statusCode = AttendanceQrHelper.ResolveStatusCode(buoi, DateTime.UtcNow);
+            string statusCode = AttendanceQrHelper.ResolveStatusCode(buoi, DateTime.UtcNow);
+            bool isPresentFlag = true;
+
+            const double refLat = 10.80615211994601;
+            const double refLon = 106.62866552433795;
+
+            var distance = AttendanceQrHelper.DistanceInMeters(
+                req.Latitude!.Value,
+                req.Longitude!.Value,
+                refLat,
+                refLon
+            );
+
+            // Nếu > 150m: đánh FRAUD_LOCATION và coi như vắng
+            if (distance > 150.0)
+            {
+                statusCode = "FRAUD_LOCATION";
+                isPresentFlag = false;
+            }
+
+            // Lấy MaTrangThai từ CodeTrangThai
             var statusId = await _repo.TryGetTrangThaiIdByCodeAsync(statusCode)
                 ?? throw new ApiException(ApiErrorCode.InternalError, "Không tìm thấy mã trạng thái.");
 
-            // Ghi DB = giờ Việt Nam (không format)
             var nowLocal = TimeHelper.UtcToVietnam(DateTime.UtcNow);
             var entity = new DiemDanh
             {
@@ -139,11 +155,15 @@ namespace api.Services.Implementations
                 MaSinhVien = maSinhVien,
                 MaTrangThai = statusId,
                 ThoiGianQuet = nowLocal,
-                TrangThai = true
+                TrangThai = isPresentFlag
             };
+
             var saved = await _repo.CreateAttendanceAsync(entity);
 
-            await _repo.LogHistoryAsync(nd.MaNguoiDung, $"CHECKIN|Buoi:{maBuoi}|LHP:{maLhp}|SV:{maSinhVien}|StatusId:{statusId}");
+            await _repo.LogHistoryAsync(
+                nd.MaNguoiDung,
+                $"CHECKIN|Buoi:{maBuoi}|LHP:{maLhp}|SV:{maSinhVien}|StatusCode:{statusCode}|StatusId:{statusId}|Distance:{distance:F2}m"
+            );
 
             // Build response (format thời gian, không UTC→VN nữa vì đã lưu giờ VN)
             var t = await _repo.GetStatusByIdAsync(statusId);

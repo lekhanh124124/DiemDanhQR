@@ -80,11 +80,12 @@ namespace api.Services.Implementations
                     TrangThai = inputResponse(x.l.TrangThai.ToString())
                 };
 
-                // Môn học (MaMonHoc, TenMonHoc, TrangThai) — chỉ map các trường hiện có trong DTO
+                // Môn học
                 var mon = new MonHocDTO
                 {
                     MaMonHoc = inputResponse(x.m.MaMonHoc ?? "null"),
                     TenMonHoc = inputResponse(x.m.TenMonHoc ?? "null"),
+                    LoaiMon = inputResponse(x.m.LoaiMon.ToString()),
                     TrangThai = inputResponse(x.m.TrangThai.ToString())
                 };
 
@@ -534,6 +535,7 @@ namespace api.Services.Implementations
                 {
                     MaMonHoc = inputResponse(mon.MaMonHoc ?? "null"),
                     TenMonHoc = inputResponse(mon.TenMonHoc ?? "null"),
+                    LoaiMon = inputResponse(mon.LoaiMon.ToString()),
                     TrangThai = inputResponse(mon.TrangThai.ToString())
                 };
 

@@ -19,6 +19,11 @@ namespace api.DTOs
     {
         [Required(ErrorMessage = "Token không được để trống.")]
         public string Token { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Vĩ độ không được để trống.")]
+        public double? Latitude { get; set; }
+
+        [Required(ErrorMessage = "Kinh độ không được để trống.")]
+        public double? Longitude { get; set; }
     }
 
 

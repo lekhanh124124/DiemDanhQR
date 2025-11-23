@@ -76,6 +76,8 @@ namespace api.DTOs
 
         public string? MoTa { get; set; }
         public int? ParentChucNangId { get; set; }
+        public string? Url { get; set; }
+        public int? Stt { get; set; }
     }
 
     public class UpdateFunctionRequest
@@ -87,6 +89,8 @@ namespace api.DTOs
         public string? TenChucNang { get; set; }
         public string? MoTa { get; set; }
         public int? ParentChucNangId { get; set; }
+        public string? Url { get; set; }
+        public int? Stt { get; set; }
     }
 
     public class CreateRoleFunctionByCodeRequest
@@ -96,6 +100,7 @@ namespace api.DTOs
         [Required(ErrorMessage = "Mã chức năng không được để trống.")]
         public int? MaChucNang { get; set; }
         public bool? TrangThai { get; set; } = true;
+
     }
 
     public class UpdateRoleFunctionByCodeRequest
