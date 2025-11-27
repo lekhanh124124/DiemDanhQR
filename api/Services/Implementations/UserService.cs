@@ -122,6 +122,10 @@ namespace api.Services.Implementations
             if (request.NgaySinh.HasValue) user.NgaySinh = DateOnly.FromDateTime(request.NgaySinh.Value);
             if (!string.IsNullOrWhiteSpace(request.DiaChi)) user.DiaChi = request.DiaChi!.Trim();
 
+            // THÊM MỚI: cho phép cập nhật trạng thái
+            if (request.TrangThai.HasValue)
+                user.TrangThai = request.TrangThai.Value;
+
             if (request.AnhDaiDien != null)
             {
                 var newUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath, user.TenDangNhap);

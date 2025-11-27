@@ -51,6 +51,7 @@ namespace api.DTOs
         public string? SoDienThoai { get; set; }
         public DateTime? NgaySinh { get; set; }
         public string? DiaChi { get; set; }
+        public bool? TrangThai { get; set; }
     }
 
     public class UserListRequest
