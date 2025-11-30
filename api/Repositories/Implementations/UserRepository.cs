@@ -97,6 +97,7 @@ namespace api.Repositories.Implementations
             string? tenDangNhap,
             string? hoTen,
             int? maQuyen,
+            string? codeQuyen,
             bool? trangThai,
             string? sortBy,
             bool desc,
@@ -121,6 +122,12 @@ namespace api.Repositories.Implementations
                 q = q.Where(x => (x.u.HoTen ?? "").Contains(s));
             }
             if (maQuyen.HasValue) q = q.Where(x => x.u.MaQuyen == maQuyen.Value);
+
+            if (!string.IsNullOrWhiteSpace(codeQuyen))
+            {
+                var s = codeQuyen.Trim();
+                q = q.Where(x => x.r.CodeQuyen.Contains(s));
+            }
             if (trangThai.HasValue) q = q.Where(x => x.u.TrangThai == trangThai.Value);
 
             var key = (sortBy ?? "MaNguoiDung").Trim().ToLowerInvariant();

@@ -63,6 +63,7 @@ namespace api.DTOs
         public string? tenDangNhap { get; set; } = null;
         public string? hoTen { get; set; } = null;
         public int? maQuyen { get; set; } = null;
+        public string? codeQuyen { get; set; } = null;   
         public bool? trangThai { get; set; } = null;
     }
 }

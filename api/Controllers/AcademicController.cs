@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using api.DTOs;
 using api.Services.Interfaces;
+using api.Helpers; // Thêm dòng này nếu chưa có
 
 namespace api.Controllers
 {
@@ -29,9 +30,12 @@ namespace api.Controllers
         }
 
         [HttpPost("create-department")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<KhoaDetailResponse>>> CreateKhoa([FromForm] CreateKhoaRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.CreateKhoaAsync(req);
             return Ok(new ApiResponse<KhoaDetailResponse>
             {
@@ -42,9 +46,12 @@ namespace api.Controllers
         }
 
         [HttpPut("update-department")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<KhoaDetailResponse>>> UpdateKhoa([FromForm] UpdateKhoaRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.UpdateKhoaAsync(req);
             return Ok(new ApiResponse<KhoaDetailResponse>
             {
@@ -55,9 +62,12 @@ namespace api.Controllers
         }
 
         [HttpDelete("delete-department")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> DeleteKhoa([FromQuery] int maKhoa)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var ok = await _svc.DeleteKhoaAsync(maKhoa);
             return Ok(new ApiResponse<object>
             {
@@ -82,9 +92,12 @@ namespace api.Controllers
         }
 
         [HttpPost("create-major")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<NganhDetailResponse>>> CreateNganh([FromForm] CreateNganhRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.CreateNganhAsync(req);
             return Ok(new ApiResponse<NganhDetailResponse>
             {
@@ -95,9 +108,12 @@ namespace api.Controllers
         }
 
         [HttpPut("update-major")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<NganhDetailResponse>>> UpdateNganh([FromForm] UpdateNganhRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.UpdateNganhAsync(req);
             return Ok(new ApiResponse<NganhDetailResponse>
             {
@@ -108,9 +124,12 @@ namespace api.Controllers
         }
 
         [HttpDelete("delete-major")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> DeleteNganh([FromQuery] int maNganh)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var ok = await _svc.DeleteNganhAsync(maNganh);
             return Ok(new ApiResponse<object>
             {

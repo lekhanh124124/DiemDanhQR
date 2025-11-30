@@ -74,35 +74,47 @@ namespace api.Controllers
 
         // POST: /api/attendance/create-status
         [HttpPost("create-status")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<AttendanceStatusListItem>>> CreateStatus([FromForm] CreateAttendanceStatusRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.CreateStatusAsync(req);
             return Ok(new ApiResponse<AttendanceStatusListItem> { Status = "200", Message = "OK", Data = data });
         }
 
         // PUT: /api/attendance/update-status
         [HttpPut("update-status")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<AttendanceStatusListItem>>> UpdateStatus([FromForm] UpdateAttendanceStatusRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.UpdateStatusAsync(req);
             return Ok(new ApiResponse<AttendanceStatusListItem> { Status = "200", Message = "OK", Data = data });
         }
 
         // DELETE: /api/attendance/delete-status
         [HttpDelete("delete-status")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> DeleteStatus([FromQuery] int MaTrangThai)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var ok = await _svc.DeleteStatusAsync(MaTrangThai);
             return Ok(new ApiResponse<object> { Status = "200", Message = ok ? "Deleted" : "NotFound", Data = new { MaTrangThai } });
         }
 
         [HttpGet("ratio-by-khoa")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<IEnumerable<AttendanceFacultyRatioItem>>>> GetRatioByKhoa([FromQuery] int? MaHocKy)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.GetFacultyAttendanceRatioAsync(MaHocKy);
             return Ok(new ApiResponse<IEnumerable<AttendanceFacultyRatioItem>>
             {

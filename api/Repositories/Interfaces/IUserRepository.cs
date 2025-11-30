@@ -33,6 +33,7 @@ namespace api.Repositories.Interfaces
             string? tenDangNhap,
             string? hoTen,
             int? maQuyen,
+            string? codeQuyen,
             bool? trangThai,
             string? sortBy,
             bool desc,

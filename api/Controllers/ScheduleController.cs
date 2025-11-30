@@ -65,9 +65,12 @@ namespace api.Controllers
         }
 
         [HttpPost("create-room")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<CreateRoomResponse>>> CreateRoom([FromForm] CreateRoomRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var tenDangNhap = JwtHelper.GetUsername(User);
             var data = await _svc.CreateRoomAsync(req, tenDangNhap);
 
@@ -95,9 +98,12 @@ namespace api.Controllers
         }
 
         [HttpPut("update-room")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<UpdateRoomResponse>>> UpdateRoom([FromForm] UpdateRoomRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var tenDangNhap = JwtHelper.GetUsername(User);
             var data = await _svc.UpdateRoomAsync(req, tenDangNhap);
 
@@ -126,9 +132,12 @@ namespace api.Controllers
 
         // POST: /api/schedule/auto-generate
         [HttpPost("auto-generate")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<List<ScheduleListItem>>>> AutoGenerate([FromForm] AutoGenerateScheduleRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             if (string.IsNullOrWhiteSpace(req.MaLopHocPhan))
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã lớp học phần là bắt buộc.");
 

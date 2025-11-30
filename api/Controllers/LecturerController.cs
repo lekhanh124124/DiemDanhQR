@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using api.Services.Interfaces;
 using api.DTOs;
+using api.Helpers;
 
 namespace api.Controllers
 {
@@ -15,11 +16,14 @@ namespace api.Controllers
         public LecturerController(ILecturerService svc) => _svc = svc;
 
         [HttpPost("create")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [RequestSizeLimit(5_000_000)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ApiResponse<CreateLecturerResponse>>> Create([FromForm] CreateLecturerRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.CreateAsync(req);
             return Ok(new ApiResponse<CreateLecturerResponse>
             {
@@ -30,9 +34,12 @@ namespace api.Controllers
         }
 
         [HttpGet("list")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<PagedResult<LecturerListItemResponse>>>> List([FromQuery] GetLecturersRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.GetListAsync(req);
             return Ok(new ApiResponse<PagedResult<LecturerListItemResponse>>
             {
@@ -43,11 +50,14 @@ namespace api.Controllers
         }
 
         [HttpPut("profile")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [RequestSizeLimit(5_000_000)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ApiResponse<UpdateLecturerResponse>>> Update([FromForm] UpdateLecturerRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.UpdateAsync(req);
             return Ok(new ApiResponse<UpdateLecturerResponse>
             {

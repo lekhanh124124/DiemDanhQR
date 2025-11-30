@@ -44,11 +44,14 @@ namespace api.Controllers
             return Ok(new ApiResponse<object> { Status = "200", Message = "Lấy thông tin người dùng thành công.", Data = result });
         }
 
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [HttpPost("create")]
         [RequestSizeLimit(5_000_000)]
         public async Task<ActionResult<ApiResponse<CreateUserResponse>>> Create([FromForm] CreateUserRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var result = await _svc.CreateAsync(req);
             return Ok(new ApiResponse<CreateUserResponse> { Status = "200", Message = "Tạo người dùng thành công.", Data = result });
         }
@@ -71,10 +74,13 @@ namespace api.Controllers
             return Ok(new ApiResponse<UpdateUserProfileResponse> { Status = "200", Message = "Cập nhật người dùng thành công.", Data = data });
         }
 
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [HttpGet("list")]
         public async Task<ActionResult<ApiResponse<PagedResult<UserItem>>>> List([FromQuery] UserListRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.GetListAsync(req);
             return Ok(new ApiResponse<PagedResult<UserItem>> { Status = "200", Message = "Lấy danh sách người dùng thành công.", Data = data });
         }

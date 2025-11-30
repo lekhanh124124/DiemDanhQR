@@ -22,10 +22,13 @@ namespace api.Controllers
         }
 
         [HttpPost("create")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [RequestSizeLimit(5_000_000)]
         public async Task<ActionResult<ApiResponse<CreateStudentResponse>>> Create([FromForm] CreateStudentRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.CreateAsync(req);
             return Ok(new ApiResponse<CreateStudentResponse> { Status = "200", Message = "Tạo sinh viên thành công.", Data = data });
         }
@@ -39,10 +42,13 @@ namespace api.Controllers
         }
 
         [HttpPut("update")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [RequestSizeLimit(5_000_000)]
         public async Task<ActionResult<ApiResponse<UpdateStudentResponse>>> Update([FromForm] UpdateStudentRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var data = await _svc.UpdateAsync(req);
             return Ok(new ApiResponse<UpdateStudentResponse> { Status = "200", Message = "Cập nhật sinh viên thành công.", Data = data });
         }
@@ -69,11 +75,14 @@ namespace api.Controllers
 
         // POST: /api/student/bulk-import
         [HttpPost("bulk-import")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         [RequestSizeLimit(20_000_000)]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<ApiResponse<BulkImportStudentsResponse>>> BulkImport([FromForm] BulkImportStudentsRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var result = await _svc.BulkImportAsync(req);
             return Ok(new ApiResponse<BulkImportStudentsResponse> { Status = "200", Message = "Import sinh viên hoàn tất.", Data = result });
         }

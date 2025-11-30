@@ -177,6 +177,7 @@ namespace api.Services.Implementations
             var tenDangNhap = request.tenDangNhap;
             var hoTen = request.hoTen;
             var maQuyen = request.maQuyen;
+            var codeQuyen = request.codeQuyen;
             var trangThai = request.trangThai;
             {
                 page = page <= 0 ? 1 : page;
@@ -184,7 +185,7 @@ namespace api.Services.Implementations
                 var desc = string.Equals(sortDir, "DESC", StringComparison.OrdinalIgnoreCase);
 
                 var (rows, total) = await _repo.SearchUsersAsync(
-                    tenDangNhap, hoTen, maQuyen, trangThai, sortBy, desc, page, pageSize);
+                    tenDangNhap, hoTen, maQuyen, codeQuyen, trangThai, sortBy, desc, page, pageSize);
 
                 var items = rows.Select(x => new UserItem
                 {

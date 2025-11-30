@@ -56,9 +56,12 @@ namespace api.Controllers
         }
 
         [HttpPost("refreshpassword")]
-        [Authorize(Roles = "ADMIN")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<RefreshPasswordResponse>>> RefreshPassword([FromForm] RefreshPasswordRequest req)
         {
+            if (!JwtHelper.IsAdmin(User))
+                return Forbid("Chỉ ADMIN mới được phép thực hiện thao tác này.");
+
             var res = await _authService.RefreshPasswordToUserIdAsync(req);
             return Ok(new ApiResponse<RefreshPasswordResponse> { Status = "200", Message = "Làm mới mật khẩu thành công.", Data = res });
         }
