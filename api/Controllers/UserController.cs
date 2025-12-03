@@ -70,7 +70,7 @@ namespace api.Controllers
             if (!isAdmin && !string.Equals(usernameFromToken, req.TenDangNhap, StringComparison.OrdinalIgnoreCase))
                 ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Bạn không thể cập nhật hồ sơ của người khác.");
 
-            var data = await _svc.UpdateProfileAsync(req, usernameFromToken);
+            var data = await _svc.UpdateProfileAsync(req, usernameFromToken!);
             return Ok(new ApiResponse<UpdateUserProfileResponse> { Status = "200", Message = "Cập nhật người dùng thành công.", Data = data });
         }
 

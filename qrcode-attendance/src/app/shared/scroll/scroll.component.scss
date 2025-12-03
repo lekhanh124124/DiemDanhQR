@@ -1,0 +1,11 @@
+.scroll-wrapper {
+  overflow: auto;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Hide WebKit scrollbar while preserving scrolling capability */
+.scroll-wrapper::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}

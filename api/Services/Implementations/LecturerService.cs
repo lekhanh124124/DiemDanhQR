@@ -266,7 +266,7 @@ namespace api.Services.Implementations
             });
             await _repo.SaveChangesAsync();
 
-            var role = await _permissionRepo.GetRoleByIdAsync(user.MaQuyen);
+            var role = await _permissionRepo.GetRoleByIdAsync((int)user.MaQuyen!);
             var department = await _academicRepo.GetKhoaByIdAsync(gv.MaKhoa!.Value);
 
             return new UpdateLecturerResponse

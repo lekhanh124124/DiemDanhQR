@@ -1,0 +1,190 @@
+<div>
+  <div class="mb-3 p-3 rounded flex flex-wrap justify-between items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <input nz-input placeholder="Nhập để tìm kiếm" [(ngModel)]="keyword" class="border rounded px-2 py-1 w-full sm:w-[260px] min-w-0" (keyup.enter)="onSearch()" />
+
+      <button nz-button nzType="primary" (click)="onSearch()" class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center min-w-0 whitespace-nowrap">
+        <i nz-icon nzType="search" class="mr-1 text-[16px] font-bold"></i>
+        <span class="truncate">Tìm kiếm</span>
+      </button>
+
+      <button nz-button (click)="refreshList()" class="flex items-center border rounded px-3 py-1 font-semibold min-w-0 whitespace-nowrap">
+        <i nz-icon nzType="reload" class="mr-1"></i>
+        <span class="truncate">Làm mới</span>
+      </button>
+
+      <a nz-dropdown [nzDropdownMenu]="advRooms" nzTrigger="click">
+        <button nz-button class="flex items-center border rounded px-3 py-1 font-semibold min-w-0 whitespace-nowrap">
+          <i nz-icon nzType="filter" class="mr-1"></i>
+          <span class="truncate">Tìm nâng cao</span>
+          <i nz-icon nzType="down" class="ml-1"></i>
+        </button>
+      </a>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button nz-button nzType="primary" (click)="openCreate()"
+        class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center">
+        <i nz-icon nzType="plus" class="mr-1 text-[16px] font-bold"></i>
+        <span>Thêm phòng</span>
+      </button>
+      <button *ngIf="setOfCheckedId.size > 0" nz-button nzType="default" nzDanger (click)="deleteSelected()"
+        class="border rounded px-3 py-1 flex items-center">
+        <i nz-icon nzType="stop" class="mr-1"></i>
+        <span>Vô hiệu hóa đã chọn ({{ setOfCheckedId.size }})</span>
+      </button>
+    </div>
+  </div>
+
+  <nz-dropdown-menu #advRooms="nzDropdownMenu">
+    <div nz-menu class="p-3" style="min-width:320px">
+      <div class="text-sm font-semibold mb-2">Bộ lọc nâng cao</div>
+
+      <div class="grid grid-cols-1 gap-2">
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Tên phòng</label>
+          <input nz-input placeholder="Tên phòng" [(ngModel)]="filterTenPhong" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Tòa nhà</label>
+          <input nz-input placeholder="Tòa nhà" [(ngModel)]="filterToaNha" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Tầng</label>
+          <input nz-input placeholder="Tầng" [(ngModel)]="filterTang" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Sức chứa</label>
+          <input nz-input placeholder="Sức chứa" [(ngModel)]="filterSucChua" />
+        </div>
+
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Trạng thái</label>
+          <nz-select [(ngModel)]="filterTrangThai" nzAllowClear nzPlaceHolder="Chọn trạng thái">
+            <nz-option [nzLabel]="'Hoạt động'" [nzValue]="true"></nz-option>
+            <nz-option [nzLabel]="'Ngừng hoạt động'" [nzValue]="false"></nz-option>
+          </nz-select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-3">
+        <button nz-button (click)="refreshList()">Làm mới</button>
+        <button nz-button nzType="primary" (click)="onFilterChange()">Tìm kiếm</button>
+      </div>
+    </div>
+  </nz-dropdown-menu>
+
+  <app-scroll-table [height]="'450px'">
+    <nz-table [nzBordered]="true" [nzLoading]="loading" [nzData]="rooms" [nzFrontPagination]="false"
+      [nzShowPagination]="false" [nzNoResult]="emptyTpl" (nzCurrentPageDataChange)="onCurrentPageDataChange($event)">
+    <thead>
+      <tr>
+        <th [nzChecked]="checked" [nzIndeterminate]="indeterminate" (nzCheckedChange)="onAllChecked($event)"
+          nzWidth="48px"></th>
+        <th style="width:64px; text-align:center">Thao tác</th>
+        <th style="font-weight:bold; cursor:pointer;" (click)="changeSort('MaPhong')">Mã phòng
+          <i nz-icon [nzType]="sortBy === 'MaPhong' ? (sortDir === 'ASC' ? 'caret-up' : 'caret-down') : 'caret-up'" class="ml-1 text-sm"></i>
+        </th>
+        <th style="font-weight:bold; cursor:pointer;" (click)="changeSort('TenPhong')">Tên phòng
+          <i nz-icon [nzType]="sortBy === 'TenPhong' ? (sortDir === 'ASC' ? 'caret-up' : 'caret-down') : 'caret-up'" class="ml-1 text-sm"></i>
+        </th>
+        <th style="font-weight:bold; cursor:pointer;" (click)="changeSort('ToaNha')">Tòa nhà
+          <i nz-icon [nzType]="sortBy === 'ToaNha' ? (sortDir === 'ASC' ? 'caret-up' : 'caret-down') : 'caret-up'" class="ml-1 text-sm"></i>
+        </th>
+        <th style="font-weight:bold; cursor:pointer;" (click)="changeSort('Tang')">Tầng
+          <i nz-icon [nzType]="sortBy === 'Tang' ? (sortDir === 'ASC' ? 'caret-up' : 'caret-down') : 'caret-up'" class="ml-1 text-sm"></i>
+        </th>
+        <th style="font-weight:bold; cursor:pointer;" (click)="changeSort('SucChua')">Sức chứa
+          <i nz-icon [nzType]="sortBy === 'SucChua' ? (sortDir === 'ASC' ? 'caret-up' : 'caret-down') : 'caret-up'" class="ml-1 text-sm"></i>
+        </th>
+        <th>Trạng thái</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of rooms">
+        <td [nzChecked]="setOfCheckedId.has(getRowKey(r))" (nzCheckedChange)="onItemChecked(getRowKey(r), $event)"
+          nzWidth="48px"></td>
+        <td class="text-center">
+          <a nz-dropdown [nzDropdownMenu]="menu" nzTrigger="hover">
+            <span nz-icon nzType="bars" nzTheme="outline"></span>
+          </a>
+          <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu nzSelectable>
+              <li nz-menu-item (click)="openEdit(r)">
+                <span nz-icon nzType="edit" class="mr-1"></span>
+                Chỉnh sửa
+              </li>
+              <li nz-menu-item (click)="delete(r)">
+                <span nz-icon nzType="stop" class="mr-1" style="color:red"></span>
+                Vô hiệu hóa
+              </li>
+              <li nz-menu-item (click)="navigateToSchedules(r)">
+                <span nz-icon nzType="calendar" class="mr-1"></span>
+                Lịch học trong phòng
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </td>
+        <td>{{ r.maPhong }}</td>
+        <td>{{ r.tenPhong }}</td>
+        <td>{{ r.toaNha }}</td>
+        <td>{{ r.tang }}</td>
+        <td>{{ r.sucChua }}</td>
+        <td>
+          <app-status-pill [state]="r.trangThai"></app-status-pill>
+        </td>
+      </tr>
+    </tbody>
+    </nz-table>
+  </app-scroll-table>
+
+  <nz-pagination [nzTotal]="total" [nzPageSize]="pageSize" [(nzPageIndex)]="page"
+    (nzPageIndexChange)="onPageChange($event)" [nzShowSizeChanger]="false" class="mt-3 flex justify-end">
+  </nz-pagination>
+
+  <!-- Empty state -->
+  <ng-template #emptyTpl>
+    <app-table-empty></app-table-empty>
+  </ng-template>
+
+  <nz-modal [(nzVisible)]="isCreateVisible" nzTitle="Thêm phòng" (nzOnCancel)="cancel()" (nzOnOk)="create()"
+    [nzOkLoading]="creating" nzOkText="Lưu" nzCancelText="Hủy">
+    <ng-container *nzModalContent>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><label>Tên phòng</label><input nz-input [(ngModel)]="newRoom.TenPhong" /></div>
+        <div><label>Tòa nhà</label><input nz-input [(ngModel)]="newRoom.ToaNha" /></div>
+        <div><label>Tầng</label><input nz-input type="number" [(ngModel)]="newRoom.Tang" /></div>
+        <div><label>Sức chứa</label><input nz-input type="number" [(ngModel)]="newRoom.SucChua" /></div>
+        <div><label>Trạng thái</label>
+          <nz-select [(ngModel)]="newRoom.TrangThai">
+            <nz-option [nzLabel]="'Hoạt động'" [nzValue]="true"></nz-option>
+            <nz-option [nzLabel]="'Ngừng hoạt động'" [nzValue]="false"></nz-option>
+          </nz-select>
+        </div>
+      </div>
+    </ng-container>
+  </nz-modal>
+
+  <!-- Edit modal -->
+  <nz-modal [(nzVisible)]="isEditVisible" nzTitle="Sửa phòng" (nzOnCancel)="cancel()" (nzOnOk)="update()"
+    [nzOkLoading]="updating" nzOkText="Lưu" nzCancelText="Hủy">
+    <ng-container *nzModalContent>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><label>Mã phòng</label><input nz-input [(ngModel)]="selectedRoom.MaPhong" disabled /></div>
+        <div><label>Tên phòng</label><input nz-input [(ngModel)]="selectedRoom.TenPhong" /></div>
+        <div><label>Tòa nhà</label><input nz-input [(ngModel)]="selectedRoom.ToaNha" /></div>
+        <div><label>Tầng</label><input nz-input type="number" [(ngModel)]="selectedRoom.Tang" /></div>
+        <div><label>Sức chứa</label><input nz-input type="number" [(ngModel)]="selectedRoom.SucChua" /></div>
+        <div><label>Trạng thái</label>
+          <nz-select [(ngModel)]="selectedRoom.TrangThai">
+            <nz-option [nzLabel]="'Hoạt động'" [nzValue]="true"></nz-option>
+            <nz-option [nzLabel]="'Ngừng hoạt động'" [nzValue]="false"></nz-option>
+          </nz-select>
+        </div>
+      </div>
+    </ng-container>
+  </nz-modal>
+</div>

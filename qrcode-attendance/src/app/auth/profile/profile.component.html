@@ -1,0 +1,140 @@
+<div class="w-full bg-gray-50">
+  <div class="min-h-screen w-full bg-gray-100">
+    <div class="max-w-6xl mx-auto px-4 pt-6 pb-12">
+      <div class="p-6 bg-white rounded-2xl shadow-md" *ngIf="userInfo; else loading">
+        <h2 class="text-xl font-semibold mb-5 flex items-center gap-2">
+          <i nz-icon nzType="user" nzTheme="outline" class="text-blue-500"></i>
+          Thông tin cá nhân
+        </h2>
+
+        <div nz-row [nzGutter]="24">
+          <div class="mb-4" *ngIf="userInfo._isFallback">
+            <nz-alert nzType="warning" nzShowIcon
+              nzMessage="Tài khoản chưa có hồ sơ Sinh viên/Giảng viên. Đang hiển thị thông tin tài khoản cơ bản."></nz-alert>
+          </div>
+          <!-- Ảnh và tên -->
+          <div nz-col [nzSpan]="8" class="text-center">
+            <img [src]="avatarUrl" (error)="onAvatarError($event)" alt="Ảnh đại diện"
+              class="rounded-full mx-auto mb-3 shadow-md border border-gray-200"
+              style="width: 150px; height: 150px; object-fit: cover;" />
+            <p class="text-lg font-semibold">{{ userInfo.hoTen }}</p>
+            <p class="text-gray-500 text-sm">
+              Mã người dùng: <span class="font-medium">{{ userInfo.maNguoiDung }}</span>
+            </p>
+            <div class="mt-3">
+              <button nz-button nzType="primary" nzSize="small" class="profile-edit-btn" (click)="openEdit()">
+                <i nz-icon nzType="edit" class="mr-1"></i>
+                Chỉnh sửa
+              </button>
+            </div>
+          </div>
+
+          <!-- Thông tin cơ bản -->
+          <div nz-col [nzSpan]="16">
+            <nz-descriptions nzBordered [nzColumn]="1">
+              <nz-descriptions-item nzTitle="Email">
+                {{ userInfo.email }}
+              </nz-descriptions-item>
+
+              <nz-descriptions-item nzTitle="Số điện thoại">
+                {{ userInfo.soDienThoai }}
+              </nz-descriptions-item>
+
+              <nz-descriptions-item nzTitle="Giới tính">
+                {{ userInfo.gioiTinh }}
+              </nz-descriptions-item>
+
+              <nz-descriptions-item nzTitle="Ngày sinh">
+                {{ userInfo.ngaySinh }}
+              </nz-descriptions-item>
+
+              <nz-descriptions-item nzTitle="Địa chỉ">
+                {{ userInfo.diaChi }}
+              </nz-descriptions-item>
+
+              <nz-descriptions-item nzTitle="Trạng thái">
+                <app-status-pill [state]="userInfo.trangThai"></app-status-pill>
+              </nz-descriptions-item>
+              <div class="mt-4 text-right">
+                <app-status-pill [state]="userInfo.trangThai"></app-status-pill>
+              </div>
+
+              <!-- Giảng viên -->
+              <ng-container *ngIf="roleCode === 'GV'">
+                <nz-descriptions-item nzTitle="Mã giảng viên">
+                  {{ userInfo.maGiangVien }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Khoa">
+                  {{ userInfo.khoa }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Học hàm">
+                  {{ userInfo.hocHam }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Học vị">
+                  {{ userInfo.hocVi }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Ngày tuyển dụng">
+                  {{ userInfo.ngayTuyenDung }}
+                </nz-descriptions-item>
+              </ng-container>
+
+              <!-- Sinh viên -->
+              <ng-container *ngIf="roleCode === 'SV'">
+                <nz-descriptions-item nzTitle="Mã sinh viên">
+                  {{ userInfo.maSinhVien }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Ngành học">
+                  {{ userInfo.nganh }}
+                </nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Năm nhập học">
+                  {{ userInfo.namNhapHoc }}
+                </nz-descriptions-item>
+              </ng-container>
+
+              <!-- Admin -->
+              <ng-container *ngIf="roleCode === 'ADMIN'">
+                <nz-descriptions-item nzTitle="Quyền hạn">
+                  {{ userInfo.roleCode }}
+                </nz-descriptions-item>
+              </ng-container>
+            </nz-descriptions>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <ng-template #loading>
+    <div class="flex items-center justify-center gap-5 py-20">
+      <nz-spin></nz-spin>
+      <span class="text-gray-600 text-base">Đang tải thông tin...</span>
+    </div>
+  </ng-template>
+
+  <!-- Edit modal -->
+  <nz-modal [(nzVisible)]="isEditVisible" nzTitle="Chỉnh sửa thông tin cá nhân" (nzOnCancel)="isEditVisible=false" (nzOnOk)="saveProfile()" [nzOkLoading]="saving" nzOkText="Lưu" nzCancelText="Hủy">
+    <ng-container *nzModalContent>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="text-center md:col-span-1 profile-avatar-col">
+          <div class="avatar-preview">
+            <img [src]="avatarPreview || avatarUrl" alt="Ảnh đại diện" class="rounded-full shadow-md" />
+          </div>
+          <label class="file-input-label">
+            <input type="file" (change)="onFileChange($event)" accept="image/*" />
+            <span class="choose-txt">Chọn tệp</span>
+          </label>
+        </div>
+        <div class="md:col-span-1 grid grid-cols-1 gap-2">
+          <label>Email</label>
+          <input nz-input [(ngModel)]="editModel.Email" />
+          <label>Số điện thoại</label>
+          <input nz-input [(ngModel)]="editModel.SoDienThoai" />
+          <label>Ngày sinh</label>
+          <input nz-input type="date" [(ngModel)]="editModel.NgaySinh" />
+          <label>Địa chỉ</label>
+          <input nz-input [(ngModel)]="editModel.DiaChi" />
+        </div>
+      </div>
+    </ng-container>
+  </nz-modal>

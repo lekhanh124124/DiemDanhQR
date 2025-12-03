@@ -1,0 +1,7 @@
+/* minimal styling for admin user list */
+:host { display: block; }
+
+/* Hide any other pagination instances rendered inside this route to avoid duplicates.
+	The local pager (the one we want) has class `local-pager` and will be shown. */
+:host ::ng-deep nz-pagination { display: none !important; }
+:host ::ng-deep .local-pager { display: flex !important; }

@@ -1,0 +1,250 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+	Make table bodies scroll internally (keep table header visible) for all ng-zorro / ant-design tables.
+	This causes the scrollbar to appear inside the table area instead of the whole page — matches the screenshot.
+	Adjust max-height as needed per layout; using viewport-based value keeps it responsive.
+*/
+/* Stronger rules to ensure table bodies scroll internally across the app. */
+
+
+.ant-dropdown,
+.ant-dropdown .ant-dropdown-menu {
+	border-radius: 8px;
+	overflow: hidden;
+	background-color: #f5f7fa;
+	border: 1px solid rgba(0,0,0,0.06);
+}
+.ant-dropdown .ant-dropdown-menu {
+	box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+.ant-modal label.mb-1,
+.ant-modal .grid > div > label,
+.ant-modal .ant-row > div > label {
+	font-weight: 600 !important;
+	color: #1f2937 !important;
+}
+
+.ant-modal {
+	--modal-radius: 12px;
+}
+.ant-modal .ant-modal-content {
+	border-radius: var(--modal-radius);
+	border: 1px solid rgba(15,23,42,0.06);
+	box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+	overflow: hidden;
+	transition: transform 160ms cubic-bezier(.2,.8,.2,1), box-shadow 160ms;
+}
+.ant-modal-header {
+	padding: 16px 24px;
+	border-bottom: 1px solid rgba(2,6,23,0.04);
+	font-weight: 600;
+}
+.ant-modal-footer {
+	padding: 12px 24px;
+	border-top: 1px solid rgba(2,6,23,0.04);
+	background: transparent;
+}
+.ant-modal-close {
+	width: 44px;
+	height: 44px;
+	line-height: 44px;
+	border-radius: 999px;
+}
+.ant-modal-mask {
+	background-color: rgba(3,6,23,0.45);
+	backdrop-filter: blur(3px);
+}
+
+.ant-modal .ant-input:focus, .ant-modal .ant-select-focused {
+	box-shadow: 0 0 0 4px rgba(99,102,241,0.08);
+	outline: none;
+}
+
+.ant-modal .ant-form-item-control-input input[type="file"],
+.ant-modal .ant-upload,
+.ant-modal .file-input-box {
+	border: 1px solid rgba(15,23,42,0.08);
+	border-radius: 8px;
+	padding: 8px 12px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	background: #ffffff;
+	min-height: 44px;
+	box-sizing: border-box;
+}
+
+.ant-modal .ant-upload .ant-upload-btn,
+.ant-modal input[type="file"]::-webkit-file-upload-button {
+	appearance: none;
+	-webkit-appearance: none;
+	background: linear-gradient(#f3f4f6,#eef2ff);
+	border: 1px solid rgba(15,23,42,0.06);
+	color: #111827;
+	padding: 6px 10px;
+	border-radius: 6px;
+	font-size: 13px;
+}
+
+.ant-modal .ant-upload-text,
+.ant-modal .ant-form-item-control-input input[type="file"] {
+	color: #374151;
+	font-size: 14px;
+}
+
+@media (max-width: 640px) {
+	.ant-modal .ant-form-item-control-input input[type="file"],
+	.ant-modal .ant-upload,
+	.ant-modal .file-input-box {
+		min-height: 40px;
+		padding: 8px;
+	}
+}
+
+/* Box controls inside modals and spacing between adjacent fields */
+.ant-modal .ant-form-item {
+	margin-bottom: 12px; /* consistent vertical rhythm inside modal */
+}
+.ant-modal .ant-form-item-control-wrapper,
+.ant-modal .ant-form-item-control {
+	width: 100%;
+}
+.ant-modal .ant-input,
+.ant-modal .ant-select-selector,
+.ant-modal .ant-input-number,
+.ant-modal .ant-select .ant-select-selector,
+.ant-modal .ant-picker,
+.ant-modal textarea {
+	border: 1px solid rgba(15,23,42,0.08);
+	border-radius: 8px;
+	padding: 8px 12px;
+	background: #fff;
+	box-shadow: none;
+	transition: border-color .15s ease, box-shadow .15s ease;
+}
+.ant-modal .ant-select .ant-select-selector {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+}
+.ant-modal .ant-select .ant-select-arrow {
+	right: 12px;
+}
+.ant-modal .ant-select-focused .ant-select-selector,
+.ant-modal .ant-input:focus,
+.ant-modal .ant-picker-focused {
+	border-color: rgba(99,102,241,0.6) !important;
+	box-shadow: 0 0 0 4px rgba(99,102,241,0.08);
+}
+
+/* Improve select vertical sizing and prevent clipped edges inside modals */
+.ant-modal .ant-select .ant-select-selector {
+	/* match other inputs: fixed height so selects don't look too tall or too short */
+	min-height: 44px;
+	height: 44px;
+	padding: 0 40px 0 12px; /* reserve space on right for arrow */
+	align-items: center; /* vertical center placeholder/selection */
+	border-radius: 8px;
+	box-sizing: border-box;
+}
+.ant-modal .ant-select .ant-select-selection-placeholder,
+.ant-modal .ant-select .ant-select-selection-item {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+	line-height: 1; /* avoid extra vertical spacing */
+}
+.ant-modal .ant-select .ant-select-arrow {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	right: 12px;
+	pointer-events: none;
+}
+
+/* Ensure select height exactly matches text inputs and pickers */
+.ant-modal .ant-input,
+.ant-modal .ant-select .ant-select-selector,
+.ant-modal .ant-picker {
+	min-height: 44px;
+	height: 44px;
+}
+
+/* When a select is clearable or focused, ensure arrow and text don't overlap */
+.ant-modal .ant-select-clear,
+.ant-modal .ant-select-suffix {
+	right: 36px;
+}
+
+/* Reduce visual clipping inside modal edges */
+.ant-modal .ant-modal-content {
+	overflow: visible;
+}
+
+/* Ensure selects expand horizontally in modals and don't appear cut off */
+.ant-modal .ant-select {
+	width: 100% !important;
+	min-width: 180px; /* prevents tiny square selects */
+}
+.ant-modal .ant-select.ant-select-single .ant-select-selector {
+	width: 100% !important;
+}
+.ant-modal .modal-row > .ant-form-item {
+	min-width: 180px; /* side-by-side fields won't collapse too small */
+}
+.ant-modal .ant-form-item-label {
+	padding-right: 12px;
+}
+
+/* Horizontal form rows: use a utility class `.modal-row` for form layouts where fields are side-by-side */
+.ant-modal .modal-row {
+	display: flex;
+	gap: 12px;
+	align-items: stretch;
+}
+.ant-modal .modal-row > .ant-form-item {
+	flex: 1 1 0;
+	margin-bottom: 0; /* parent controls spacing */
+}
+
+/* Prevent controls from visually touching the modal edge */
+.ant-modal .ant-modal-body {
+	padding: 18px 22px 20px;
+}
+
+/* Small screens: stack modal rows */
+@media (max-width: 640px) {
+	.ant-modal .modal-row { flex-direction: column; gap: 10px; }
+	.ant-modal .ant-input, .ant-modal .ant-select-selector { min-height: 40px; padding: 8px; }
+}
+
+.course-list-table .ant-table-placeholder {
+	display: none !important;
+}
+
+
+.table-empty nz-empty {
+	--empty-image-size: 96px;
+}
+.table-empty nz-empty .ant-empty-image {
+	width: var(--empty-image-size);
+	height: var(--empty-image-size);
+}
+.table-empty nz-empty .ant-empty-description {
+	color: #6b7280; /* text-gray-500 */
+	font-size: 14px;
+	margin-top: 8px;
+}
+.table-empty { padding: 28px 0; }
+
+/* Force specific dropdown overlays to use fixed positioning so they are not clipped by transformed/overflowed ancestors */
+.adv-filter-overlay {
+	position: fixed !important;
+	z-index: 1200 !important;
+}
+

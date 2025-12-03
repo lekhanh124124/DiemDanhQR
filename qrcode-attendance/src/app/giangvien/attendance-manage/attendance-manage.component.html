@@ -1,0 +1,99 @@
+<div class="p-4">
+  <h2 class="text-xl font-semibold mb-3">Quản lý điểm danh</h2>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 items-center">
+    <nz-select [(ngModel)]="selectedClass" nzPlaceHolder="Chọn lớp HP" nzShowSearch
+      class="!border-[0.5px] !border-gray-300 !rounded-md">
+      <nz-option *ngFor="let c of classes" [nzValue]="c.maLopHocPhan" [nzLabel]="c.tenLopHocPhan"></nz-option>
+    </nz-select>
+    <input nz-input type="date" [(ngModel)]="selectedDate" class="!border-[0.5px] !border-gray-300 !rounded-md" />
+    <div class="flex items-center gap-2 flex-wrap">
+      <button nz-button nzType="primary" class="!rounded-lg !border !border-blue-600 flex items-center min-w-0 w-full sm:w-auto justify-center px-3 font-semibold"
+        (click)="loadAttendance()">
+        <i nz-icon nzType="search" class="mr-2"></i>
+        <span class="truncate">Tìm kiếm</span>
+      </button>
+      <button nz-button nzType="default"
+        class="!rounded-lg !border !border-gray-300 text-gray-700 bg-white flex items-center min-w-0 w-full sm:w-auto justify-center px-3 hover:!bg-gray-50 font-semibold"
+        (click)="refreshAttendance()">
+        <i nz-icon nzType="reload" class="mr-2"></i>
+        <span class="truncate">Làm mới</span>
+      </button>
+    </div>
+    <div></div>
+  </div>
+
+  <div class="mb-4 p-4 bg-white rounded shadow flex flex-wrap items-center justify-between gap-3">
+    <!-- Thống kê -->
+    <div class="text-sm font-semibold bg-gray-50 border border-gray-200 rounded-lg p-3">
+      <div class="mb-1">
+        Tổng sinh viên: <span class="font-bold text-gray-800">{{ classSize || totalRecords }}</span>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <span> Có mặt: <span class="font-bold text-green-600">{{ presentCount }}</span> </span>
+        <span> Vắng: <span class="font-bold text-red-600">{{ absentCount }}</span> </span>
+        <span> Muộn: <span class="font-bold text-yellow-600">{{ lateCount }}</span> </span>
+      </div>
+    </div>
+
+    <!-- Nút -->
+    <div class="flex items-center flex-wrap gap-2">
+      <button nz-button nzType="primary" class="!rounded-lg !border !border-blue-600 flex items-center"
+        [disabled]="processingSaveAll" (click)="saveAllHandmarks()">
+        <i nz-icon nzType="save" class="mr-2"></i>
+        <span>Lưu</span>
+      </button>
+      <button nz-button nzType="default"
+        class="!bg-green-500 !border !border-green-500 text-white !rounded-lg flex items-center hover:!bg-green-600"
+        (click)="exportExcel()">
+        <i nz-icon nzType="file-excel" class="mr-2 text-white "></i>
+        <span>Export Excel</span>
+      </button>
+      <button nz-button nzType="default"
+        class="!bg-red-500 !border !border-red-500 text-white !rounded-lg flex items-center hover:!bg-red-600"
+        (click)="exportPdf()">
+        <i nz-icon nzType="file-pdf" class="mr-2 text-white"></i>
+        <span>Export PDF</span>
+      </button>
+    </div>
+  </div>
+
+  <app-scroll-table [height]="'520px'">
+  <nz-table [nzData]="records" nzBordered [nzNoResult]="emptyTpl" [nzLoading]="loading">
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th>Mã SV</th>
+        <th>Họ tên</th>
+        <th>Thời gian quét</th>
+        <th>Trạng thái</th>
+        <th>Ghi chú</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of records; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ r.maSinhVien || r.MaSinhVien }}</td>
+        <td>{{ r.hoTen || r.HoTen }}</td>
+        <td>{{ r.thoiGianQuet || r.ThoiGianQuet || '—' }}</td>
+        <td>
+          <nz-radio-group [(ngModel)]="r._editStatus">
+            <label nz-radio nzValue="CÓ MẶT" style="display:block;margin-bottom:6px">Có mặt</label>
+            <label nz-radio nzValue="ĐI TRỄ" style="display:block;margin-bottom:6px">Đi trễ</label>
+            <label nz-radio nzValue="VẮNG KHÔNG PHÉP" style="display:block;margin-bottom:6px">Vắng không phép</label>
+            <label nz-radio nzValue="VẮNG CÓ PHÉP" style="display:block;margin-bottom:6px">Vắng có phép</label>
+            <label nz-radio nzValue="ĐIỂM DANH SAI VỊ TRÍ GPS" style="display:block;margin-bottom:6px">Điểm danh sai vị
+              trí GPS</label>
+          </nz-radio-group>
+        </td>
+        <td>
+          <input nz-input [(ngModel)]="r._editLyDo" placeholder="Lý do" />
+        </td>
+
+      </tr>
+    </tbody>
+  </nz-table>
+  </app-scroll-table>
+  <ng-template #emptyTpl>
+    <app-table-empty></app-table-empty>
+  </ng-template>
+</div>

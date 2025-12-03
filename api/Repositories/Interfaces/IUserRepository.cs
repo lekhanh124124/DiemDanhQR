@@ -29,7 +29,7 @@ namespace api.Repositories.Interfaces
             int pageSize);
 
         // Thêm: tìm kiếm danh sách người dùng
-        Task<(List<(NguoiDung User, PhanQuyen Role)> Items, int Total)> SearchUsersAsync(
+        Task<(List<(NguoiDung User, PhanQuyen? Role)> Items, int Total)> SearchUsersAsync(
             string? tenDangNhap,
             string? hoTen,
             int? maQuyen,
@@ -39,5 +39,6 @@ namespace api.Repositories.Interfaces
             bool desc,
             int page,
             int pageSize);
+
     }
 }

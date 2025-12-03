@@ -1,0 +1,13 @@
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px);
+  overflow: hidden;
+}
+
+.table-container {
+  flex: 1;
+  overflow-y: auto; 
+  overflow-x: hidden;
+  padding-bottom: 8px;
+}

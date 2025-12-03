@@ -1,0 +1,27 @@
+.status-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap; /* prevent label from wrapping */
+  text-align: center; /* center text inside the pill */
+  min-width: 96px; /* ensure enough room for longer labels */
+  vertical-align: middle; /* help center within table cells */
+}
+.status-pill.active {
+  background: #22c55e; /* green-500 */
+}
+.status-pill.inactive {
+  background: #ef4444; /* red-500 */
+}
+/* compact variant for tighter table columns */
+.status-pill.compact {
+  padding: 4px 8px;
+  min-width: 64px;
+  border-radius: 6px;
+  font-size: 12px;
+}

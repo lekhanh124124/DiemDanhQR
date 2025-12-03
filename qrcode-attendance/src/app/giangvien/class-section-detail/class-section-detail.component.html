@@ -1,0 +1,85 @@
+<nz-tabset [(nzSelectedIndex)]="selectedTabIndex">
+  <!-- TAB 1: Danh sách sinh viên -->
+  <nz-tab nzTitle="Danh sách sinh viên">
+    <app-scroll-table [height]="'400px'">
+      <nz-table #studentTable [nzData]="studentsPaged" nzBordered [nzNoResult]="emptyTpl" [nzFrontPagination]="false"
+        [nzShowPagination]="false">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Mã SV</th>
+            <th>Họ và tên</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sv of studentTable.data; let i = index">
+            <td>{{ (studentsPage - 1) * studentsPageSize + i + 1 }}</td>
+            <td>{{ sv.maSinhVien }}</td>
+            <td>{{ sv.hoTen }}</td>
+            <td class="text-center">
+              <app-status-pill [state]="sv.thamGiaTrangThai"></app-status-pill>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </app-scroll-table>
+    <div class="mt-2 flex justify-end">
+      <nz-pagination [nzTotal]="students.length" [nzPageIndex]="studentsPage" [nzPageSize]="studentsPageSize"
+        (nzPageIndexChange)="onStudentsPageChange($event)"></nz-pagination>
+    </div>
+  </nz-tab>
+
+  <ng-template #emptyTpl>
+    <app-table-empty></app-table-empty>
+  </ng-template>
+
+  <!-- TAB 2: Thời khóa biểu -->
+  <nz-tab nzTitle="Thời khóa biểu">
+    <div class="mb-3 flex items-center justify-between">
+      <div></div>
+      <div>
+      </div>
+    </div>
+    <app-scroll-table [height]="'400px'">
+      <nz-table #scheduleTable [nzData]="schedulesPaged" nzBordered [nzFrontPagination]="false"
+        [nzShowPagination]="false" [nzNoResult]="emptyTpl">
+        <thead>
+          <tr>
+            <th>Ngày</th>
+            <th>Tiết bắt đầu</th>
+            <th>Số tiết</th>
+            <th>Phòng</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of scheduleTable.data"
+            [class.selected-row]="selectedScheduleId && (selectedScheduleId == (s.maBuoi + ''))">
+            <td>{{ s.ngayHoc }}</td>
+            <td>{{ s.tietBatDau }}</td>
+            <td>{{ s.soTiet }}</td>
+            <td>{{ s.tenPhong }}</td>
+            <td class="flex items-center gap-3">
+              <button nz-button nzType="primary"
+                class="!rounded-lg !px-4 !py-2 !font-semibold !flex !items-center !gap-2 !shadow-sm hover:!shadow-md transition-all"
+                (click)="handleCreateQr(s)">
+                <i nz-icon nzType="qrcode"></i>
+                Tạo QR
+              </button>
+
+              <span *ngIf="selectedScheduleId && (selectedScheduleId == (s.maBuoi + ''))"
+                class="selected-badge text-sm text-blue-600 font-medium">
+                Đang tạo QR
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </app-scroll-table>
+    <div class="mt-2 flex justify-end">
+      <nz-pagination [nzTotal]="schedules.length" [nzPageIndex]="schedulesPage" [nzPageSize]="schedulesPageSize"
+        (nzPageIndexChange)="onSchedulesPageChange($event)"></nz-pagination>
+    </div>
+  </nz-tab>
+</nz-tabset>

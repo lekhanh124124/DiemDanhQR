@@ -1,0 +1,105 @@
+<div class="p-4">
+
+  <div *ngIf="tab==='week'">
+    <div class="toolbar mb-4 flex gap-2 items-center">
+      <nz-date-picker [(ngModel)]="selectedDate" (ngModelChange)="generateWeek()"></nz-date-picker>
+      <button nz-button nzType="default" (click)="goToToday()">Hiện tại</button>
+      <button nz-button nzType="default" (click)="prevWeek()">< Trước</button>
+      <button nz-button nzType="default" (click)="nextWeek()">Sau ></button>
+    </div>
+
+    <nz-table nzBordered [nzNoResult]="emptyTpl">
+      <thead>
+        <tr>
+          <th class="text-center">Ca học</th>
+          <th *ngFor="let day of currentWeek" class="text-center">
+            {{ day.label }}<br />
+            {{ day.date | date:'dd/MM/yyyy' }}
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let ca of caHoc">
+          <td class="text-center font-medium">{{ ca }}</td>
+
+          <td *ngFor="let day of currentWeek" class="align-top">
+            <ng-container *ngFor="let buoi of schedules">
+              <div *ngIf="buoi.ngayKey === day.key && getCa(buoi.tietBatDau) === ca"
+                class="p-2 m-1 rounded-md shadow-sm text-sm" [ngStyle]="getStyle(buoi)">
+                <strong>{{ buoi.tenMonHoc || buoi.TenMonHoc }}</strong><br />
+                {{ buoi.maLopHocPhan || buoi.MaLopHocPhan }}<br />
+                Tiết: {{ buoi.tietBatDau || buoi.TietBatDau }} ({{ buoi.soTiet || buoi.SoTiet }} tiết)<br />
+                Phòng: {{ buoi.tenPhong || buoi.TenPhong }}
+              </div>
+            </ng-container>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+    <ng-template #emptyTpl></ng-template>
+
+    <div class="legend mt-4 flex gap-4">
+      <span class="legend-item"><span class="box lt"></span> Lý thuyết</span>
+      <span class="legend-item"><span class="box th"></span> Thực hành</span>
+      <span class="legend-item"><span class="box lth"></span> Lý thuyết + Thực hành</span>
+    </div>
+  </div>
+
+  <div *ngIf="tab==='progress'">
+    <div class="mb-4">
+      <label class="mr-2 font-semibold">Học kỳ</label>
+      <select [(ngModel)]="selectedSemesterKey" class="border rounded p-1" style="min-width:220px">
+        <option [ngValue]="null">— Chọn học kỳ —</option>
+        <option *ngFor="let hk of semesters" [ngValue]="hk.key">{{ hk.key }}</option>
+      </select>
+      <button class="ml-2 px-3 py-1 border rounded bg-blue-600 text-white" (click)="loadSchedule()">Xem lịch</button>
+    </div>
+
+    <div *ngIf="!selectedSemesterKey && semesters.length" class="text-sm text-gray-600 mb-2">Vui lòng chọn học kỳ</div>
+
+    <div *ngIf="selectedSemesterKey" class="mb-6">
+      <h4 class="font-semibold text-blue-600 mb-2">{{ selectedSemesterKey }}</h4>
+
+      <nz-table nzBordered [nzData]="progressList">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Mã lớp học phần</th>
+            <th>Tên môn học/học phần</th>
+            <th>TC</th>
+            <th>Thứ</th>
+            <th>Tiết</th>
+            <th>Loại lịch</th>
+            <th>Phòng</th>
+            <th>Nhóm</th>
+            <th>Giờ</th>
+            <th>Bắt đầu</th>
+            <th>Kết thúc</th>
+            <th>Mã giảng viên</th>
+            <th>Giảng viên</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of progressList; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ s?.MaLopHocPhan || s?.maLopHocPhan || s?.maLop }}</td>
+            <td>{{ s?.TenMonHoc || s?.tenMonHoc || s?.ten }}</td>
+            <td>{{ s?.SoTinChi || s?.soTinChi || s?.tinChi || '-' }}</td>
+            <td>{{ weekdayLabel(s) }}</td>
+            <td>{{ formatTiet(s) }}</td>
+            <td>{{ s?.LoaiLich || s?.loaiLich || s?.loaiBuoi || '-' }}</td>
+            <td>{{ s?.Phong || s?.TenPhong || s?.tenPhong || '-' }}</td>
+            <td>{{ s?.Nhom || s?.nhom || '-' }}</td>
+            <td>{{ s?.Gio || s?.gio || '-' }}</td>
+            <td>{{ s?.NgayHoc || s?.ngay || '-' }}</td>
+            <td>{{ s?.NgayKetThuc || s?.ketThuc || s?.ngayKetThuc || '-' }}</td>
+            <td>{{ s?.MaGiangVien || s?.maGiangVien || '-' }}</td>
+            <td>{{ s?.TenGiangVien || s?.tenGiangVien || s?.giangVien || '-' }}</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
+  </div>
+
+</div>

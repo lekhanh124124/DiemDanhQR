@@ -93,7 +93,7 @@ namespace api.Repositories.Implementations
             await _db.LichSuHoatDong.AddAsync(log);
         }
 
-        public async Task<(List<(NguoiDung User, PhanQuyen Role)> Items, int Total)> SearchUsersAsync(
+        public async Task<(List<(NguoiDung User, PhanQuyen? Role)> Items, int Total)> SearchUsersAsync(
             string? tenDangNhap,
             string? hoTen,
             int? maQuyen,
@@ -107,9 +107,19 @@ namespace api.Repositories.Implementations
             page = page <= 0 ? 1 : page;
             pageSize = pageSize <= 0 ? 20 : Math.Min(pageSize, 200);
 
-            var q = from u in _db.NguoiDung.AsNoTracking()
-                    join r in _db.PhanQuyen.AsNoTracking() on u.MaQuyen equals r.MaQuyen
-                    select new { u, r };
+            // LEFT JOIN NguoiDung - PhanQuyen
+            var q =
+                from u in _db.NguoiDung.AsNoTracking()
+                join r in _db.PhanQuyen.AsNoTracking()
+                    on u.MaQuyen equals r.MaQuyen into gj
+                from r in gj.DefaultIfEmpty() // r có thể NULL (user không có quyền)
+                select new { u, r };
+
+            // chỉ lấy user KHÔNG có CodeQuyen = 'SV' hoặc 'GV'
+            q = q.Where(x =>
+                x.r == null ||                   
+                (x.r.CodeQuyen != "SV" && x.r.CodeQuyen != "GV")
+            );
 
             if (!string.IsNullOrWhiteSpace(tenDangNhap))
             {
@@ -121,14 +131,17 @@ namespace api.Repositories.Implementations
                 var s = hoTen.Trim();
                 q = q.Where(x => (x.u.HoTen ?? "").Contains(s));
             }
-            if (maQuyen.HasValue) q = q.Where(x => x.u.MaQuyen == maQuyen.Value);
+            if (maQuyen.HasValue)
+                q = q.Where(x => x.u.MaQuyen == maQuyen.Value);
 
             if (!string.IsNullOrWhiteSpace(codeQuyen))
             {
                 var s = codeQuyen.Trim();
-                q = q.Where(x => x.r.CodeQuyen.Contains(s));
+                q = q.Where(x => x.r != null && x.r.CodeQuyen.Contains(s));
             }
-            if (trangThai.HasValue) q = q.Where(x => x.u.TrangThai == trangThai.Value);
+
+            if (trangThai.HasValue)
+                q = q.Where(x => x.u.TrangThai == trangThai.Value);
 
             var key = (sortBy ?? "MaNguoiDung").Trim().ToLowerInvariant();
             q = key switch
@@ -141,12 +154,15 @@ namespace api.Repositories.Implementations
             };
 
             var total = await q.CountAsync();
-            var list = await q.Skip((page - 1) * pageSize).Take(pageSize)
+            var list = await q.Skip((page - 1) * pageSize)
+                              .Take(pageSize)
                               .Select(x => new { x.u, x.r })
                               .ToListAsync();
 
             var items = list.Select(x => (x.u, x.r)).ToList();
-            return (items, total);
+            return (items, total)!;
         }
+
+
     }
 }

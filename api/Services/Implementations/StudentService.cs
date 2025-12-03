@@ -275,7 +275,7 @@ namespace api.Services.Implementations
             await _repo.SaveChangesAsync();
 
             // Liên kết
-            var role = await _permRepo.GetRoleByIdAsync(user.MaQuyen);
+            var role = await _permRepo.GetRoleByIdAsync((int)user.MaQuyen!);
             Nganh? ng = null; Khoa? kh = null;
             if (sv.MaNganh.HasValue)
             {

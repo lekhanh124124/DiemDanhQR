@@ -1,0 +1,45 @@
+<div class="p-4">
+  <h2 class="text-xl font-semibold mb-3"> Điểm danh bằng mã QR</h2>
+
+  <div *ngIf="!hasPermission" class="text-red-500 mb-2">
+    Cần quyền truy cập camera
+  </div>
+
+  <zxing-scanner [formats]="formats" [device]="selectedDevice" (camerasFound)="onCamerasFound($event)"
+    (scanSuccess)="onScanSuccess($event)" (permissionResponse)="onPermissionResponse($event)" [torch]="true"
+    style="width: 100%; max-width: 400px; height: auto;" *ngIf="scanEnabled"></zxing-scanner>
+
+  <div class="mt-4">
+    <div *ngIf="submitting" class="flex items-center gap-2">
+      <svg class="w-5 h-5 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <div class="text-sm text-gray-700">Đang gửi điểm danh...</div>
+    </div>
+    <div *ngIf="lastMessage" class="mt-2">
+      <div
+        [ngClass]="{ 'text-green-600': lastMessageType==='success', 'text-red-600': lastMessageType==='error', 'text-gray-700': lastMessageType==='info' }">
+        {{ lastMessage }}
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 flex items-center gap-2">
+    <label for="camera" class="whitespace-nowrap"> Chọn camera:</label>
+    <select id="camera" class="border p-2 rounded flex-1 min-w-0 max-w-full" [(ngModel)]="selectedDevice"
+      [disabled]="submitting || !scanEnabled">
+      <option *ngFor="let device of availableDevices" [ngValue]="device">
+        {{ device.label || 'Camera ' + device.deviceId }}
+      </option>
+    </select>
+  </div>
+
+  <div *ngIf="scanResult" class="mt-4 w-full">
+    <div class="w-full whitespace-normal break-words break-all">
+       Mã quét được:
+      <strong class="break-words break-all">{{ scanResult }}</strong>
+    </div>
+  </div>
+</div>

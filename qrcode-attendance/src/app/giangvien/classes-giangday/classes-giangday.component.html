@@ -1,0 +1,111 @@
+<div class="p-4">
+  <!-- <h2 class="text-xl font-semibold mb-4">Danh sách lớp giảng dạy</h2> -->
+
+  <div class="mb-3 flex flex-wrap justify-between items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <input nz-input placeholder="Nhập để tìm kiếm" [(ngModel)]="keyword" (ngModelChange)="onKeywordChange($event)"
+        class="border rounded px-2 py-1 w-full md:w-[260px]" (keyup.enter)="search()" />
+
+      <button nz-button nzType="primary" (click)="search()" [nzLoading]="loading"
+        class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center mt-2 md:mt-0">
+        <i nz-icon nzType="search" class="mr-1 text-[16px]"></i>
+        <span>Tìm kiếm</span>
+      </button>
+
+      <button nz-button (click)="refreshList()" [disabled]="loading"
+        class="flex items-center border rounded px-3 py-1 font-semibold mt-2 md:mt-0">
+        <i nz-icon nzType="reload" class="mr-1"></i>
+        <span>Làm mới</span>
+      </button>
+
+      <a nz-dropdown [nzDropdownMenu]="advFilters" nzTrigger="click">
+        <button nz-button class="flex items-center border rounded px-3 py-1 font-semibold mt-2 md:mt-0">
+          <i nz-icon nzType="filter" class="mr-1"></i>
+          <span>Tìm nâng cao</span>
+          <i nz-icon nzType="down" class="ml-1"></i>
+        </button>
+      </a>
+    </div>
+  </div>
+
+  <nz-dropdown-menu #advFilters="nzDropdownMenu">
+    <div nz-menu class="p-3" style="min-width:260px">
+      <div class="grid grid-cols-1 gap-2">
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Học kỳ</label>
+          <input nz-input type="number" placeholder="Học kỳ" [(ngModel)]="hocKy" />
+        </div>
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Mã lớp</label>
+          <input nz-input placeholder="Mã lớp" [(ngModel)]="maLopHocPhan" />
+        </div>
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Tên lớp</label>
+          <input nz-input placeholder="Tên lớp" [(ngModel)]="tenLopHocPhan" />
+        </div>
+        <div class="flex flex-col">
+          <label class="mb-1 font-medium">Năm học</label>
+          <input nz-input type="number" placeholder="Năm học" [(ngModel)]="namHoc" />
+        </div>
+        <div class="flex justify-end gap-2 mt-1">
+          <button nz-button
+            (click)="hocKy = undefined; namHoc = undefined; maLopHocPhan = undefined; tenLopHocPhan = undefined; loadData(false)">Làm
+            mới</button>
+          <button nz-button nzType="primary" (click)="loadData(true)">Tìm kiếm</button>
+        </div>
+      </div>
+    </div>
+  </nz-dropdown-menu>
+
+  <nz-spin [nzSpinning]="loading">
+    <app-scroll-table [height]="'450px'">
+      <nz-table #classTable [nzData]="danhSachLop" nzBordered [nzNoResult]="emptyTpl">
+        <thead>
+          <tr>
+            <th>Thao tác</th>
+            <th>STT</th>
+            <th>Mã lớp HP</th>
+            <th>Tên lớp</th>
+            <th>Môn học</th>
+            <th>Học kỳ</th>
+            <th>Năm học</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cls of classTable.data; let i = index" [ngClass]="{ 'disabled-row': isDisabled(cls) }">
+            <td>
+              <ng-container *ngIf="!isDisabled(cls); else disabledActions">
+                <a nz-dropdown [nzDropdownMenu]="actions" nzTrigger="click">
+                  <button nz-button nzType="default" nzShape="circle">
+                    <span nz-icon nzType="bars"></span>
+                  </button>
+                </a>
+                <nz-dropdown-menu #actions="nzDropdownMenu">
+                  <ul nz-menu>
+                    <li nz-menu-item (click)="xemChiTiet(cls)"><span nz-icon nzType="eye"></span> Chi tiết</li>
+                  </ul>
+                </nz-dropdown-menu>
+              </ng-container>
+              <ng-template #disabledActions>
+                <button nz-button nzType="default" nzShape="circle" disabled aria-disabled="true" title="Lớp đã bị vô hiệu hóa">
+                  <span nz-icon nzType="bars"></span>
+                </button>
+              </ng-template>
+            </td>
+            <td>{{ i + 1 }}</td>
+            <td>{{ cls.maLopHocPhan }}</td>
+            <td>{{ cls.tenLopHocPhan }}</td>
+            <td>
+              {{ cls.tenMonHoc || cls.tenLopHocPhan || '' }}
+            </td>
+            <td>{{ cls.hocKy }}</td>
+            <td>{{ cls.namHoc }}</td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </app-scroll-table>
+  </nz-spin>
+  <ng-template #emptyTpl>
+    <app-table-empty></app-table-empty>
+  </ng-template>
+</div>

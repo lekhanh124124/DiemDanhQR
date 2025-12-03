@@ -1,0 +1,650 @@
++ AUTH
+POST: {{BASE_URL}}/api/auth/login
+"form-data:
+tendangnhap: admin1
+matkhau: admin1"
+const data = pm.response.json().data;
+pm.environment.set('accessToken', data.accessToken);
+pm.environment.set('refreshToken', data.refreshToken);
+"_ Đăng nhập, cấp accessToken(60mins) để dùng các chức năng khác, cấp refreshToken(14days) dùng để cấp lại accessToken khi nó hết hạn
+"
+
+POST: {{BASE_URL}}/api/auth/logout
+"_ Cần Bearer Token
+ _ Không cần tham số"
+ Đăng xuất, xoá refreshToken, chặn accessToken còn hạn
+
+POST: {{BASE_URL}}/api/auth/refreshtoken
+ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNCIsInVuaXF1ZV9uYW1lIjoiYWRtaW4xIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU4iLCJyb2xlX2NvZGUiOiJBRE1JTiIsInJvbGVfaWQiOiIxIiwiZXhwIjoxNzYxMTQzNjE2LCJpc3MiOiJEaWVtRGFuaFFSX0FQSSIsImF1ZCI6IkRpZW1EYW5oUVJfQ2xpZW50In0.ee0Qf1TlkQ5KaAe93-zIi_biZNzLlBHqUd8RS94eNEc
+ " _ form-data:
+{
+TenDangNhap: admin1
+RefreshToken: {{refreshToken}}
+}"
+const data = pm.response.json().data;
+pm.environment.set('accessToken', data.accessToken);
+Làm mới token
+
+POST: {{BASE_URL}}/api/auth/changepassword
+"_ Cần Bearer Token
+ _ form-data:
+{
+  "matkhaucu" : "admin1",
+  "matkhaumoi" : "123456"
+}
+Đổi mật khẩu
+
+POST: {{BASE_URL}}/api/auth/refreshpassword
+ "_ Cần Bearer Token
+ _form-data:
+{
+    ""TenDangNhap"" : ""admin1""
+}"
+Reset mật khẩu người dùng về mặc định và chỉ token admin mới làm được
+
+GET: {{BASE_URL}}/api/auth/role-functions
+ _ Cần Bearer Token
+Lấy nhóm chức năng
+
++ USER
+POST: {{BASE_URL}}/api/user/create
+"_ Cần Bearer Token
+ _ form-data:
+TenDangNhap
+MaQuyen
+HoTen
+GioiTinh
+AnhDaiDien: file
+Email
+SoDienThoai
+NgaySinh
+DiaChi"
+Tạo người dùng.
+
+GET: {{BASE_URL}}/api/user/info?TenDangNhap=admin1
+"_ Cần Bearer Token
+ _ Url string params (được null):"
+Lấy thông tin cá nhân.
+
+GET: {{BASE_URL}}/api/user/activity
+_ Cần Bearer Token
+"params:
+Page=2
+&PageSize=3
+&SortBy=tendangnhap
+&SortDir= asc
+tendangnhap: admin2
+&DateFrom= yyyy-MM-dd
+&DateTo= yyyy-MM-dd"
+Lấy lịch sử hoạt động của người dùng.
+
+PUT: {{BASE_URL}}/api/user/update
+"_ Cần Bearer Token
+_ form-data:
+TenDangNhap: admin4
+MaQuyen
+HoTen
+GioiTinh
+AnhDaiDien: file
+Email
+SoDienThoai
+NgaySinh
+DiaChi"
+Sửa thông tin người dùng
+
+GET: {{BASE_URL}}/api/user/list?page&pageSize&sortBy&sortDir&tenDangNhap=admin1&hoTen&maQuyen&CodeQuyen&trangThai
+"_ Cần Bearer Token
+Lấy danh sách người dùng
+
++ STUDENT
+POST: {{BASE_URL}}/api/student/create
+"_ Cần Token
+_ Content-Type : multipart/form-data
+_ form-data:
+HoTen:Nguyễn Văn C
+TrangThai
+NamNhapHoc
+MaNganh:2
+AnhDaiDien: file: ảnh sinh viên.png
+GioiTinh:
+Email:
+SoDienThoai:
+NgaySinh: yyyy-MM-dd
+DiaChi:
+"Tạo sinh viên
+
+GET: {{BASE_URL}}/api/student/list
+"_ Cần Token
+_ params:
+Page=1
+&PageSize=5
+&SortBy=maSinhVien
+&SortDir=DESC
+&Khoa= INT4001_01
+&Nganh=
+&HoTen=
+&NamNhapHoc=
+&TrangThaiUser=
+&MaLopHocPhan= CT201_251"
+Lấy danh sách sinh viên
+
+PUT: {{BASE_URL}}/api/student/update
+"_ Cần Token
+_ Content-Type : multipart/form-data
+_ form-data:
+MaSinhVien:sinhvien1
+TenSinhVien:
+TrangThai:
+NamNhapHoc:
+MaNganh:2
+GioiTinh:
+AnhDaiDien:file
+Email:
+SoDienThoai:
+NgaySinh:
+DiaChi:"
+Sửa thông tin sinh viên
+
+POST: {{BASE_URL}}/api/student/add-to-course
+"_ Cần Token
+form-data:
+MaLopHocPhan: LOP01
+MaSinhVien: sinhvien1
+NgayThamGia
+TrangThai: false"
+Thêm sinh viên vào lớp học phần
+
+PUT: {{BASE_URL}}/api/student/remove-from-course
+"_ Cần Token
+form-data:
+MaLopHocPhan:
+MaSinhVien:"
+Loại sinh viên khỏi lớp học phần
+
+POST:{{BASE_URL}}/api/student/bulk-import
+"_ Cần Token
+form-data:
+file: mau_danh_sach_sinh_vien.xlsx
+DefaultNamNhapHoc"
+format header thêm sinh viên hàng loạt trong excel: HoTen, GioiTinh, Email, SoDienThoai, NgaySinh, DiaChi, NamNhapHoc, CodeNganh, MaSinhVien
+
++ SCHEDULE
+GET: {{BASE_URL}}/api/schedule/list
+"_ Cần Token
+params:
+page
+pageSize
+&SortBy= ngayhoc
+&SortDir= desc
+&MaBuoi=
+&MaPhong=
+&TenPhong=
+&MaLopHocPhan=
+&TenLopHocPhan=
+&TenMonHoc=
+&NgayHoc=
+&Tuan
+&Thang
+&Nam
+&TietBatDau=1
+&SoTiet=
+&MaGiangVien=
+&MaSinhVien=21CNTT0001
+&trangthai: false"
+MaHocKy=4
+Lấy danh sách buổi học
+
+GET: {{BASE_URL}}/api/schedule/rooms
+"_ Cần Token
+params:
+Page=
+&PageSize=
+&SortBy=
+&SortDir=
+&MaPhong=
+&TenPhong=
+&ToaNha=
+&Tang=
+&SucChua=
+&TrangThai="
+Lấy danh sách phòng học
+
+POST: {{BASE_URL}}/api/schedule/create-room
+"_ Cần Token
+form-data:
+TenPhong:A302
+ToaNha:
+Tang:
+SucChua:50
+TrangThai:"
+Tạo phòng học
+
+POST: {{BASE_URL}}/api/schedule/create-schedule
+"_ Cần Token
+form-data:
+MaLopHocPhan:INT1001_01
+MaPhong:2
+NgayHoc:2025-10-10
+TietBatDau:1
+SoTiet:3
+GhiChu:
+TrangThai:true"
+Tạo buổi học
+
+PUT: {{BASE_URL}}/api/schedule/update-schedule
+"_ Cần Token
+form-data:
+MaBuoi
+MaPhong
+NgayHoc
+TietBatDau
+SoTiet
+GhiChu
+TrangThai"
+Cập nhật buổi học
+
+PUT: {{BASE_URL}}/api/schedule/update-room
+"_ Cần Token
+form-data:
+MaPhong
+TenPhong
+ToaNha
+Tang
+SucChua
+TrangThai
+Cập nhật phòng học
+
+POST: {{BASE_URL}}/api/schedule/auto-generate
+"_ Cần Token
+form-data:
+MaLopHocPhan: XLA-2025-K1-001"
+Tạo buổi học tự động
+
+
++ COURSE
+GET: {{BASE_URL}}/api/course/list
+"_ Cần Token
+params:
+Page=1
+&PageSize=20
+&SortBy=TenMonHoc
+&SortDir=DESC
+&maLopHocPhan=
+&tenLopHocPhan=
+&trangThai=
+&MaMonHoc=
+&soTinChi=
+&maGiangVien=
+&NamHoc
+&MaHocKy
+&Ky
+&MaSinhVien=sinhvien1"
+Lấy danh sách lớp học phần
+
+POST: {{BASE_URL}}/api/course/create-course
+"_ Cần Token
+form-data:
+TenLopHocPhan:Lớp Lịch sử
+MaMonHoc:LS001
+MaGiangVien:giangvien1
+MaHocKy:1
+TrangThai:false"
+Tạo lớp học phần
+
+PUT: {{BASE_URL}}/api/course/update-course
+"_ Cần Token
+form-data:
+MaLopHocPhan:LOP01
+TenLopHocPhan: Lớp 1
+TrangThai: true
+MaMonHoc
+MaGiangVien
+MaHocKy
+Cập nhật lớp học phần
+
+GET: {{BASE_URL}}/api/course/subjects?Page=1&PageSize=1&SortBy=&SortDir=&MaMonHoc=&TenMonHoc=&SoTinChi=&SoTiet=&TrangThai=
+"_ Cần Token
+Lấy danh sách môn học
+
+POST: {{BASE_URL}}/api/course/create-subject
+"_ Cần Token
+form-data:
+TenMonHoc:Lịch sử
+SoTinChi:3
+SoTiet:45
+MoTa:
+TrangThai:
+LoaiMon"
+Tạo môn học
+
+PUT: {{BASE_URL}}/api/course/update-subject
+"_ Cần Token
+form-data:
+MaMonHoc
+TenMonHoc
+SoTinChi
+SoTiet
+MoTa
+TrangThai
+Cập nhật môn học
+
+GET: {{BASE_URL}}/api/course/semesters?Page=1&PageSize=10&SortBy&SortDir&NamHoc=2024&Ky=3
+"_ Cần Token
+Lấy danh sách học kỳ
+
+POST: {{BASE_URL}}/api/course/create-semester
+"_ Cần Token
+form-data:
+NamHoc: 2025
+Ky: 1
+Tạo học kỳ
+
+PUT: {{BASE_URL}}/api/course/update-semester
+"_ Cần Token
+form-data:
+MaHocKy: 1
+NamHoc: 2024
+Ky:
+Cập nhật học kỳ
+
+
++ LECTURER
+POST: {{BASE_URL}}/api/lecturer/create
+"_ Cần Token
+_ Content-Type : multipart/form-data
+_ form-data:
+HoTen: Trần Văn A
+MaKhoa: 1
+HocHam:
+HocVi:
+NgayTuyenDung:
+GioiTinh:
+AnhDaiDien: file
+Email:
+SoDienThoai:
+NgaySinh: yyyy-MM-dd
+DiaChi: string"
+Tạo giảng viên
+
+GET: {{BASE_URL}}/api/lecturer/list
+"_ Cần Token
+_ params:
+&Page=3
+&PageSize=5
+&SortBy=hoten
+&SortDir=asc
+&MaKhoa=
+&HocHam=
+&HocVi=
+&NgayTuyenDungFrom=
+&NgayTuyenDungTo=
+&TrangThaiUser=true
+MaGiangVien: giangvien03
+HoTen: 02"
+Lấy danh sách giảng viên
+
+POST: {{BASE_URL}}/api/lecturer/profile
+"_ Cần Token
+_ Content-Type : multipart/form-data
+_ form-data:
+MaGiangVien:giangvien3
+TenGiangVien:
+TrangThai:
+MaKhoa:
+HocHam:
+HocVi:
+NgayTuyenDung:
+GioiTinh:
+AnhDaiDien:file
+Email:
+SoDienThoai:
+NgaySinh:2000-2-2
+DiaChi:"
+Sửa thông tin giảng viên
+
++ PERMISSION
+GET: {{BASE_URL}}/api/permission/list
+"_ Cần Token
+params:
+page=1
+&pageSize=10
+&sortBy=TenQuyen
+&sortDir=desc
+&keyword=quy
+&MaQuyen=
+&CodeQuyen=
+&TenQuyen=
+&MoTa=
+&machucnang= 2"
+Lấy danh sách phân quyền
+
+POST: {{BASE_URL}}/api/permission/create-role
+"_ Cần Token
+form-data:
+CodeQuyen: ADMIN_DP
+TenQuyen: vd Quản trị điều phối
+MoTa: Quản trị người dùng
+TrangThai "
+Thêm phân quyền
+
+PUT: {{BASE_URL}}/api/permission/update-role
+"_ Cần Token
+form-data:
+MaQuyen: 4
+CodeQuyen:ADMIN_ND
+TenQuyen: Quản trị người dùng
+MoTa:Quản trị người dùng
+Sửa phân quyền
+
+DELETE: {{BASE_URL}}/api/permission/delete-role?maQuyen=4
+"_ Cần Token
+params: maQuyen:4"
+Xóa phân quyền
+
+GET: {{BASE_URL}}/api/permission/functions
+"_ Cần Token
+params:
+Page=
+&PageSize=
+&SortBy=
+&SortDir=
+&MaChucNang=
+&CodeChucNang=
+&TenChucNang=
+&maQuyen=2"
+ParentChucNangId
+Lấy danh sách chức năng (danh mục)
+
+POST: {{BASE_URL}}/api/permission/create-function
+"_ Cần Token
+form-data:
+CodeChucNang: QTND
+TenChucNang: Quản lý người dùng
+MoTa: Quản lý người dùng"
+Thêm chức năng
+
+PUT: {{BASE_URL}}/api/permission/update-function
+"_ Cần Token
+form-data:
+MaChucNang:1
+CodeChucNang
+TenChucNang
+MoTa: QUẢN LÝ NGƯỜI DÙNG
+ParentChucNangId:4
+Cập nhật chức năng
+
+DELETE: {{BASE_URL}}/api/permission/delete-function?maChucNang=5
+"_ Cần Token
+Xóa chức năng
+
+GET: {{BASE_URL}}/api/permission/role-functions
+Page
+PageSize
+SortBy
+SortDir
+MaQuyen
+MaChucNang
+Lấy danh sách nhóm chức năng
+
+POST: {{BASE_URL}}/api/permission/create-role-function
+"_ Cần Token
+form-data:
+maquyen:1
+machucnang:2
+TrangThai"
+Thêm nhóm chức năng
+
+PUT: {{BASE_URL}}/api/permission/update-role-function
+"_ Cần Token
+form-data:
+FromMaQuyen:1
+FromMaChucNang:2
+ToMaQuyen:1
+ToMaChucNang:2
+TrangThai: true"
+Cập nhật nhóm chức năng
+
+DELETE: {{BASE_URL}}/api/permission/delete-role-function?maquyen=1&machucnang=2"
+_ Cần Token
+Xóa nhóm chức năng
+
+
++ ATTENDANCE
+POST: {{BASE_URL}}/api/attendance/qr?maBuoi=1&ttlSeconds=900&pixelsPerModule=5
+"_ Cần Token
+Tạo QR
+
+POST: {{BASE_URL}}/api/attendance/checkin?token=NTd8SU9UMDAxLUs0LTAxfDE3NjI5NDcxNzd8ZTVhZWUyOGYxNTZlNDhlN2JjNWFkNTVkYjljMzU3MWN8LUNlZDNwc2UtblF0QmgxWms4bDlUbXJFeUtTamJoZVNGMHd6bmNFM2hXbw
+"_ Cần Token
+Điểm danh
+
+GET: {{BASE_URL}}/api/attendance/records
+"_ Cần Token
+params:
+Page
+PageSize
+SortBy
+SortDir
+MaDiemDanh
+ThoiGianQuet
+maTrangThai
+LyDo
+TrangThai
+MaBuoi
+MaSinhVien
+MaLopHocPhan"
+Lấy danh sách điểm danh
+
+POST: {{BASE_URL}}/api/attendance/create-record
+"_ Cần Token
+form-data:
+MaBuoi
+MaSinhVien
+MaTrangThai
+LyDo
+TrangThai"
+Tạo điểm danh
+
+PUT: {{BASE_URL}}/api/attendance/update-record
+"_ Cần Token
+form-data:
+MaDiemDanh
+MaTrangThai
+LyDo
+TrangThai"
+Cập nhật điểm danh
+
+GET: {{BASE_URL}}/api/attendance/statuses
+"_ Cần Token
+params:
+Page
+PageSize
+SortBy
+SortDir
+MaTrangThai
+TenTrangThai
+CodeTrangThai"
+Lấy danh sách trạng thái điểm danh
+
+POST: {{BASE_URL}}/api/attendance/create-status
+"_ Cần Token
+form-data:
+CodeTrangThai:haha
+TenTrangThai:haha"
+Tạo trạng thái điểm danh
+
+PUT: {{BASE_URL}}/api/attendance/update-status
+"_ Cần Token
+form-data:
+MaTrangThai:6
+CodeTrangThai:hoho
+TenTrangThai:hoho"
+Cập nhật trạng thái điểm danh
+
+DELETE: {{BASE_URL}}/api/attendance/delete-status?MaTrangThai=6
+"_ Cần Token
+MaTrangThai:6
+Xoá trạng thái điểm danh
+
+GET: {{BASE_URL}}/api/attendance/ratio-by-khoa?maHocKy=1
+"_ Cần Token
+Tỉ lệ vắng/có mặt của sinh viên theo Khoa
+
+GET: {{BASE_URL}}/api/attendance/ratio-by-lophocphan/gv?maHocKy
+"_ Cần Token
+Tỉ lệ vắng/có mặt theo LHP mà GIẢNG VIÊN đang dạy
+
+GET:{{BASE_URL}}/api/attendance/ratio-by-lophocphan/sv?maHocKy
+"_ Cần Token
+Tỉ lệ vắng/có mặt theo LHP mà SINH VIÊN đang học
+
++ ACADEMIC
+GET: {{BASE_URL}}/api/Academic/departments?Page&PageSize&SortBy&SortDir&MaKhoa&CodeKhoa&TenKhoa
+"_ Cần Token
+Lấy danh sách Khoa
+
+POST: {{BASE_URL}}/api/Academic/create-department
+"_ Cần Token
+form-data:
+CodeKhoa: KDDDD
+TenKhoa: Kinh doanh"
+Tạo Khoa
+
+PUT: {{BASE_URL}}/api/academic/update-department
+"_ Cần Token
+form-data:
+MaKhoa:3
+CodeKhoa
+TenKhoa: Ngoại ngữ
+Cập nhật khoa
+
+DELETE: {{BASE_URL}}/api/academic/delete-department?maKhoa=5
+"_ Cần Token
+Xóa khoa
+
+GET:{{BASE_URL}}/api/Academic/majors?Page&PageSize&SortBy=makhoa&SortDir&MaNganh&CodeNganh&TenNganh&MaKhoa
+"_ Cần Token
+Lấy danh sách ngành
+
+POST: {{BASE_URL}}/api/Academic/create-major
+"_ Cần Token
+form-data:
+CodeNganh: MARKETINGGGGG
+TenNganh: Marketing
+MaKhoa:4"
+Tạo ngành
+
+PUT: {{BASE_URL}}/api/academic/update-major
+"_ Cần Token
+form-data:
+MaNganh:8
+CodeNganh:
+TenNganh:
+MaKhoa:4"
+Cập nhật ngành
+
+DELETE: {{BASE_URL}}/api/academic/delete-major?maNganh=16
+"_ Cần Token
+Xóa ngành
+
+

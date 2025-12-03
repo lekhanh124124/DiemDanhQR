@@ -1,0 +1,70 @@
+<div class="page-container">
+  <h3 class="mt-0 mb-2 text-lg sm:text-xl font-bold text-gray-600">
+    Lịch học trong phòng: {{ tenPhong || maPhong }}
+  </h3>
+
+  <div class="toolbar mb-4 flex flex-wrap sm:flex-nowrap gap-2 items-center p-2 rounded-md"
+    style="padding:6px; border-radius:8px;">
+    <div class="w-full sm:w-auto">
+      <nz-date-picker class="w-full sm:w-auto rounded-md" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange()"
+        [nzFormat]="'dd/MM/yyyy'"></nz-date-picker>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center sm:ml-2">
+      <button nz-button nzType="default"
+        class="rounded-md min-w-0 truncate text-sm sm:text-base px-3 sm:px-4 w-full sm:w-auto bg-blue-500 text-white border border-blue-500 hover:bg-gray-100 hover:text-blue-500 hover:border-gray-200 transition-colors"
+        style="border-radius:6px;" (click)="goToday()">Hiện tại</button>
+      <button nz-button nzType="default"
+        class="rounded-md min-w-0 truncate text-sm sm:text-base px-3 sm:px-4 w-full sm:w-auto bg-blue-500 text-white border border-blue-500 hover:bg-gray-100 hover:text-blue-500 hover:border-gray-200 transition-colors"
+        style="border-radius:6px;" (click)="prevWeek()">&lt; Trước</button>
+      <button nz-button nzType="default"
+        class="rounded-md min-w-0 truncate text-sm sm:text-base px-3 sm:px-4 w-full sm:w-auto bg-blue-500 text-white border border-blue-500 hover:bg-gray-100 hover:text-blue-500 hover:border-gray-200 transition-colors"
+        style="border-radius:6px;" (click)="nextWeek()">Sau &gt;</button>
+    </div>
+  </div>
+
+  <nz-spin [nzSpinning]="loading">
+    <div class="overflow-auto">
+      <nz-table class="min-w-[720px]" nzBordered [nzNoResult]="emptyTpl">
+        <thead>
+          <tr>
+            <th class="text-center schedule-header-cell">Ca học</th>
+            <th *ngFor="let day of currentWeek" class="text-center schedule-header-cell">
+              {{ day.label }}<br />
+              {{ day.date | date:'dd/MM/yyyy' }}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let ca of caHoc">
+            <td class="text-center font-medium schedule-left-cell">{{ ca }}</td>
+
+            <td *ngFor="let day of currentWeek" class="align-top">
+              <ng-container *ngFor="let buoi of schedules">
+                <div *ngIf="buoi.ngayKey === day.key && getCa(buoi.tietBatDau) === ca"
+                  class="buoi-box p-1 sm:p-2 m-1 rounded-md shadow-sm text-xs sm:text-sm" [ngClass]="buoi.subjectClass"
+                  [ngStyle]="getStyle(buoi)">
+                  <strong class="cursor-pointer text-[#003763]">{{ buoi.tenMonHoc }}</strong><br />
+                  {{ buoi.maLopHocPhan }}<br />
+                  Tiết: {{ getTietRange(buoi) }}<br />
+                  Giảng viên: {{ buoi?.giangVienInfo?.hoTen || buoi?.giangVien?.hoTen || buoi?.giangVien?.tenNguoiDung
+                  ||
+                  buoi?.giangVien?.maGiangVien || buoi?.giangVien || '—' }}
+                </div>
+              </ng-container>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
+  </nz-spin>
+
+  <ng-template #emptyTpl></ng-template>
+
+  <div class="legend mt-4 flex gap-4">
+    <span class="legend-item"><span class="box lt"></span> Lý thuyết</span>
+    <span class="legend-item"><span class="box th"></span> Thực hành</span>
+    <span class="legend-item"><span class="box lth"></span> Lý thuyết & Thực hành</span>
+  </div>
+</div>

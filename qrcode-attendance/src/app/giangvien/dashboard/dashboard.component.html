@@ -1,0 +1,53 @@
+<div class="p-6 space-y-6">
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-white rounded-xl shadow p-4 self-start">
+      <h3 class="text-lg font-semibold mb-3">Buổi dạy hôm nay</h3>
+      <div *ngIf="loadingUpcoming" class="text-sm text-gray-500 mb-2">Đang tải lịch...</div>
+
+      <div *ngIf="!loadingUpcoming && (!todayClasses || todayClasses.length === 0)"
+        class="flex items-center justify-center h-36 text-gray-400">
+        <div class="text-center">
+          <div class="text-sm">Không có buổi dạy hôm nay</div>
+        </div>
+      </div>
+
+      <div *ngIf="todayClasses && todayClasses.length" #todayContainer
+        [ngClass]="{'overflow-hidden relative h-24': true, 'flex items-center': todayClasses.length === 1}">
+        <div #todayInner class="transition-transform duration-700">
+          <div *ngFor="let l of todayClasses; let idx = index"
+            class="p-3 rounded-lg shadow-sm flex items-center justify-between flex-none h-24 hover:shadow-md transition-shadow"
+            [ngClass]="{'bg-gradient-to-r from-[#E0FBFF] to-gray-50': true, 'border-l-2 border-gray-200': true}">
+            <div class="flex items-center gap-3 flex-1 min-w-0 pr-3">
+              <div class="min-w-0">
+                <div class="text-base font-semibold truncate">{{ l.tenLop }}</div>
+                <div class="text-sm text-gray-600 mt-1 truncate">Tiết: {{ l.gio }} · Phòng: {{ l.phong }}</div>
+              </div>
+            </div>
+            <div class="flex-shrink-0 text-right">
+              <div class="text-sm text-blue-600 whitespace-nowrap">{{ formatDateDisplay(l.ngayRaw) }}</div>
+              <div class="mt-1 text-xs inline-block bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{{ l.tuan || '' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Chart -->
+    <div class="bg-white rounded-xl shadow p-4">
+      <h3 class="text-lg font-semibold mb-2">Tỉ lệ điểm danh theo lớp</h3>
+      <div class="mb-3 flex items-center">
+        <div class="ml-auto flex items-center gap-2 flex-wrap justify-end">
+          <span class="text-sm text-gray-700">Chọn học kỳ:</span>
+          <select class="border rounded px-2 py-1 w-28 text-sm flex-shrink-0" [(ngModel)]="selectedSemesterKey" (change)="onSemesterChange()">
+            <option *ngFor="let s of semesters" [value]="s.key">{{ s.key }}</option>
+          </select>
+          <!-- <div *ngIf="loadingChart" class="text-sm text-gray-500">Đang tải...</div> -->
+        </div>
+      </div>
+      <div class="w-full h-56">
+        <canvas id="attendanceRateChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,58 @@
+<div class="page-container">
+  <div class="toolbar mb-4 flex flex-wrap gap-2 items-center" style="padding:6px; border-radius:8px;">
+    <nz-date-picker class="rounded-md" style="border-radius:6px;" [(ngModel)]="selectedDate" (ngModelChange)="onDateChange()" [nzFormat]="'dd/MM/yyyy'"></nz-date-picker>
+    <button nz-button nzType="default" class="rounded-md min-w-0 truncate text-sm sm:text-base px-3 sm:px-4" style="border-radius:6px;" (click)="goToToday()">Hiện tại</button>
+    <button nz-button nzType="default" class="rounded-md min-w-0 truncate text-sm sm:text-base px-3 sm:px-4" style="border-radius:6px;" (click)="prevWeek()">&lt; Trước</button>
+    <button nz-button nzType="default" class="rounded-md min-w-0 truncate text-sm sm:text-base px-3 sm:px-4" style="border-radius:6px;" (click)="nextWeek()">Sau &gt;</button>
+  </div>
+
+  <nz-spin [nzSpinning]="isLoading">
+    <app-scroll-table [height]="'520px'">
+      <nz-table nzBordered [nzNoResult]="emptyTpl">
+      <thead>
+        <tr>
+          <th class="text-center schedule-header-cell">Ca học</th>
+          <th *ngFor="let day of currentWeek" class="text-center schedule-header-cell">
+            {{ day.label }}<br />
+            {{ day.date | date:'dd/MM/yyyy' }}
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let ca of caHoc">
+          <td class="text-center font-medium schedule-left-cell">{{ ca }}</td>
+
+          <td *ngFor="let day of currentWeek" class="align-top">
+            <ng-container *ngFor="let buoi of schedules">
+              <div
+                *ngIf="buoi.ngayKey === day.key && getCa(buoi.tietBatDau) === ca"
+                class="buoi-box p-2 m-1 rounded-md shadow-sm text-sm"
+                [ngClass]="buoi.subjectClass"
+                [ngStyle]="getStyle(buoi)"
+                [class.disabled-buoi]="isDisabled(buoi)"
+                [attr.title]="isDisabled(buoi) ? 'Lớp đã bị vô hiệu hóa' : null"
+              >
+                <strong class="text-[#003763]" (click)="viewStudents(buoi)">{{ buoi.tenMonHoc }}</strong><br />
+                {{ buoi.maLopHocPhan }}  {{ buoi.maLopHocPhanChiTiet }}<br />
+                Tiết: {{ getTietRange(buoi) }}<br />
+                Phòng: {{ buoi.tenPhong }}<br />
+                <!-- <div class="mt-1 flex gap-1">
+                  <button nz-button nzSize="small" (click)="openAttendance(buoi)"><span nz-icon nzType="team"></span></button>
+                </div> -->
+              </div>
+            </ng-container>
+          </td>
+        </tr>
+      </tbody>
+      </nz-table>
+    </app-scroll-table>
+  </nz-spin>
+  <ng-template #emptyTpl></ng-template>
+
+  <div class="legend mt-4 flex gap-4">
+    <span class="legend-item"><span class="box lt"></span> Lý thuyết</span>
+    <span class="legend-item"><span class="box th"></span> Thực hành</span>
+    <span class="legend-item"><span class="box lth"></span> Lý thuyết & Thực hành</span>
+  </div>
+</div>

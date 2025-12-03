@@ -1,0 +1,3 @@
+<span class="status-pill" [ngClass]="{ 'active': isActive(), 'inactive': !isActive(), 'compact': compact }" [ngStyle]="styleObject">
+  {{ isActive() ? activeLabel : inactiveLabel }}
+</span>

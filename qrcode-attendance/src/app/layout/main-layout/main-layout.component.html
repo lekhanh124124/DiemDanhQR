@@ -1,0 +1,100 @@
+<nz-layout class="app-layout h-screen">
+  <!-- Sidebar -->
+  <nz-sider class="menu-sidebar bg-gray-50 border-r border-gray-300" [class.mobile-overlay]="isMobile && !isCollapsed" nzCollapsible nzWidth="300px" nzBreakpoint="md"
+    [(nzCollapsed)]="isCollapsed" [nzCollapsedWidth]="isMobile ? 0 : 64" (nzBreakpoint)="onBreakpoint($event)" [nzTrigger]="null" [@.disabled]="true">
+
+    <!-- Logo -->
+    <div class="sidebar-logo flex items-center justify-center py-6 px-4 border-b border-gray-200 bg-gradient-to-r from-white via-blue-50 to-white shadow-sm">
+      <img src="assets/images/huit.png" alt="Logo" class="h-14 w-14 object-contain mr-4" />
+      <div *ngIf="!isCollapsed" class="flex flex-col">
+        <span class="text-xl font-extrabold text-blue-700 leading-tight">HỆ THỐNG ĐIỂM DANH</span>
+        <span class="text-base font-medium text-gray-600 mt-1 uppercase"
+          style="text-shadow: 0 1px 1px rgba(0,0,0,0.05)">BẰNG MÃ QR</span>
+      </div>
+    </div>
+
+    <!-- Menu -->
+    <app-scroll [height]="'calc(100vh - 140px)'">
+      <ul nz-menu nzMode="inline" [nzInlineCollapsed]="isCollapsed" nzTheme="light" [@.disabled]="true">
+      <ng-container *ngFor="let item of menuItems">
+        <li *ngIf="item.children && item.title !== 'Trang chủ' && item.title !== 'Nhật ký hệ thống'; else normalItem" nz-submenu [nzTitle]="submenuTitle">
+          <ng-template #submenuTitle>
+            <span class="ant-menu-item-icon"><span nz-icon [nzType]="item.icon || 'file-text'" nzTheme="outline"></span></span>
+            <span class="ant-menu-title-content">
+              <a *ngIf="item.route; else plainTitle" [routerLink]="item.route" class="submenu-title-link"><span class="menu-title">{{ item.title }}</span></a>
+              <ng-template #plainTitle><span class="menu-title">{{ item.title }}</span></ng-template>
+            </span>
+          </ng-template>
+          <ul>
+            <li *ngFor="let child of item.children" nz-menu-item [routerLink]="child.route"
+                routerLinkActive="ant-menu-item-selected" [routerLinkActiveOptions]="{ exact: true }">
+                <span class="ant-menu-item-icon"><span nz-icon [nzType]="child.icon || 'file-text'" nzTheme="outline"></span></span>
+                <span class="ant-menu-title-content">{{ child.title }}</span>
+              </li>
+          </ul>
+        </li>
+
+        <!-- Item thường -->
+        <ng-template #normalItem>
+          <li nz-menu-item [routerLink]="item.route" routerLinkActive="ant-menu-item-selected" [routerLinkActiveOptions]="{ exact: true }">
+            <span class="ant-menu-item-icon"><span nz-icon [nzType]="item.icon || 'file-text'" nzTheme="outline"></span></span>
+            <span class="ant-menu-title-content">{{ item.title }}</span>
+          </li>
+        </ng-template>
+      </ng-container>
+      </ul>
+    </app-scroll>
+  </nz-sider>
+
+  <!-- Main Layout -->
+  <nz-layout [class.overlay-open]="isMobile && !isCollapsed">
+    <!-- Header -->
+  <nz-header class="flex items-center justify-between bg-blue-50 shadow px-4 border-b border-gray-200">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <span class="cursor-pointer" (click)="toggleSidebar()">
+          <i nz-icon [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"></i>
+        </span>
+        <span class="text-lg font-semibold text-blue-900 truncate">{{currentTitle}}</span>
+      </div>
+
+      <div class="flex items-center gap-5 flex-nowrap min-w-max">
+        <i nz-icon nzType="home" class="text-xl text-gray-600 cursor-pointer" title="Trang chủ" (click)="goHome()"></i>
+        <!-- <i nz-icon nzType="bell" class="text-xl text-gray-600 cursor-pointer"></i> -->
+
+          <a nz-dropdown nzTrigger="click" [nzDropdownMenu]="menu">
+          <div class="flex items-center gap-2 cursor-pointer">
+            <img [src]="avatarUrl || defaultAvatar" (error)="onAvatarError($event)" alt="Avatar" class="w-8 h-8 rounded-full border" />
+            <span *ngIf="!isMobile" class="font-medium text-gray-700">Chào, {{ userName }}</span>
+            <i nz-icon nzType="down"></i>
+          </div>
+        </a>
+
+        <nz-dropdown-menu #menu="nzDropdownMenu">
+          <ul nz-menu class="w-48">
+            <li nz-menu-item class="text-gray-600">Vai trò: <strong>{{ userRole }}</strong></li>
+            <li nz-menu-divider></li>
+            <li nz-menu-item (click)="goProfile()">Thông tin cá nhân</li>
+            <li nz-menu-item (click)="goChangePassword()">Đổi mật khẩu</li>
+            <li nz-menu-item (click)="logout()" class="text-red-500">
+              <div class="flex items-center gap-2">
+                <span nz-icon nzType="logout" nzTheme="outline" class="text-lg"></span>
+                <span>Đăng xuất</span>
+              </div>
+            </li>
+          </ul>
+        </nz-dropdown-menu>
+      </div>
+    </nz-header>
+
+    <!-- Nội dung chính -->
+    <nz-content>
+      <div class="inner-content p-6 bg-gradient-to-b from-gray-100 via-white to-gray-50 min-h-[calc(100vh-64px)]">
+        <div class="max-w-[1200px] mx-auto">
+          <div class="bg-white rounded-xl shadow-lg p-6">
+            <router-outlet></router-outlet>
+          </div>
+        </div>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>

@@ -264,9 +264,9 @@ namespace api.Services.Implementations
             var role = await _repo.GetRoleByIdAsync(maQuyen);
             if (role == null) ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy quyền.");
 
-            var users = await _repo.CountUsersByRoleAsync(maQuyen);
-            if (users > 0)
-                ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Quyền đang được gán cho người dùng, không thể xóa.");
+            // var users = await _repo.CountUsersByRoleAsync(maQuyen);
+            // if (users > 0)
+            //     ApiExceptionHelper.Throw(ApiErrorCode.BadRequest, "Quyền đang được gán cho người dùng, không thể xóa.");
 
             // var hasMappings = await _repo.AnyRoleFunctionMappingsAsync(maQuyen);
             // if (hasMappings)

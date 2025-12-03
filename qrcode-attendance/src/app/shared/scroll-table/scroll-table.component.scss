@@ -1,0 +1,6 @@
+.scroll-table-wrapper { overflow: hidden; border: 1px solid #eee; border-radius: 6px; }
+.scroll-table-inner { overflow-y: auto; height: 100%; }
+.scroll-table-inner table { border-collapse: collapse; }
+.scroll-table-inner th { background: #fafafa; border-bottom: 1px solid #eee; }
+.scroll-table-inner td { vertical-align: top; }
+

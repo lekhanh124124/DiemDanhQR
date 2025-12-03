@@ -43,7 +43,7 @@ namespace api.Services.Implementations
             }
 
             var maQuyen = user.MaQuyen;
-            var role = maQuyen > 0 ? await _repo.GetRoleAsync(maQuyen) : null;
+            var role = maQuyen > 0 ? await _repo.GetRoleAsync((int)maQuyen!) : null;
             var roleCode = role?.CodeQuyen ?? "USER";
 
             // JWT
@@ -145,7 +145,7 @@ namespace api.Services.Implementations
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Refresh token đã hết hạn.");
 
             var maQuyen = user.MaQuyen;
-            var role = maQuyen > 0 ? await _repo.GetRoleAsync(maQuyen) : null;
+            var role = maQuyen > 0 ? await _repo.GetRoleAsync((int)maQuyen!) : null;
             var roleCode = role?.CodeQuyen ?? "USER";
 
             var jwtOpts = JwtHelper.Read(_cfg);
@@ -260,7 +260,7 @@ namespace api.Services.Implementations
                 ApiExceptionHelper.Throw(ApiErrorCode.Unauthorized, "Tài khoản không hợp lệ hoặc đã bị khoá.");
 
             var maQuyen = user.MaQuyen;
-            var role = maQuyen > 0 ? await _repo.GetRoleAsync(maQuyen) : null;
+            var role = maQuyen > 0 ? await _repo.GetRoleAsync((int)maQuyen!) : null;
             if (role == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.Forbidden, "Tài khoản chưa được gán phân quyền.");
 
@@ -289,7 +289,7 @@ namespace api.Services.Implementations
 
             foreach (var fn in funcItems)
             {
-                var map = await _permRepo.GetRoleFunctionAsync(maQuyen, fn.MaChucNang);
+                var map = await _permRepo.GetRoleFunctionAsync((int)maQuyen!, fn.MaChucNang);
 
                 roleFunctions.Add(new RoleFunctionDetailResponse
                 {

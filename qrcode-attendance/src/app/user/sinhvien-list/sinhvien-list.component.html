@@ -1,0 +1,314 @@
+<div class="mb-3 flex flex-wrap justify-between items-center gap-2">
+  <div class="flex flex-wrap items-center gap-2">
+    <input nz-input placeholder="Nhập để tìm kiếm" [(ngModel)]="keyword"
+      class="border rounded px-2 py-1 w-full sm:w-[260px] min-w-0" (keyup.enter)="onSearch()" />
+    <button nz-button nzType="primary" (click)="onSearch()"
+      class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center min-w-0 whitespace-nowrap">
+      <i nz-icon nzType="search" class="mr-1 text-[16px] font-bold"></i>
+      <span class="truncate">Tìm kiếm</span>
+    </button>
+
+    <button nz-button (click)="refreshList()"
+      class="flex items-center border rounded px-3 py-1 font-semibold min-w-0 whitespace-nowrap">
+      <i nz-icon nzType="reload" class="mr-1"></i>
+      <span class="truncate">Làm mới</span>
+    </button>
+
+    <a nz-dropdown [nzDropdownMenu]="advancedMenu" nzTrigger="click">
+      <button nz-button class="flex items-center border rounded px-3 py-1 font-semibold min-w-0 whitespace-nowrap">
+        <i nz-icon nzType="filter"></i>
+        <span class="ml-1 font-semibold truncate">Tìm nâng cao</span>
+        <i nz-icon nzType="down" class="ml-1"></i>
+      </button>
+    </a>
+
+    <nz-dropdown-menu #advancedMenu="nzDropdownMenu">
+      <div nz-menu class="p-3" style="min-width:320px">
+        <div class="text-sm font-semibold mb-3 border-b pb-2">Bộ lọc nâng cao</div>
+
+        <div class="grid grid-cols-1 gap-2">
+          <div class="flex flex-col">
+            <label class="mb-1 font-medium">Ngành</label>
+            <nz-select [(ngModel)]="filterNganh" style="width:100%" nzAllowClear nzPlaceHolder="Chọn ngành">
+              <nz-option nzLabel="Tất cả" [nzValue]="''"></nz-option>
+              <nz-option *ngFor="let m of majors" [nzLabel]="m.label" [nzValue]="m.value"></nz-option>
+            </nz-select>
+          </div>
+
+          <div class="flex flex-col">
+            <label class="mb-1 font-medium">Năm nhập học</label>
+            <nz-select [(ngModel)]="filterNamNhapHoc" style="width:100%" nzAllowClear nzPlaceHolder="Chọn năm">
+              <nz-option nzLabel="Tất cả" [nzValue]="''"></nz-option>
+              <nz-option *ngFor="let y of years" [nzLabel]="y" [nzValue]="y"></nz-option>
+            </nz-select>
+          </div>
+
+          <div class="flex flex-col">
+            <label class="mb-1 font-medium">Trạng thái</label>
+            <nz-select [(ngModel)]="filterTrangThaiUser" style="width:100%">
+              <nz-option nzLabel="Tất cả" [nzValue]="undefined"></nz-option>
+              <nz-option nzLabel="Hoạt động" [nzValue]="true"></nz-option>
+              <nz-option nzLabel="Ngừng hoạt động" [nzValue]="false"></nz-option>
+            </nz-select>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 mt-3">
+          <button nz-button (click)="clearAdvanced()" class="border rounded px-2 py-1">Làm mới</button>
+          <button nz-button nzType="primary" (click)="onSearch()" class="border rounded px-3 py-1">Tìm kiếm</button>
+        </div>
+      </div>
+    </nz-dropdown-menu>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mb-3">
+    <button nz-button nzType="primary" (click)="showCreateModal()"
+      class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center">
+      <i nz-icon nzType="plus" class="mr-1 text-[16px] font-bold"></i>
+      <span>Thêm sinh viên</span>
+    </button>
+
+    <button nz-button (click)="showImportModal()" class="border rounded px-3 py-1 flex items-center">
+      <i nz-icon nzType="upload" class="mr-1"></i>
+      <span>Import Excel</span>
+    </button>
+  </div>
+</div>
+
+<div class="mb-3">
+  <div class="flex gap-2 mb-2">
+    <button *ngIf="setOfCheckedId.size > 0" nz-button nzType="default" nzDanger (click)="deleteSelected()"
+      style="border-radius: 6px; border: 1px solid #ff4d4f;">
+      <span nz-icon nzType="stop" nzTheme="outline"></span>
+      <span class="ml-2">Vô hiệu hóa các mục đã chọn</span>
+      <span class="ml-2 text-orange-600 font-semibold">({{ setOfCheckedId.size }})</span>
+    </button>
+  </div>
+</div>
+
+<app-scroll [height]="'60vh'">
+  <nz-table #basicTable [nzData]="students" [nzBordered]="true" [nzLoading]="loading" [nzFrontPagination]="false"
+    (nzCurrentPageDataChange)="onCurrentPageDataChange($event)" [nzPageSize]="pageSize" [nzPageIndex]="pageIndex"
+    (nzPageIndexChange)="onPageChange($event)" [nzNoResult]="emptyTpl">
+    <thead>
+      <tr>
+        <th [nzChecked]="checked" [nzIndeterminate]="indeterminate" (nzCheckedChange)="onAllChecked($event)"
+          nzWidth="60px"></th>
+        <th style="font-weight: bold; text-align: center;">Thao tác</th>
+        <th style="font-weight: bold; text-align: center;">STT</th>
+        <th style="font-weight: bold; text-align: center; cursor: pointer;" (click)="changeSort('maSinhVien')">
+          Mã sinh viên
+          <i nz-icon [nzType]="sortBy === 'maSinhVien' ? (sortDir === 'asc' ? 'caret-up' : 'caret-down') : 'caret-up'"
+            [ngClass]="{'text-blue-600': sortBy === 'maSinhVien'}" class="ml-1"></i>
+        </th>
+        <th style="font-weight: bold; text-align: center; cursor: pointer;" (click)="changeSort('hoTen')">
+          Họ tên
+          <i nz-icon [nzType]="sortBy === 'hoTen' ? (sortDir === 'asc' ? 'caret-up' : 'caret-down') : 'caret-up'"
+            [ngClass]="{'text-blue-600': sortBy === 'hoTen'}" class="ml-1"></i>
+        </th>
+
+        <th style="font-weight: bold; text-align: center; cursor: pointer;" (click)="changeSort('khoa')">
+          Khoa
+          <i nz-icon [nzType]="sortBy === 'khoa' ? (sortDir === 'asc' ? 'caret-up' : 'caret-down') : 'caret-up'"
+            [ngClass]="{'text-blue-600': sortBy === 'khoa'}" class="ml-1"></i>
+        </th>
+        <th style="font-weight: bold; text-align: center; cursor: pointer;" (click)="changeSort('nganh')">
+          Ngành
+          <i nz-icon [nzType]="sortBy === 'nganh' ? (sortDir === 'asc' ? 'caret-up' : 'caret-down') : 'caret-up'"
+            [ngClass]="{'text-blue-600': sortBy === 'nganh'}" class="ml-1"></i>
+        </th>
+        <th style="font-weight: bold; text-align: center; cursor: pointer;" (click)="changeSort('namNhapHoc')">
+          Năm nhập học
+          <i nz-icon [nzType]="sortBy === 'namNhapHoc' ? (sortDir === 'asc' ? 'caret-up' : 'caret-down') : 'caret-up'"
+            [ngClass]="{'text-blue-600': sortBy === 'namNhapHoc'}" class="ml-1"></i>
+        </th>
+        <th style="font-weight: bold; text-align: center;">Trạng thái</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let student of basicTable.data; index as i">
+        <td [nzChecked]="setOfCheckedId.has(student.maSinhVien)"
+          (nzCheckedChange)="onItemChecked(student.maSinhVien, $event)"></td>
+        <td class="text-center">
+          <a nz-dropdown [nzDropdownMenu]="menu" nzTrigger="hover">
+            <span nz-icon nzType="bars" nzTheme="outline"></span>
+          </a>
+          <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu nzSelectable>
+              <li nz-menu-item (click)="showDetailModal(student)">
+                <span nz-icon nzType="eye" nzTheme="outline" class="mr-1"></span>
+                Xem chi tiết
+              </li>
+              <li nz-menu-item (click)="showEditModal(student)">
+                <span nz-icon nzType="edit" nzTheme="outline" class="mr-1"></span>
+                Chỉnh sửa
+              </li>
+              <li nz-menu-item (click)="handleDelete(student)">
+                <span nz-icon nzType="stop" nzTheme="outline" class="mr-1" style="color: red"></span>
+                Vô hiệu hóa
+              </li>
+              <li *ngIf="isAdmin" nz-menu-item
+                (click)="onResetPassword(student.tenDangNhap || student.TenDangNhap || student.maSinhVien || student.MaSinhVien)">
+                <span nz-icon nzType="lock" nzTheme="outline" class="mr-1"></span>
+                Đặt lại mật khẩu
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </td>
+        <td class="text-center">{{ (pageIndex - 1) * pageSize + (i + 1) }}</td>
+        <td class="text-center">{{ student.maSinhVien || student.MaSinhVien || '-' }}</td>
+        <td>{{ student.hoTen || student.HoTen || '-' }}</td>
+
+        <td>{{ student.khoa || student.Khoa || '-' }}</td>
+        <td>{{ getMajorLabel(student.maNganh) || student.nganh || student.Nganh || '-' }}</td>
+        <td>{{ student.namNhapHoc || student.NamNhapHoc || '-' }}</td>
+        <td class="text-center">
+          <app-status-pill [state]="student.isActive"></app-status-pill>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</app-scroll>
+
+<!-- Empty state tiếng Việt -->
+<ng-template #emptyTpl>
+  <app-table-empty></app-table-empty>
+
+</ng-template>
+
+<nz-pagination [nzTotal]="total" [nzPageSize]="pageSize" [(nzPageIndex)]="pageIndex"
+  (nzPageIndexChange)="onPageChange($event)" [nzShowSizeChanger]="false" class="mt-3 flex justify-end"></nz-pagination>
+
+<!-- Modal tạo -->
+<nz-modal [(nzVisible)]="isCreateModalVisible" nzTitle="Tạo sinh viên" (nzOnCancel)="handleCancel()"
+  (nzOnOk)="handleCreate()" [nzOkLoading]="creating" nzOkText="Lưu" nzCancelText="Hủy">
+  <ng-container *nzModalContent>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+      <div><label>Họ tên</label><input nz-input [(ngModel)]="newStudent.HoTen" placeholder="Nhập họ tên" /></div>
+      <div><label>Email</label><input nz-input [(ngModel)]="newStudent.Email" placeholder="Nhập email" /></div>
+      <div><label>Số điện thoại</label><input nz-input [(ngModel)]="newStudent.SoDienThoai" placeholder="Nhập SĐT" />
+      </div>
+      <div><label>Giới tính</label>
+        <nz-radio-group [(ngModel)]="newStudent.GioiTinh">
+          <label nz-radio [nzValue]="1">Nam</label>
+          <label nz-radio [nzValue]="2">Nữ</label>
+          <label nz-radio [nzValue]="3">Khác</label>
+        </nz-radio-group>
+      </div>
+      <div><label>Ngày sinh</label><input nz-input type="date" [(ngModel)]="newStudent.NgaySinh" /></div>
+      <div><label>Địa chỉ</label><input nz-input [(ngModel)]="newStudent.DiaChi" placeholder="Nhập địa chỉ" /></div>
+      <div>
+        <label>Năm nhập học</label>
+        <nz-select [(ngModel)]="newStudent.NamNhapHoc" style="width:100%" nzAllowClear nzPlaceHolder="Chọn năm">
+          <nz-option *ngFor="let y of years" [nzLabel]="y" [nzValue]="y"></nz-option>
+        </nz-select>
+      </div>
+      <div>
+        <label>Ngành</label>
+        <nz-select [(ngModel)]="newStudent.MaNganh" style="width:100%" nzAllowClear nzPlaceHolder="Chọn ngành">
+          <nz-option *ngFor="let m of majors" [nzLabel]="m.label" [nzValue]="m.value"></nz-option>
+        </nz-select>
+      </div>
+      <div class="md:col-span-2 flex flex-col gap-1">
+        <label class="font-medium">Ảnh đại diện</label>
+        <input type="file" (change)="onNewAvatarChange($event)" accept="image/*"
+          class="border rounded px-3 py-2 w-full" />
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal sửa -->
+<nz-modal [(nzVisible)]="isEditModalVisible" nzTitle="Sửa thông tin sinh viên" (nzOnCancel)="handleCancel()"
+  (nzOnOk)="handleEdit()" [nzOkLoading]="editing" nzOkText="Lưu" nzCancelText="Hủy">
+  <ng-container *nzModalContent>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <!-- API: PUT /api/student/update -->
+      <div><label>Mã sinh viên</label><input nz-input [(ngModel)]="selectedStudent.MaSinhVien" disabled /></div>
+      <div><label>Họ tên</label><input nz-input [(ngModel)]="selectedStudent.HoTen" placeholder="Nhập họ tên" /></div>
+      <div><label>Giới tính</label>
+        <nz-radio-group [(ngModel)]="selectedStudent.GioiTinh">
+          <label nz-radio [nzValue]="1">Nam</label>
+          <label nz-radio [nzValue]="2">Nữ</label>
+          <label nz-radio [nzValue]="3">Khác</label>
+        </nz-radio-group>
+      </div>
+      <div><label>Email</label><input nz-input [(ngModel)]="selectedStudent.Email" placeholder="Nhập email" /></div>
+      <div><label>Số điện thoại</label><input nz-input [(ngModel)]="selectedStudent.SoDienThoai"
+          placeholder="Nhập SĐT" /></div>
+      <div><label>Ngày sinh</label><input nz-input type="date" [(ngModel)]="selectedStudent.NgaySinh" /></div>
+      <div><label>Địa chỉ</label><input nz-input [(ngModel)]="selectedStudent.DiaChi" placeholder="Nhập địa chỉ" />
+      </div>
+      <div><label>Năm nhập học</label>
+        <nz-select [(ngModel)]="selectedStudent.NamNhapHoc" style="width:100%" nzAllowClear>
+          <nz-option *ngFor="let y of years" [nzLabel]="y" [nzValue]="y"></nz-option>
+        </nz-select>
+      </div>
+      <div><label>Mã ngành</label>
+        <nz-select [(ngModel)]="selectedStudent.MaNganh" style="width:100%" nzAllowClear nzPlaceHolder="Chọn ngành">
+          <nz-option *ngFor="let m of majors" [nzLabel]="m.label" [nzValue]="m.value"></nz-option>
+        </nz-select>
+      </div>
+      <div><label>Trạng thái</label>
+        <nz-select [(ngModel)]="selectedStudent.TrangThai">
+          <nz-option [nzLabel]="'Hoạt động'" [nzValue]="true"></nz-option>
+          <nz-option [nzLabel]="'Ngừng hoạt động'" [nzValue]="false"></nz-option>
+        </nz-select>
+      </div>
+      <div class="md:col-span-2"><label>Ảnh đại diện</label><input type="file" (change)="onEditAvatarChange($event)"
+          accept="image/*" />
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal chi tiết -->
+<nz-modal [(nzVisible)]="isDetailModalVisible" nzTitle="Chi tiết sinh viên" (nzOnCancel)="isDetailModalVisible=false"
+  [nzFooter]="null" [nzWidth]="700">
+  <ng-container *nzModalContent>
+    <div *ngIf="detailLoading" class="p-6 text-center">Đang tải...</div>
+    <div *ngIf="!detailLoading">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><strong>Mã sinh viên:</strong> {{ detailStudent.maSinhVien || detailStudent.MaSinhVien || '-' }}</div>
+        <div><strong>Tên đăng nhập:</strong> {{ detailStudent.tenDangNhap || detailStudent.TenDangNhap || '-' }}</div>
+        <div><strong>Họ tên:</strong> {{ detailStudent.hoTen || detailStudent.HoTen || '-' }}</div>
+        <div><strong>Email:</strong> {{ detailStudent.email || detailStudent.Email || '-' }}</div>
+        <div><strong>Số điện thoại:</strong> {{ detailStudent.soDienThoai || detailStudent.SoDienThoai ||
+          detailStudent.sdt || '-' }}</div>
+        <div><strong>Giới tính:</strong> {{ (detailStudent.gioiTinh===1) ? 'Nam' : (detailStudent.gioiTinh===2) ? 'Nữ' :
+          (detailStudent.gioiTinh ? 'Khác' : '-') }}</div>
+        <div><strong>Khoa:</strong> {{ detailStudent.khoa || detailStudent.Khoa || '-' }}</div>
+        <div><strong>Ngành:</strong> {{ getMajorLabel(detailStudent.maNganh) || detailStudent.nganh ||
+          detailStudent.Nganh || '-' }}</div>
+        <div><strong>Năm nhập học:</strong> {{ detailStudent.namNhapHoc || detailStudent.NamNhapHoc || '-' }}</div>
+        <div class="md:col-span-2"><strong>Địa chỉ:</strong> {{ detailStudent.diaChi || detailStudent.DiaChi || '-' }}
+        </div>
+        <div class="sm:col-span-2">
+          <strong>Trạng thái:</strong>
+          <app-status-pill [state]="detailStudent.trangThaiUser ?? detailStudent.isActive"></app-status-pill>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal import -->
+<nz-modal [(nzVisible)]="isImportModalVisible" nzTitle="Import sinh viên từ Excel"
+  (nzOnCancel)="isImportModalVisible=false" (nzOnOk)="handleImport()" [nzOkLoading]="importing"
+  [nzOkDisabled]="!importValid" nzOkText="Import" nzCancelText="Hủy">
+  <ng-container *nzModalContent>
+    <div class="grid grid-cols-1 gap-3">
+      <p>Chọn file Excel chứa danh sách sinh viên.</p>
+      <input type="file" (change)="onImportFileChange($event)" accept=".xlsx,.xls" />
+      <div class="flex items-center gap-2">
+        <label class="mr-2">Nếu file không có cột "NamNhapHoc", chọn năm mặc định:</label>
+        <nz-select [(ngModel)]="importDefaultNamNhapHoc" style="width:160px" nzAllowClear nzPlaceHolder="Năm mặc định">
+          <nz-option *ngFor="let y of years" [nzLabel]="y" [nzValue]="y"></nz-option>
+        </nz-select>
+      </div>
+      <div *ngIf="importError" class="text-sm text-red-600">{{ importError }}</div>
+      <div *ngIf="importValid" class="text-sm text-green-600">File hợp lệ, sẵn sàng import.</div>
+    </div>
+  </ng-container>
+</nz-modal>

@@ -1,0 +1,55 @@
+/* Ensure QR container expands properly when placed into fullscreen */
+.qr-host {
+	display: inline-block;
+}
+
+/* Fullscreen styles for standard and WebKit */
+.qr-host:fullscreen,
+.qr-host:-webkit-full-screen {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	background: #ffffff;
+	padding: 16px;
+	box-sizing: border-box;
+}
+
+.qr-host:fullscreen img,
+.qr-host:-webkit-full-screen img,
+.qr-host:fullscreen canvas,
+.qr-host:-webkit-full-screen canvas {
+	max-width: 90vw !important;
+	max-height: 90vh !important;
+	width: auto !important;
+	height: auto !important;
+}
+
+/* slightly larger default size on the page */
+.qr-host img {
+	width: 320px;
+	height: 320px;
+}
+
+/* Action buttons alignment */
+.qr-actions {
+	align-items: center;
+}
+.qr-actions button {
+	height: 42px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+}
+.qr-actions .btn-fullscreen {
+	background: #1976d2;
+	color: #fff;
+	border-color: #1976d2;
+}
+.qr-actions .btn-fullscreen:hover {
+	background: #155fa0;
+	border-color: #155fa0;
+}
+

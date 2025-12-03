@@ -1,0 +1,90 @@
+<div class="p-4">
+  <h2 class="text-xl font-semibold mb-3"> Tạo mã QR điểm danh</h2>
+
+  <!-- <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 items-center">
+    <nz-select [(ngModel)]="selectedClass" nzPlaceHolder="Chọn lớp" nzShowSearch>
+      <nz-option *ngFor="let c of classes" [nzValue]="c.maLopHocPhan" [nzLabel]="c.tenLopHocPhan"></nz-option>
+    </nz-select>
+
+    <input nz-input [(ngModel)]="selectedDate" type="date" />
+
+    <input nz-input type="number" placeholder="Tiết bắt đầu" [(ngModel)]="tietBatDau" />
+    <input nz-input type="number" placeholder="Số tiết" [(ngModel)]="soTiet" />
+
+    <button nz-button nzType="primary" (click)="generateQR()">Tạo mã QR</button>
+  </div> -->
+
+  <div *ngIf="qrImageDataUrl || qrData" class="space-y-4">
+    <div class="p-4 bg-white rounded shadow text-center">
+      <div class="text-sm text-gray-500">Thời gian điểm danh còn lại</div>
+      <div class="text-4xl font-bold text-blue-600 my-2">{{ countdownDisplay || '00:00' }}</div>
+      <!-- <div *ngIf="qrData" class="text-lg font-semibold text-blue-700">{{ qrData }}</div> -->
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-6">
+      <div #qrHost class="flex-shrink-0 qr-host w-full sm:w-auto flex flex-col items-center">
+        <div class="w-full max-w-[320px]">
+          <img *ngIf="qrImageDataUrl" [src]="qrImageDataUrl" alt="QR" class="border rounded max-w-full h-auto mx-auto w-64 sm:w-72" />
+          <div *ngIf="!qrImageDataUrl && qrData" class="mx-auto" style="max-width:280px;">
+            <qrcode [qrdata]="qrData" [width]="280" [errorCorrectionLevel]="'M'"></qrcode>
+          </div>
+        </div>
+
+        <div *ngIf="expiresAt" class="text-gray-500 mt-3 text-center">Hết hạn lúc: {{ expiresAt }}</div>
+
+        <div class="mt-3 flex gap-2 qr-actions flex-col sm:flex-row w-full sm:w-auto">
+          <button nz-button nzType="primary" (click)="endAttendance()" class="btn-end w-full sm:w-auto"
+            style="background:#e53935;border-color:#e53935; padding: 8px 14px; font-size: 1rem;">
+            Kết thúc
+          </button>
+          <button nz-button nzType="default" (click)="enterFullscreen()" class="btn-fullscreen w-full sm:w-auto" style="padding: 8px 14px; font-size: 1rem;">
+            Toàn màn hình
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col flex-1 w-full">
+        <div class="flex-1 bg-white rounded p-3 shadow w-full">
+          <h3 class="font-medium mb-2">Danh sách sinh viên đã điểm danh</h3>
+          <app-scroll-table [height]="'320px'">
+            <nz-table [nzData]="attendanceList" nzSize="middle" [nzFrontPagination]="false" [nzNoResult]="emptyTpl">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Mã SV</th>
+                  <th>Tên sinh viên</th>
+                  <th>Thời gian</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of attendanceList; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ s.maSinhVien }}</td>
+                  <td>{{ s.tenSinhVien }}</td>
+                  <td>{{ s.thoiGianQuet }}</td>
+                  <td>
+                    <span [ngClass]="getBadgeClass(s)">{{ getBadgeLabel(s) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </nz-table>
+          </app-scroll-table>
+        </div>
+      </div>
+    </div>
+
+    <!-- <div class="flex items-center gap-2">
+      <button nz-button nzType="default" (click)="extractBase64()">Lấy ảnh base64</button>
+      <button nz-button nzType="default" (click)="downloadQrPng()" [disabled]="!qrImageDataUrl">Tải PNG</button>
+    </div> -->
+
+    <ng-template #emptyTpl>
+      <app-table-empty></app-table-empty>
+    </ng-template>
+  </div>
+</div>
+
+
+
+

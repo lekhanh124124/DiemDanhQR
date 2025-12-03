@@ -1,0 +1,76 @@
+<!-- Thống kê nhanh -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <nz-card *ngFor="let stat of stats" class="hover:shadow-lg transition">
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-sm text-gray-500 truncate">{{ stat.title }}</p>
+        <p class="text-2xl font-bold text-gray-800 mt-1 truncate">
+          <ng-container *ngIf="!statsLoading; else loadingStat">{{ stat.value }}</ng-container>
+          <ng-template #loadingStat><i nz-icon nzType="loading" nzSpin class="text-xl"></i></ng-template>
+        </p>
+      </div>
+      <i nz-icon [nzType]="stat.icon" [ngClass]="stat.color" class="text-3xl flex-shrink-0"></i>
+    </div>
+  </nz-card>
+</div>
+
+<!-- Biểu đồ + bảng -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <nz-card class="mb-4 lg:mb-0 flex flex-col">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h2 class="text-lg font-medium">Thống kê điểm danh theo khoa</h2>
+      <div class="flex items-center gap-2 flex-wrap ml-auto">
+        <label class="text-sm text-gray-600 whitespace-nowrap">Học kỳ</label>
+        <div class="w-40 sm:w-52">
+          <nz-select class="w-full" [(ngModel)]="selectedSemesterKey" (ngModelChange)="onSemesterChange()">
+            <nz-option *ngFor="let s of semesters" [nzLabel]="s.key" [nzValue]="s.key"></nz-option>
+          </nz-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 flex flex-col">
+      <nz-spin [nzSpinning]="loadingChart" nzTip="Đang tải dữ liệu..." class="flex-1">
+        <div class="flex-1 flex items-center">
+          <canvas id="attendanceChart" class="w-full h-full" style="display:block;"></canvas>
+        </div>
+      </nz-spin>
+      <div *ngIf="!semesters || semesters.length===0 || (semesters && semesters.length>0 && !selectedSemesterKey)"
+        class="text-sm text-gray-500 mt-2">Không có dữ liệu học kỳ</div>
+    </div>
+
+    <ng-template #emptyTpl>
+      <app-table-empty></app-table-empty>
+    </ng-template>
+  </nz-card>
+
+  <!-- Nhật ký hoạt động -->
+  <nz-card class="mb-4 lg:mb-0 flex flex-col">
+    <h2 class="text-lg font-medium mb-4">Nhật ký hoạt động</h2>
+    <div class="flex-1">
+      <app-scroll-table [height]="'320px'">
+        <nz-spin [nzSpinning]="logsLoading" nzTip="Đang tải...">
+          <nz-table [nzData]="activityLogs" nzBordered [nzFrontPagination]="false" [nzNoResult]="emptyTpl">
+            <thead>
+              <tr>
+                <th *ngFor="let col of activityCols">{{ col.header }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of activityLogs">
+                <td *ngFor="let col of activityCols">
+                  <ng-container [ngSwitch]="col.key">
+                    <ng-container *ngSwitchCase="'time'">{{ getLogTime(a) }}</ng-container>
+                    <ng-container *ngSwitchCase="'user'">{{ getLogUser(a) }}</ng-container>
+                    <ng-container *ngSwitchCase="'action'">{{ getLogAction(a) }}</ng-container>
+                    <ng-container *ngSwitchDefault>{{ a[col.key] || '-' }}</ng-container>
+                  </ng-container>
+                </td>
+              </tr>
+            </tbody>
+          </nz-table>
+        </nz-spin>
+      </app-scroll-table>
+    </div>
+  </nz-card>
+</div>

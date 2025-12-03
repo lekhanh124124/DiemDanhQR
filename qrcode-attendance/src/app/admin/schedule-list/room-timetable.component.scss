@@ -1,0 +1,99 @@
+.page-container {
+	 padding: 2px 10px 10px 10px;
+}
+
+.toolbar {
+	margin-bottom: 12px;
+}
+
+.buoi-box {
+	border-radius: 6px;
+	padding: 6px;
+	font-size: 13px;
+	line-height: 1.4;
+	margin: 2px;
+}
+
+.buoi-box.lt { background-color: #E7ECF0 !important; color: #222 !important; }
+.buoi-box.th { background-color: #71CB35 !important; color: #fff !important; }
+.buoi-box.lth { background: linear-gradient(135deg,#E7ECF0 0%, #71CB35 100%) !important; color: #222 !important; }
+
+.legend {
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.box {
+		width: 18px;
+		height: 18px;
+		border-radius: 4px;
+		display: inline-block;
+	}
+
+	.lt { background-color: #E7ECF0; }
+	.th { background-color: #71CB35; }
+	.lth { background: linear-gradient(135deg,#E7ECF0 0%, #71CB35 100%); }
+
+	.no-empty ::ng-deep .ant-empty {
+		display: none !important;
+	}
+}
+
+.schedule-header-cell {
+	background: #F3F7F9;
+	color: #1390ef;
+	font-weight: 600;
+}
+
+.schedule-left-cell {
+	background: #FFFFCE;
+	color: #748285;
+	border-right: 1px solid #eef2f7;
+}
+
+::ng-deep .ant-table-tbody > tr:hover > td {
+	background-color: transparent !important;
+	color: inherit !important;
+}
+
+.buoi-box {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.page-container .buoi-box,
+.page-container .buoi-box * {
+	font-size: 13px !important;
+	line-height: 1.4 !important;
+}
+
+.rounded-md { border-radius:8px }
+.shadow-sm { box-shadow: 0 1px 3px rgba(0,0,0,0.08) }
+
+.page-container .toolbar > button.rounded-md {
+	color: #1390ef;
+	background-color: #1390ef !important;
+	color: #ffffff !important;
+	border-color: transparent !important;
+	transition: background-color .15s ease, color .15s ease;
+}
+
+.page-container .toolbar > button.rounded-md:hover,
+.page-container .toolbar > button.rounded-md:active,
+.page-container .toolbar > button.rounded-md:focus {
+	background-color: #F3F7F9 !important;
+	color: #1390ef !important;
+}
+
+::ng-deep .page-container .toolbar nz-date-picker .ant-picker {
+	background: #ffffff !important;
+	border-color: #1390ef !important;
+	color: #1390ef !important;
+}
+
+::ng-deep .page-container .toolbar nz-date-picker .ant-picker:hover,
+::ng-deep .page-container .toolbar nz-date-picker .ant-picker:focus {
+	background-color: #F3F7F9 !important;
+	color: #1390ef !important;
+}

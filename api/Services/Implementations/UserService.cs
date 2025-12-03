@@ -37,7 +37,7 @@ namespace api.Services.Implementations
             if (!request.MaQuyen.HasValue || request.MaQuyen.Value <= 0)
                 ApiExceptionHelper.Throw(ApiErrorCode.ValidationError, "Mã quyền không hợp lệ.");
 
-            var role = await _repo.GetRoleAsync(request.MaQuyen.Value);
+            var role = await _repo.GetRoleAsync(request.MaQuyen!.Value);
             if (role == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy quyền.");
 
@@ -81,16 +81,16 @@ namespace api.Services.Implementations
                     HoTen = inputResponse(entity.HoTen),
                     TenDangNhap = inputResponse(entity.TenDangNhap),
                     TrangThai = inputResponse(entity.TrangThai.ToString()),
-                    GioiTinh = inputResponse(entity.GioiTinh?.ToString()),
-                    AnhDaiDien = inputResponse(entity.AnhDaiDien),
-                    Email = inputResponse(entity.Email),
-                    SoDienThoai = inputResponse(entity.SoDienThoai),
-                    NgaySinh = inputResponse(FDateOnly(entity.NgaySinh)),
-                    DiaChi = inputResponse(entity.DiaChi)
+                    GioiTinh = inputResponse(entity.GioiTinh?.ToString()!),
+                    AnhDaiDien = inputResponse(entity.AnhDaiDien!),
+                    Email = inputResponse(entity.Email!),
+                    SoDienThoai = inputResponse(entity.SoDienThoai!),
+                    NgaySinh = inputResponse(FDateOnly(entity.NgaySinh)!),
+                    DiaChi = inputResponse(entity.DiaChi!)
                 },
                 PhanQuyen = new PhanQuyenDTO
                 {
-                    MaQuyen = inputResponse(role.MaQuyen.ToString()),
+                    MaQuyen = inputResponse(role!.MaQuyen.ToString()),
                     CodeQuyen = inputResponse(role.CodeQuyen),
                     TenQuyen = inputResponse(role.TenQuyen)
                 }
@@ -112,36 +112,35 @@ namespace api.Services.Implementations
                 var roleEntity = await _repo.GetRoleAsync(request.MaQuyen.Value);
                 if (roleEntity == null)
                     ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy quyền.");
-                user.MaQuyen = request.MaQuyen.Value;
+                user!.MaQuyen = request.MaQuyen.Value;
             }
 
-            if (!string.IsNullOrWhiteSpace(request.HoTen)) user.HoTen = request.HoTen!.Trim();
-            if (request.GioiTinh.HasValue) user.GioiTinh = request.GioiTinh.Value;
-            if (!string.IsNullOrWhiteSpace(request.Email)) user.Email = request.Email!.Trim();
-            if (!string.IsNullOrWhiteSpace(request.SoDienThoai)) user.SoDienThoai = request.SoDienThoai!.Trim();
-            if (request.NgaySinh.HasValue) user.NgaySinh = DateOnly.FromDateTime(request.NgaySinh.Value);
-            if (!string.IsNullOrWhiteSpace(request.DiaChi)) user.DiaChi = request.DiaChi!.Trim();
+            if (!string.IsNullOrWhiteSpace(request.HoTen)) user!.HoTen = request.HoTen!.Trim();
+            if (request.GioiTinh.HasValue) user!.GioiTinh = request.GioiTinh.Value;
+            if (!string.IsNullOrWhiteSpace(request.Email)) user!.Email = request.Email!.Trim();
+            if (!string.IsNullOrWhiteSpace(request.SoDienThoai)) user!.SoDienThoai = request.SoDienThoai!.Trim();
+            if (request.NgaySinh.HasValue) user!.NgaySinh = DateOnly.FromDateTime(request.NgaySinh.Value);
+            if (!string.IsNullOrWhiteSpace(request.DiaChi)) user!.DiaChi = request.DiaChi!.Trim();
 
-            // THÊM MỚI: cho phép cập nhật trạng thái
             if (request.TrangThai.HasValue)
-                user.TrangThai = request.TrangThai.Value;
+                user!.TrangThai = request.TrangThai.Value;
 
             if (request.AnhDaiDien != null)
             {
-                var newUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath, user.TenDangNhap);
+                var newUrl = await AvatarHelper.SaveAvatarAsync(request.AnhDaiDien, _env.WebRootPath, user!.TenDangNhap);
                 if (!string.IsNullOrWhiteSpace(newUrl)) user.AnhDaiDien = newUrl;
             }
 
-            await _repo.UpdateAsync(user);
+            await _repo.UpdateAsync(user!);
             await _repo.AddActivityAsync(new LichSuHoatDong
             {
-                MaNguoiDung = user.MaNguoiDung,
+                MaNguoiDung = user!.MaNguoiDung,
                 HanhDong = $"Cập nhật hồ sơ người dùng [{user.TenDangNhap}] bởi [{currentUsername}]",
                 ThoiGian = TimeHelper.UtcToVietnam(DateTime.UtcNow)
             });
             await _repo.SaveChangesAsync();
 
-            var role = await _repo.GetRoleAsync(user.MaQuyen) ?? new PhanQuyen();
+            var role = await _repo.GetRoleAsync((int)user.MaQuyen!);
 
             return new UpdateUserProfileResponse
             {
@@ -151,16 +150,16 @@ namespace api.Services.Implementations
                     HoTen = inputResponse(user.HoTen),
                     TenDangNhap = inputResponse(user.TenDangNhap),
                     TrangThai = inputResponse(user.TrangThai.ToString()),
-                    GioiTinh = inputResponse(user.GioiTinh?.ToString()),
-                    AnhDaiDien = inputResponse(user.AnhDaiDien),
-                    Email = inputResponse(user.Email),
-                    SoDienThoai = inputResponse(user.SoDienThoai),
-                    NgaySinh = inputResponse(FDateOnly(user.NgaySinh)),
-                    DiaChi = inputResponse(user.DiaChi)
+                    GioiTinh = inputResponse(user.GioiTinh?.ToString()!),
+                    AnhDaiDien = inputResponse(user.AnhDaiDien!),
+                    Email = inputResponse(user.Email!),
+                    SoDienThoai = inputResponse(user.SoDienThoai!),
+                    NgaySinh = inputResponse(FDateOnly(user.NgaySinh)!),
+                    DiaChi = inputResponse(user.DiaChi!)
                 },
                 PhanQuyen = new PhanQuyenDTO
                 {
-                    MaQuyen = inputResponse(role.MaQuyen.ToString()),
+                    MaQuyen = inputResponse(role!.MaQuyen.ToString()),
                     CodeQuyen = inputResponse(role.CodeQuyen),
                     TenQuyen = inputResponse(role.TenQuyen)
                 }
@@ -185,7 +184,7 @@ namespace api.Services.Implementations
                 var desc = string.Equals(sortDir, "DESC", StringComparison.OrdinalIgnoreCase);
 
                 var (rows, total) = await _repo.SearchUsersAsync(
-                    tenDangNhap, hoTen, maQuyen, codeQuyen, trangThai, sortBy, desc, page, pageSize);
+    tenDangNhap, hoTen, maQuyen, codeQuyen, trangThai, sortBy, desc, page, pageSize);
 
                 var items = rows.Select(x => new UserItem
                 {
@@ -198,9 +197,9 @@ namespace api.Services.Implementations
                     },
                     PhanQuyen = new PhanQuyenDTO
                     {
-                        MaQuyen = inputResponse(x.Role.MaQuyen.ToString()),
-                        CodeQuyen = inputResponse(x.Role.CodeQuyen),
-                        TenQuyen = inputResponse(x.Role.TenQuyen)
+                        MaQuyen = inputResponse(x.Role != null ? x.Role.MaQuyen.ToString() : null!),
+                        CodeQuyen = inputResponse(x.Role?.CodeQuyen!),
+                        TenQuyen = inputResponse(x.Role?.TenQuyen!)
                     }
                 }).ToList();
 
@@ -226,13 +225,13 @@ namespace api.Services.Implementations
                 ApiExceptionHelper.Throw(ApiErrorCode.NotFound, "Không tìm thấy người dùng.");
 
             // Lấy quyền
-            var pqEntity = await _permRepo.GetRoleByIdAsync(user.MaQuyen);
+            var pqEntity = await _permRepo.GetRoleByIdAsync((int)user!.MaQuyen!);
             if (pqEntity == null)
                 ApiExceptionHelper.Throw(ApiErrorCode.InternalError, "Không tìm thấy quyền của người dùng.");
 
             var phanQuyenDto = new PhanQuyenDTO
             {
-                MaQuyen = inputResponse(pqEntity.MaQuyen.ToString()),
+                MaQuyen = inputResponse(pqEntity!.MaQuyen.ToString()),
                 CodeQuyen = inputResponse(pqEntity.CodeQuyen),
                 TenQuyen = inputResponse(pqEntity.TenQuyen)
             };
@@ -242,12 +241,12 @@ namespace api.Services.Implementations
             {
                 MaNguoiDung = inputResponse(user.MaNguoiDung.ToString()),
                 HoTen = inputResponse(user.HoTen),
-                GioiTinh = inputResponse(user.GioiTinh?.ToString()),
-                AnhDaiDien = inputResponse(user.AnhDaiDien),
-                Email = inputResponse(user.Email),
-                SoDienThoai = inputResponse(user.SoDienThoai),
-                NgaySinh = inputResponse(FDateOnly(user.NgaySinh)),
-                DiaChi = inputResponse(user.DiaChi),
+                GioiTinh = inputResponse(user.GioiTinh?.ToString()!),
+                AnhDaiDien = inputResponse(user.AnhDaiDien!),
+                Email = inputResponse(user.Email!),
+                SoDienThoai = inputResponse(user.SoDienThoai!),
+                NgaySinh = inputResponse(FDateOnly(user.NgaySinh)!),
+                DiaChi = inputResponse(user.DiaChi!),
                 TenDangNhap = inputResponse(user.TenDangNhap),
                 TrangThai = inputResponse(user.TrangThai.ToString())
             };
@@ -271,9 +270,9 @@ namespace api.Services.Implementations
                     GiangVien = new GiangVienDTO
                     {
                         MaGiangVien = inputResponse(gv.MaGiangVien),
-                        HocHam = inputResponse(gv.HocHam),
-                        HocVi = inputResponse(gv.HocVi),
-                        NgayTuyenDung = inputResponse(FDateOnly(gv.NgayTuyenDung))
+                        HocHam = inputResponse(gv.HocHam!),
+                        HocVi = inputResponse(gv.HocVi!),
+                        NgayTuyenDung = inputResponse(FDateOnly(gv.NgayTuyenDung)!)
                     },
                     Khoa = kh == null
                         ? new KhoaDTO()
@@ -283,7 +282,7 @@ namespace api.Services.Implementations
                             CodeKhoa = inputResponse(kh.CodeKhoa),
                             TenKhoa = inputResponse(kh.TenKhoa)
                         },
-                    PhanQuyen = phanQuyenDto
+                    PhanQuyen = phanQuyenDto ?? null
                 };
             }
 
@@ -326,7 +325,7 @@ namespace api.Services.Implementations
                             CodeKhoa = kh == null ? null : inputResponse(kh.CodeKhoa),
                             TenKhoa = kh == null ? null : inputResponse(kh.TenKhoa)
                         },
-                    PhanQuyen = phanQuyenDto
+                    PhanQuyen = phanQuyenDto ?? null
                 };
             }
 

@@ -1,0 +1,112 @@
+<div>
+  <div class="mb-3 p-3 rounded flex flex-wrap justify-between items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <input nz-input placeholder="Nhập để tìm kiếm (Năm học hoặc Kỳ)" [(ngModel)]="keyword" class="border rounded px-2 py-1"
+        style="width:260px" (keyup.enter)="onSearch()" />
+
+      <button nz-button nzType="primary" (click)="onSearch()"
+        class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center">
+        <i nz-icon nzType="search" class="mr-1 text-[16px] font-bold"></i>
+        <span>Tìm kiếm</span>
+      </button>
+
+      <button nz-button (click)="refreshList()" class="flex items-center border rounded px-3 py-1 font-semibold">
+        <i nz-icon nzType="reload" class="mr-1"></i>
+        <span>Làm mới</span>
+      </button>
+
+      <a nz-dropdown [nzDropdownMenu]="advSemesters" nzTrigger="click">
+        <button nz-button class="flex items-center border rounded px-3 py-1 font-semibold">
+          <i nz-icon nzType="filter" class="mr-1"></i>
+          <span>Tìm nâng cao</span>
+          <i nz-icon nzType="down" class="ml-1"></i>
+        </button>
+      </a>
+    </div>
+
+    <div>
+      <button nz-button nzType="primary" (click)="openCreate()"
+        class="border rounded px-3 py-1 font-semibold text-[15px] flex items-center">
+        <i nz-icon nzType="plus" class="mr-1 text-[16px] font-bold"></i>
+        <span>Thêm học kỳ</span>
+      </button>
+    </div>
+  </div>
+
+  <nz-dropdown-menu #advSemesters="nzDropdownMenu">
+    <div nz-menu class="p-3" style="min-width: 320px;">
+      <div class="text-sm font-semibold mb-2">Bộ lọc nâng cao</div>
+      <div class="grid grid-cols-1 gap-2">
+        <input nz-input placeholder="Năm học (vd: 2025)" [(ngModel)]="filterNamHoc" />
+        <input nz-input placeholder="Kỳ (vd: 1)" [(ngModel)]="filterKy" />
+        <div class="flex justify-end gap-2 mt-1">
+          <button nz-button (click)="refreshList()">Làm mới</button>
+          <button nz-button nzType="primary" (click)="onApplyAdvanced()">Tìm kiếm</button>
+        </div>
+      </div>
+    </div>
+  </nz-dropdown-menu>
+
+  <!-- Table -->
+  <nz-table [nzBordered]="true" [nzLoading]="loading" [nzData]="semesters" [nzFrontPagination]="false" [nzShowPagination]="false" [nzNoResult]="emptyTpl">
+    <thead>
+      <tr>
+        <th style="width:64px; text-align:center">Thao tác</th>
+        <th>Mã học kỳ</th>
+        <th>Năm học</th>
+        <th>Kỳ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let s of semesters">
+        <td class="text-center">
+          <a nz-dropdown [nzDropdownMenu]="menu" nzTrigger="hover">
+            <span nz-icon nzType="bars" nzTheme="outline"></span>
+          </a>
+          <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu nzSelectable>
+              <li nz-menu-item (click)="openEdit(s)">
+                <span nz-icon nzType="edit" class="mr-1"></span>
+                Chỉnh sửa
+              </li>
+              <li nz-menu-item (click)="navigateToCourses(s)">
+                <span nz-icon nzType="team" class="mr-1"></span>
+                Lớp học phần của kỳ này
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </td>
+        <td>{{ s.maHocKy }}</td>
+        <td>{{ s.namHoc }}</td>
+        <td>{{ s.ky }}</td>
+      </tr>
+    </tbody>
+  </nz-table>
+
+  <nz-pagination [nzTotal]="total" [nzPageSize]="pageSize" [(nzPageIndex)]="page" (nzPageIndexChange)="onPageChange($event)" [nzShowSizeChanger]="false" class="mt-3 flex justify-end"></nz-pagination>
+
+  <ng-template #emptyTpl>
+    <app-table-empty></app-table-empty>
+  </ng-template>
+
+  <!-- Create modal -->
+  <nz-modal [(nzVisible)]="isCreateVisible" nzTitle="Thêm học kỳ" (nzOnCancel)="cancel()" (nzOnOk)="create()" [nzOkLoading]="creating" nzOkText="Lưu" nzCancelText="Hủy">
+    <ng-container *nzModalContent>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><label>Năm học</label><input nz-input type="number" [(ngModel)]="newSemester.NamHoc" /></div>
+        <div><label>Kỳ</label><input nz-input type="number" [(ngModel)]="newSemester.Ky" /></div>
+      </div>
+    </ng-container>
+  </nz-modal>
+
+  <!-- Edit modal -->
+  <nz-modal [(nzVisible)]="isEditVisible" nzTitle="Sửa học kỳ" (nzOnCancel)="cancel()" (nzOnOk)="update()" [nzOkLoading]="updating" nzOkText="Lưu" nzCancelText="Hủy">
+    <ng-container *nzModalContent>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><label>Mã học kỳ</label><input nz-input [(ngModel)]="selectedSemester.MaHocKy" disabled /></div>
+        <div><label>Năm học</label><input nz-input type="number" [(ngModel)]="selectedSemester.NamHoc" /></div>
+        <div><label>Kỳ</label><input nz-input type="number" [(ngModel)]="selectedSemester.Ky" /></div>
+      </div>
+    </ng-container>
+  </nz-modal>
+</div>

@@ -23,7 +23,7 @@ namespace api.Models
         public Guid? RefreshTokenId { get; set; }
         public DateTime? RefreshTokenRevokedAt { get; set; }
 
-        public int MaQuyen { get; set; }
+        public int? MaQuyen { get; set; }
     }
 }
 

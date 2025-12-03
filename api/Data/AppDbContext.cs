@@ -136,12 +136,12 @@ public class AppDbContext : DbContext
             e.Property(x => x.RefreshTokenId);
             e.Property(x => x.RefreshTokenRevokedAt);
 
-            e.Property(x => x.MaQuyen).IsRequired();
+            e.Property(x => x.MaQuyen);
 
             e.HasOne<PhanQuyen>()
              .WithMany()
              .HasForeignKey(x => x.MaQuyen)
-             .OnDelete(DeleteBehavior.Restrict);
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         // GIANGVIEN (add trigger mapping)
